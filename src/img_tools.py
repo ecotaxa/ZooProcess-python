@@ -72,20 +72,27 @@ def rotate90c(img) -> np.ndarray:
 def mkdir(path):
     Path(path).mkdir(parents=True, exist_ok=True)
 
-def rename(filename,extraname,ext=None) -> str:
+def rename(filename, extraname, ext=None) -> str:
     """
     rename : define a new filename. 
     The function insert the string extraname in the filename and its extension.
     also it could change the extension with ext parameter. Don't use dot ie: ext="jpg", ext="tiff", etc...
     """
-    if extraname == None :
+    if extraname == None and  ext == None :
         raise ValueError("extraname could not eqal to None")
+    
     import os
     decompose = os.path.splitext(filename)
     print(f"decompose {decompose}")
     extension = decompose[1]
-    if ext: extension = "." + ext
-    new_filename = decompose[0] + "_" + extraname + extension
+    new_filename = decompose[0] 
+    if extraname:
+        new_filename += "_" + extraname
+    if ext: 
+        # extension = "." + ext
+        # if extension: 
+        # new_filename += extension
+        new_filename += "." + ext
     return new_filename
 
 def getPath(filename, extraname=None, ext=None, path=None) -> str:
