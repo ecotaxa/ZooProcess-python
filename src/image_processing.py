@@ -7,8 +7,8 @@ from ProjectClass import ProjectClass
 from SampleClass import SampleClass
 
 from pieceImage import pieceImage
-from config import NB_THREADS
-
+# from config import NB_THREADS
+import config
 
 def convertPieceOfImage16to8bit(piece:pieceImage) -> np.ndarray:
     return convertImage16to8bit(piece.image, piece.histolut)
@@ -30,7 +30,7 @@ def splitimage(image, histolut) -> list:
 
 def convertRawScan(pathProject, scan_filename):
 
-    project = ProjectClass(pathProject)
+    project = ProjectClass( project_name=pathProject, piqvFolder=config.piqvhome  )
 
     index = 1
     sample = SampleClass(project, scan_filename, index)
@@ -56,7 +56,7 @@ def convert( sample: SampleClass ):
     new_image = np.zeros(image.shape)
 
 
-    with concurrent.futures.ThreadPoolExecutor(NB_THREADS , "thread_split" ) as executor:
+    with concurrent.futures.ThreadPoolExecutor(config;NB_THREADS , "thread_split" ) as executor:
         for split, newimage in zip(splitted, executor.map(convertPieceOfImage16to8bit,splitted)):
             name = f"{split.top}-{split.left}-{split.bottom}-{split.right}"
             print(f"name: {name}")
@@ -66,3 +66,4 @@ def convert( sample: SampleClass ):
         
     new = saveimage(new_image,sample.sample, extraname="treated", ext="jpg", path=sample.projet.tempFolder())
     print(f"result picture => {new}")
+

@@ -11,20 +11,23 @@ class ProjectClass():
         folder: the project path
     """
 
-
-    userhome = "/Users/sebastiengalvagno/"
-    piqv="piqv/plankton/zooscan_monitoring/"
-    piqvhome=userhome+piqv
-
-    def __init__(self,project_name) -> None:
+    def __init__(self, project_name, piqvFolder , outputFolder = None) -> None:
         self.project_name = project_name
         # if project_name:
-        self.folder = Path(self.piqvhome, project_name)
+        self.piqvhome = piqvFolder
         self.home = Path(self.piqvhome)
+        self.folder = Path(self.piqvhome, project_name)
         self.raw = Path(self.folder, "Zooscan_scan", "_raw")
         self.work = Path(self.folder, "Zooscan_scan", "_work")
         self.tempFolder = Path(self.folder, "temp")
+        if ( outputFolder ):
+            self.outputFolder = Path(outputFolder)
+            create_folder(self.outputFolder)
+        else:
+            self.outputFolder = self.home
+        
         self._createFolders()
+
 
     def _createFolders(self):
         create_folder(self.home)
