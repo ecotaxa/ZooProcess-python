@@ -35,23 +35,37 @@ separateServer = SeparateServer(server,dbserver)
 
 app = FastAPI()
 
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
 
 origins = [
-    '*'
+    '*',
+    "localhost",
+    "zooprocess.imev-mer.fr",
+    "localhost:8000",
     # "http://localhost",
     # "http://localhost:8000",
     # "http://localhost:3001",
+    # "http://127.0.0.1:59245",
 ]
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+CORSMiddleware,
+allow_origins=["*"], # Allows all origins
+allow_credentials=True,
+allow_methods=["*"], # Allows all methods
+allow_headers=["*"], # Allows all headers
 )
 
 
@@ -162,6 +176,27 @@ def separate(folder: Folder):
         return f"/separate/{id}"
 
     raise HTTPException(status_code=404, detail="Folder not found") 
+
+
+
+
+@app.get("/separate/{folder}")
+# Description : Separate multiple from folder
+def getSeparate(folder: str):
+
+    # got list files from the DB
+    # getVignettes( scanId, type = (MASK, MERGE, RAW)
+
+    # id = 1
+    files = {
+        "path1",
+        "path2",
+        "path3"
+    }
+    # return {"files":files}
+    return files
+    # return f"/separate/{folder.path}"
+    # return {"files":"files"}
 
 
 class ImageUrl(BaseModel):
