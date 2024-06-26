@@ -18,21 +18,63 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
     print("open image: " , path)
     # image = Image.open(path)
     # Open the TIFF image
-    tiff_image = Image.open(path)
+    try:
+        tiff_image = Image.open(path)
 
-    # Convert the image to JPEG format
-    print("converting")
-    jpeg_image = tiff_image.convert("RGB")
+        print("tiff_image.format_description: ", tiff_image.format_description)
 
-    # Save the JPEG image
-    print("saving")
-    jpeg_image.save(path_out)
+        # Convert the image to JPEG format
+        print("converting")
+        # jpeg_image = tiff_image.convert("RGB")
+        # jpeg_image = tiff_image.convert("L")
+
+        # image 16bit
+        # tiff_image.mode = 'I' # a fonctionne mais plus ????
+        # jpeg_image = tiff_image.point(lambda i:i*(1./256)).convert('L') # .save('my.jpeg')
+        # tiff_image.point(lambda i:i*(1./256)).convert('L').save(path_out)
+
+        # if jpeg_image.dtype == "uint16":
+        #     print("uint16")
+        # tiff_image.mode = 'I'
+        # jpeg_image = tiff_image.point(lambda i:i*(1./256))
+        #     jpeg_image = jpeg_image.convert('L')
+        # else:
+        jpeg_image = tiff_image.convert("L")
+        # print(f"8 bit image {jpeg_image.dtype}")
+
+        # Save the JPEG image
+        print("saving")
+        jpeg_image.save(path_out)
+        
+        # # image.mode = 'I'
+        # # image.point(lambda i:i*(1./256)).convert('L').save(path_out)
+        # # imgdst = image.point(lambda i:i*(1./256)).convert('L')
+        # # imgdst.save(path_out)
+
+        print("image saved ", path_out)    
+        return path_out 
+
+
+    except:
+        print(f"Error: can not open image file: {path}")
+        return None
     
-    # image.mode = 'I'
-    # image.point(lambda i:i*(1./256)).convert('L').save(path_out)
-    # imgdst = image.point(lambda i:i*(1./256)).convert('L')
-    # imgdst.save(path_out)
 
-    print("image saved ", path_out)    
-    return path_out 
+    # tiff_image = Image.open(path)
+
+    # # Convert the image to JPEG format
+    # print("converting")
+    # jpeg_image = tiff_image.convert("RGB")
+
+    # # Save the JPEG image
+    # print("saving")
+    # jpeg_image.save(path_out)
+    
+    # # image.mode = 'I'
+    # # image.point(lambda i:i*(1./256)).convert('L').save(path_out)
+    # # imgdst = image.point(lambda i:i*(1./256)).convert('L')
+    # # imgdst.save(path_out)
+
+    # print("image saved ", path_out)    
+    # return path_out 
 
