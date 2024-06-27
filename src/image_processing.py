@@ -56,7 +56,7 @@ def convert( sample: SampleClass ):
     new_image = np.zeros(image.shape)
 
 
-    with concurrent.futures.ThreadPoolExecutor(config;NB_THREADS , "thread_split" ) as executor:
+    with concurrent.futures.ThreadPoolExecutor( config.NB_THREADS , "thread_split" ) as executor :
         for split, newimage in zip(splitted, executor.map(convertPieceOfImage16to8bit,splitted)):
             name = f"{split.top}-{split.left}-{split.bottom}-{split.right}"
             print(f"name: {name}")
