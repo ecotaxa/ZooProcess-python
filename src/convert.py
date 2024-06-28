@@ -1,6 +1,7 @@
 import os
 import PIL
 from PIL import Image 
+import cv2
 
 from .img_tools import rename
 
@@ -23,24 +24,30 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
 
         print("tiff_image.format_description: ", tiff_image.format_description)
 
-        # Convert the image to JPEG format
         print("converting")
-        # jpeg_image = tiff_image.convert("RGB")
-        # jpeg_image = tiff_image.convert("L")
 
-        # image 16bit
-        # tiff_image.mode = 'I' # a fonctionne mais plus ????
-        # jpeg_image = tiff_image.point(lambda i:i*(1./256)).convert('L') # .save('my.jpeg')
-        # tiff_image.point(lambda i:i*(1./256)).convert('L').save(path_out)
+        image = cv2.imread(path)
+        if ( image.dtype == "uint16"):
 
-        # if jpeg_image.dtype == "uint16":
-        #     print("uint16")
-        # tiff_image.mode = 'I'
-        # jpeg_image = tiff_image.point(lambda i:i*(1./256))
-        #     jpeg_image = jpeg_image.convert('L')
-        # else:
-        jpeg_image = tiff_image.convert("L")
-        # print(f"8 bit image {jpeg_image.dtype}")
+            # Convert the image to JPEG format
+            # jpeg_image = tiff_image.convert("RGB")
+            # jpeg_image = tiff_image.convert("L")
+
+            # image 16bit
+            print("uint16")
+
+            # tiff_image.mode = 'I' # a fonctionne mais plus ????
+            jpeg_image = tiff_image.point(lambda i:i*(1./256)).convert('L') # .save('my.jpeg')
+            # tiff_image.point(lambda i:i*(1./256)).convert('L').save(path_out)
+
+            # if jpeg_image.dtype == "uint16":
+            #     print("uint16")
+            # tiff_image.mode = 'I'
+            # jpeg_image = tiff_image.point(lambda i:i*(1./256))
+            #     jpeg_image = jpeg_image.convert('L')
+        else:
+            print(f"8 bit image {jpeg_image.dtype}")
+            jpeg_image = tiff_image.convert("L")
 
         # Save the JPEG image
         print("saving")
