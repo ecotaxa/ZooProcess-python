@@ -46,6 +46,7 @@ origins = [
     "localhost",
     "zooprocess.imev-mer.fr",
     "localhost:8000",
+    "imev:3001",
     # "http://localhost",
     # "http://localhost:8000",
     # "http://localhost:3001",
