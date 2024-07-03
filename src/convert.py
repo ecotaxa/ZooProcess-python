@@ -1,13 +1,31 @@
 import os
 import PIL
 from PIL import Image 
-import cv2
+# import cv2
 #from numpy import uint16
-import numpy
+# import numpy
 from PIL.ExifTags import TAGS
-from PIL import ExifTags
+# from PIL import ExifTags
+# from tools import create_folder
 
 from .img_tools import rename
+
+from pathlib import Path
+
+def create_folder(path: Path):
+    
+    print("create folder:" , path.as_posix())
+    p = Path(path)
+    try :
+        if not os.path.isdir(path):
+            #os.mkdir(path)
+            #os.makedirs(path, exist_ok=True)
+            p.mkdir(parents=True, exist_ok=True)
+    except OSError as error: 
+        path_str = str(p.absolute)
+
+        # eprint("cannot create folder: ", path_str ,", ", str(error))
+        print("cannot create folder: ", path_str ,", ", str(error))
 
 def print_exif(data):
 
@@ -58,6 +76,15 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
 
     if os.path.isfile(path_out) and force != True:
         return path_out
+
+    #TODO : reflechir si on crée le dossier si il n'existe pas ou si on lève une exception
+    folder = os.path.dirname(path_out)
+    if os.path.isdir(folder) == False:
+        print("folder does not exist, creating it", folder)
+        # p = Path(folder)
+        # path_out = os.path.mkdir(folder)
+        # p.mkdir(parents=True, exist_ok=True)
+        create_folder(folder)
 
     print("open image: " , path)
     # image = Image.open(path)
