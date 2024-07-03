@@ -2,12 +2,55 @@ import os
 import PIL
 from PIL import Image 
 import cv2
+#from numpy import uint16
+import numpy
+from PIL.ExifTags import TAGS
+from PIL import ExifTags
 
 from .img_tools import rename
 
+def print_exif(data):
+
+    for datum in data:
+        tag = TAGS.get(datum, datum)
+        value = data.get(datum)
+        # decode bytes 
+        if isinstance(value, bytes):
+            value = value.decode()
+        print(f"{tag:20}: {value}")
+
+def get_BitsPerSample(data):
+
+    for datum in data:
+        tag = TAGS.get(datum, datum)
+        value = data.get(datum)
+        # decode bytes 
+        if isinstance(value, bytes):
+            value = value.decode()
+        # print(f"{tag:20}: {value}")
+        if tag == "BitsPerSample":
+            return value
+    
+    return None
+
+
+def get_ExifTag(exifdata, tag):
+
+    for datum in exifdata:
+        embendedtag = TAGS.get(datum, datum)
+        value = exifdata.get(datum)
+        # decode bytes 
+        if isinstance(value, bytes):
+            value = value.decode()
+        # print(f"{tag:20}: {value}")
+        if embendedtag == tag:
+            return value
+    
+    return None
+
 def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
     PIL.Image.MAX_IMAGE_PIXELS = 375000000
-
+    print("EXIF")
     if ( path_out == None):
         print("path_out == None")
         path_out = rename(path, extraname=None, ext="jpg")
@@ -22,12 +65,52 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
     try:
         tiff_image = Image.open(path)
 
-        print("tiff_image.format_description: ", tiff_image.format_description)
+        # print("tiff_image.format_description: ", tiff_image.format_description)
+        # print("tiff_image.__dict__:", tiff_image.__dict__)
+        # # print("tiff_image.getexif: ", tiff_image.getexif())
+        exif_dict = tiff_image.getexif()
+        # print_exif(exif_dict)
+        # print("tiff_image.getdata: ", tiff_image.getdata())
+        # # print("tiff_image.getdata.shape: ", tiff_image.getdata().shape)
 
         print("converting")
 
-        image = cv2.imread(path)
-        if ( image.dtype == "uint16"):
+        # image = cv2.imread(path)
+        # print("image read")
+        # print("image.dtype:", image.dtype)
+        # print("image.shape:", image.shape)
+        # print("image.size:", image.size)
+
+        # print("image.mode:", image.mode) crash
+        # print("image.n_frames:", image.n_frames) crash
+        # print("image.info:", image.info) crash
+        # print("image.format:", image.format) crash
+        # print("image.format_description:", image.format_description) crash
+        # print("image.filename:", image.filename) crash
+        # if ( image.dtype == uint16):
+
+        # print("get_ifd", tiff_image.getexif().get_ifd(0x8769)) # la date de prise de vue
+        # print("get_ifd bit_length", tiff_image.getexif().get_ifd(ExifTags.IFD.bit_length)) crash
+        # print("get_ifd bit_count", tiff_image.getexif().get_ifd(ExifTags.IFD.bit_count)) crash
+        # print("get_ifd bit_count", tiff_image.getexif().get_ifd(ExifTags.IFD.IFD1.bit_count)) crash
+
+
+
+        # BitsPerSample = get_BitsPerSample(exif_dict)
+        BitsPerSample = get_ExifTag(exif_dict,"BitsPerSample")
+        # XResolution = get_ExifTag(exif_dict,"XResolution")
+        # YResolution = get_ExifTag(exif_dict,"YResolution")
+        # BitsPerSample = exif_dict['BitsPerSample']
+        print("BitsPerSample:", BitsPerSample)
+        # print("XResolution:", XResolution)
+        # print("YResolution:", YResolution)
+
+        # print ("type(image.dtype): ", type(image.dtype))  retourne toujours uint8 
+
+        # if ( image.dtype == "uint8" ): print("string uint8")
+
+        # if ( image.dtype == "uint16" or BitsPerSample == 16 ): # "uint16"):
+        if (BitsPerSample == 16 ): # "uint16"):
 
             # Convert the image to JPEG format
             # jpeg_image = tiff_image.convert("RGB")
@@ -38,6 +121,7 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
 
             # tiff_image.mode = 'I' # a fonctionne mais plus ????
             jpeg_image = tiff_image.point(lambda i:i*(1./256)).convert('L') # .save('my.jpeg')
+            # jpeg_image.save('my.jpeg')
             # tiff_image.point(lambda i:i*(1./256)).convert('L').save(path_out)
 
             # if jpeg_image.dtype == "uint16":
@@ -46,8 +130,11 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
             # jpeg_image = tiff_image.point(lambda i:i*(1./256))
             #     jpeg_image = jpeg_image.convert('L')
         else:
-            print(f"8 bit image {jpeg_image.dtype}")
-            jpeg_image = tiff_image.convert("L")
+            print(f"8 bit image")
+            # jpeg_image = tiff_image.convert("L")
+            jpeg_image = tiff_image
+            # print(f"jpeg_image {jpeg_image.dtype}")
+            
 
         # Save the JPEG image
         print("saving")
