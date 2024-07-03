@@ -21,6 +21,7 @@ def create_folder(path: Path):
             #os.mkdir(path)
             #os.makedirs(path, exist_ok=True)
             p.mkdir(parents=True, exist_ok=True)
+            print("folder created: ", path.absolute)
     except OSError as error: 
         path_str = str(p.absolute)
 
@@ -84,7 +85,7 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
         # p = Path(folder)
         # path_out = os.path.mkdir(folder)
         # p.mkdir(parents=True, exist_ok=True)
-        create_folder(folder)
+        create_folder(Path(folder))
 
     print("open image: " , path)
     # image = Image.open(path)
