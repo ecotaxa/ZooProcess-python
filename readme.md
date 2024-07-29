@@ -97,6 +97,6 @@ docker build -t gateway_api .
 
 Build 
 ```
-docker run -p 3001:3000 -v /Users/sebastiengalvagno/piqv/plankton/:/piqv gateway_api
+docker run -p 8000:8000 -v /Users/sebastiengalvagno/piqv/plankton/:/app/data --name happy_pipeline gateway_api
 ```
 
