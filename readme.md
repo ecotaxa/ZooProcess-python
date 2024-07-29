@@ -88,3 +88,15 @@ test happy pipeline : to see if server alive
 
 test DEEP plankton separation - niko alive ? : to see if multi_plankton_separation is alive on Niko server
 
+
+#docker
+
+```
+docker build -t gateway_api .
+```
+
+Build 
+```
+docker run -p 3001:3000 -v /Users/sebastiengalvagno/piqv/plankton/:/piqv gateway_api
+```
+
