@@ -100,3 +100,13 @@ Build
 docker run -p 8000:8000 -v /Users/sebastiengalvagno/piqv/plankton/:/app/data --name happy_pipeline gateway_api
 ```
 
+when use Docker use .env.production  else .env.development
+
+at this moment, I can't run in docker because the path are linked to other apps
+then it can't find the file
+
+a possibility, to use docker, is to make the very long local path in the container
+and use .env.development
+
+
+
