@@ -173,7 +173,7 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
         # # imgdst = image.point(lambda i:i*(1./256)).convert('L')
         # # imgdst.save(path_out)
 
-        print("image saved ", path_out)    
+        print("image saved >", path_out, "<")    
         return path_out 
 
 

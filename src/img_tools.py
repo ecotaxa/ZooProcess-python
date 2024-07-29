@@ -19,7 +19,7 @@ def print_image_info(img,title=None) -> None:
     # print('Image Width        : ',width)
     # print('Number of Channels : ',channels)
 
-import matplotlib
+# import matplotlib
 
 # draw a grayscale histogram
 def histogram(image, normalize=True, title = None, show=True):

@@ -1,4 +1,3 @@
-import pandas as pd
 
 
 # my Dict assert
@@ -74,6 +73,8 @@ def dump(obj, nested_level=0, output=sys.stdout , name=True):
 
 # change namecr to '\n' permit to show some issue
 def dump_structure(obj, nested_level=0, output=sys.stdout, name=True, namecr=""):
+    import pandas as pd
+
     if name: 
         variable_names = mod_retrieve_name(obj)
         if len(variable_names):
