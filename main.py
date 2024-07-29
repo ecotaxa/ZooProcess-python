@@ -9,7 +9,7 @@ from src.server import Server
 # from fastapi import FastAPI
 from fastapi import FastAPI, HTTPException
 
-import requests
+# import requests
 
 # from src.separate import separate_multiple
 

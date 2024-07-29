@@ -1,6 +1,14 @@
 # gunicorn
-# fastapi
-fastapi>=0.112.0,<0.113.0
-pydantic>=2.7.0,<3.0.0
-uvicorn
+fastapi
+# fastapi>=0.112.0,<0.113.0
+# pydantic>=2.7.0,<3.0.0
+pydantic
+uvicorn[standard]
 sse-starlette
+requests
+numpy
+# pandas
+# matplotlib
+opencv-python # cv2
+Pillow # PIL
+
