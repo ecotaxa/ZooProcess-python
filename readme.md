@@ -67,18 +67,22 @@ ssh niko
 cd ~/complex/DEEP-OC-multi_plankton_separation
 
 # build the container
-docker build -t deephdc/uc-emmaamblard-deep-oc-multi_plankton_separation .
+docker build -t deephdc/uc-ecotaxa-deep-oc-multi_plankton_separation .
 
 
 # run it to have interactive shell
-~/complex/DEEP-OC-multi_plankton_separation$ docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/uc-emmaamblard-deep-oc-multi_plankton_separation 
+~/complex/DEEP-OC-multi_plankton_separation$ 
+docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/uc-ecotaxa-deep-oc-multi_plankton_separation 
+
 
 # run it in detach mode
-~/complex/DEEP-OC-multi_plankton_separation$ docker run -d -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/uc-emmaamblard-deep-oc-multi_plankton_separation 
+~/complex/DEEP-OC-multi_plankton_separation$ 
+docker run -d -ti -p 5000:5000 -p 6006:6006 -p 8888:8888 deephdc/uc-ecotaxa-deep-oc-multi_plankton_separation 
 
 
 # change local port 8888 to 8889, because already use by another container,      which ????
-~/complex/DEEP-OC-multi_plankton_separation$ docker run -d -ti -p 5000:5000 -p 6006:6006 -p 8889:8888 deephdc/uc-emmaamblard-deep-oc-multi_plankton_separation 
+~/complex/DEEP-OC-multi_plankton_separation$ 
+docker run -d -ti -p 5000:5000 -p 6006:6006 -p 8889:8888 deephdc/uc-ecotaxa-deep-oc-multi_plankton_separation 
 
 
 ## Test with Thunder Client
@@ -109,4 +113,14 @@ a possibility, to use docker, is to make the very long local path in the contain
 and use .env.development
 
 
+
+
+
+# use the Swagger UI
+open http://localhost:5000/ui
+
+## throw the VPN (niko run)
+make a tunnel before
+ssh  -f niko -L 5001:localhost:5000 -N
+open http://localhost:5001/ui
 
