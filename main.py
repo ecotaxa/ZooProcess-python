@@ -9,17 +9,16 @@ from src.server import Server
 # from fastapi import FastAPI
 from fastapi import FastAPI, HTTPException
 
+from pydantic import BaseModel
+
 # import requests
 
 # from src.separate import separate_multiple
 
 from src.separate import Separate
 from src.SeparateServer import SeparateServer
-
-from pydantic import BaseModel
-
 from src.convert import convert_tiff_to_jpeg
-
+from src.demo_get_vignettes import generate_json
 
 params = {
     "server": "http://localhost:8081",
@@ -184,7 +183,9 @@ def separate(folder: Folder):
 @app.get("/separate/{folder}")
 # Description : Separate multiple from folder
 def getSeparate(folder: str):
-
+    """ 
+    Separate multiple from folder
+    """
     # got list files from the DB
     # getVignettes( scanId, type = (MASK, MERGE, RAW)
 
@@ -220,4 +221,27 @@ def convert(image:ImageUrl):
         print("Cannot convert ", image.src)
         raise HTTPException(status_code=500, detail="Folder not found") 
 
+
+class VignetteFolder(BaseModel):
+    src: str
+    base: str
+    output: str
+
+@app.get("/vignettes/")
+def getVignettes( folder:VignetteFolder):
+    """ get vignettes list from a folder 
+        return web path to the vignettes list file
+    """
+
+    print("GET /vignettes/ ", folder)
+
+    try:
+        json_data = generate_json(folder.src, folder.base)
+        with open(folder.output, "w") as json_file:
+            json_file.write(json_data)
+
+        return json_data
+    except:
+        print("Cannot generate vignettes list")
+        raise HTTPException(status_code=500, detail="Folder not found")
 
