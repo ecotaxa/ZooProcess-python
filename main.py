@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 
 from src.separate_fn import separate_images
 # from src.tools import mkdir
@@ -27,9 +27,11 @@ params = {
 
 dbserver = Server("http://zooprocess.imev-mer.fr:8081", "/v1/ping")
 server = Server("http://seb:5000", "/")
+tunnelserver = Server("http://localhost:5001", "/")
 nikoserver = Server("http://niko.obs-vlfr.fr:5000", "/")
 
-separateServer = SeparateServer(server,dbserver)
+# separateServer = SeparateServer(server,dbserver)
+separateServer = SeparateServer(tunnelserver,dbserver)
 
 
 app = FastAPI()
@@ -75,15 +77,17 @@ def read_root():
     # test_db_server = dbserver.test_server() #? "running":"not running";
     # test_server = server.test_server() #? "running":"not running";
     # test_niko = nikoserver.test_server() #? "running":"not running";
+    test_tunnel_niko = tunnelserver.test_server() #? "running":"not running";
 
     return {
         "message": "Happy Pipeline",
         "description": "API to separate multiple plankton organisms from Zooprocess images",
-        # "servers": {
-        #     "bd": test_db_server ,
+        "servers": {
+            # "bd": test_db_server ,
         #     "home": test_server,
-        #     "niko": test_niko
-        # }
+            # "niko": test_niko,
+         "tunnel_niko" : test_tunnel_niko
+        }
     }
 
 
@@ -114,6 +118,18 @@ class Folder(BaseModel):
     db: Union[str, None] = None
     taskId: Union[str, None] = None
     scanId: Union[str, None] = None
+
+class Background(BaseModel):
+    # path: str
+    # bearer: str | None = None
+    # bd: str | None = None
+    bearer: Union[str, None] = None
+    db: Union[str, None] = None
+    taskId: Union[str, None] = None
+    # back1scanId: str
+    # back2scanId: str
+    projectId: str
+    backgroundId: List[str]
 
 class Scan(BaseModel):
     scanId: str
@@ -245,3 +261,129 @@ def getVignettes( folder:VignetteFolder):
         print("Cannot generate vignettes list")
         raise HTTPException(status_code=500, detail="Folder not found")
 
+
+
+
+@app.post("/process/")
+def process(folder:Folder):
+    """
+    Process a scan
+    """
+    import requests
+
+    print("scanId OK: ", folder.scanId)
+
+    print("POST /process/", folder)
+
+    # img = {
+    #     "state":"",
+    #     "vignettes": [],
+    #     "mask": "/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727764546231-800724713.jpg",
+    #     "out": "/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727764546231-800724713.jpg",
+    #     "vis": "/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727764546231-800724713.jpg",
+    #     "log": "blabla about job done"
+    # }
+
+    if ( (folder.scanId == None) or (folder.scanId == "") ):
+        print("scanId is not defined")
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    print("scanId OK: ", folder.scanId)
+
+    url = f"{dbserver.getUrl()}/scan/{folder.scanId}"
+    print("url: ", url)
+
+    response = requests.get(url, headers={"Authorization": f"Bearer {folder.bearer}"})
+    if response.ok:
+        scan = response.json()
+        # return scan
+        print("scan: ", scan)
+    else:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    response = requests.get(f"${dbserver.getUrl()}/project/{scan.projectId}")
+    if response.ok:
+        project = response.json()
+        print("project: ", project)
+    else:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+
+    response = requests.get(f"${dbserver.getUrl()}/project/{scan.projectId}/sample/{scan.sampleId}/subsample/{scan.subsampleId}")
+    if response.ok:
+        sample = response.json()
+        print("sample: ", sample)
+    else:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    data = {
+        "background": sample.background,
+    }
+
+    return (data)
+
+
+
+def getScanFromDB(scanId):
+    """
+    Get the scan using the DB information
+    """
+    import requests
+
+    response = requests.get(f"${dbserver.getUrl()}scan/{scanId}")
+    if response.ok:
+        scan = response.json()
+        print("scan: ", scan)
+        return scan
+    else:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+def mediumBackground(back1url, back2url):
+    """
+    Process the background scans
+    """
+    import numpy as np
+
+    print("POST /background/", back1url, back2url)
+
+    back : np.ndarray
+
+    return  back    
+
+
+@app.post("/background/")
+def background(background:Background):
+    """
+    Process the background scans
+    """
+    import requests
+
+    print("POST /background/", background)
+
+    try:
+        back1 = getScanFromDB(background.backgroundId[0])
+        back2 = getScanFromDB(background.backgroundId[1])
+    except:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    
+    if back1.instrumentId == back2.instrumentId:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    back = mediumBackground(back1.url, back2.url)
+
+    instrumentId = back1.instrumentId
+    projectId = background.projectId
+
+    data = {
+        "url": f"http://localhost:8000/background/{back1.url}",
+        # "instrumentId": instrumentId,
+        # "projectId": projectId
+    }
+
+    # save_image(back, "/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif")
+    response = requests.put(url=f"${dbserver.getUrl()}background/{instrumentId}/url?projectId=${projectId}", data=data, headers={"Authorization": f"Bearer {background.bearer}"})
+    if response.ok:
+        print(response.json())
+        return response.json().get("id")
+    else:
+        raise HTTPException(status_code=404, detail="Cannot generate medium scan")
