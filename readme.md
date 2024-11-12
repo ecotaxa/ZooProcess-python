@@ -119,8 +119,29 @@ and use .env.development
 # use the Swagger UI
 open http://localhost:5000/ui
 
-## throw the VPN (niko run)
-make a tunnel before
+## through the VPN (niko run)
+make a tunnel before open on with local address, port do not pass throught the VPN
 ssh  -f niko -L 5001:localhost:5000 -N
 open http://localhost:5001/ui
+
+
+
+# new container
+
+cd complex
+git clone https://github.com/ai4os-hub/zooprocess-multiple-separator.git
+cd zooprocess-multiple-separator/
+docker build -t zooprocess-multiple-separator:1 .
+docker build --no-cache -t zooprocess-multiple-separator:lastest .
+
+docker run -d -ti -p 5000:5000 -p 6006:6006 -p 8888:8888  zooprocess-multiple-separator:1
+
+
+docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888  zooprocess-multiple-separator:1
+
+
+## Docker help:
+-t: ImageName:Version
+-d: detach
+
 
