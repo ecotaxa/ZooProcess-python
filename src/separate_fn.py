@@ -84,7 +84,8 @@ def separate_img(path,filename,path_out, taskId=None, bearer=None, db=None):
                 'type':'mask'
             }
             print(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
-            requests.put(url=f"${dbserver.getUrl()}separator/{taskId}", data=data, headers={"Authorization": f"Bearer {bearer}"})
+            if ( db != None and bearer != None ):
+                requests.put(url=f"${dbserver.getUrl()}separator/{taskId}", data=data, headers={"Authorization": f"Bearer {bearer}"})
 
         return mask_img
     
