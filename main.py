@@ -621,10 +621,18 @@ def background(background:Background):
 # importe(app)
 
 class Project(BaseModel):
-    path: str
+    """
+        Project path: the path to the project folder
+        bearer: the bearer token to use for the request
+        db: the database to use for the request
+        name: [optional] the name of the project else take the name of the project folder
+        instrumentSerialNumber: [optional] the serial number of the instrument else instrument will marked undefine in the DB
+    """
+    path: str 
     bearer: Union[str, None] = None
     db: Union[str, None] = None
- 
+    name: Union[str, None] = None
+    instrumentSerialNumber: Union[str, None] = None 
 
 def testBearer(db,bearer):
     if (bearer == None or db == None): 
@@ -676,6 +684,7 @@ def    postSample(projectId,sample,bearer,db):
 
 def convertsamplekey(samplejson):
 
+    # scanid;sampleid;scanop;fracid;fracmin;fracsup;fracnb;observation;code;submethod;cellpart;replicates;volini;volprec
     convertionkey = {
         'sampleid': 'sample_id', # 'apero2023_tha_bioness_sup2000_017_st66_d_n1', 
         'scanop': 'scanning_operator', # 'adelaide_perruchon',
@@ -738,15 +747,77 @@ def convertsamplekey(samplejson):
     #     return convertionkey[key]
 
     new_dict = {}
+
+    def latlng_correction(value):
+        try:
+            val = float(value)
+            degrees = int(val)
+            decimal = (val - degrees) * 100
+            decimal = round(decimal/30*50, 4)
+            return degrees + decimal/100
+        except ValueError:
+            return value
+
+    def latitude_correction(latitude):
+        try:
+            return latlng_correction(latitude)
+        except ValueError:
+            return latitude
+    
+    def longitude_correction(longitude):
+        try:
+            return - latlng_correction(longitude)
+        except ValueError:
+            return longitude
+
     for key, value in samplejson.items():
+        if key in convertionkey:
+            new_key = convertionkey[key]
+            match key:
+                case 'longitude':
+                    new_value = longitude_correction(value)
+                case 'longitude_end':
+                    new_value = longitude_correction(value)
+                case 'latitude':
+                    new_value = latitude_correction(value)
+                case 'latitude_end':
+                    new_value = latitude_correction(value)
+                case _:
+                    new_value = value
+            new_dict[new_key] = new_value
+        else:
+            new_dict[key] = value  # Keep the key unchanged
+    return new_dict
+
+def convertscankey(subsamplejson):
+
+    # scanid;sampleid;scanop;fracid;fracmin;fracsup;fracnb;observation;code;submethod;cellpart;replicates;volini;volprec
+    convertionkey = {
+        # scanid        ;sampleid ;scanop   ;fracid ;fracmin ;fracsup ;fracnb ;observation ;code ;submethod ;cellpart ;replicates ;volini ;volprec
+        'scanid':'scan_id',
+        'sampleid':'sample_id',
+        'scanop' : 'scanning_operator',
+        'fracid':'frac_id', # ??
+        'fracmin' :'fraction_min_mesh',
+        'fracsup':'fraction_max_mesh',
+        'fracnb':'fraction_number',
+        'observation':'observation',
+        'code' :'code', # ??
+        'submethod':'submethod', # ??
+        'cellpart':'cellpart', # ??
+        'replicates': 'replicates', # ??
+        'volini': 'volini', # ??
+        'volprec':'volprec', # ??
+
+    }
+    new_dict = {}
+    for key, value in subsamplejson.items():
         if key in convertionkey:
             new_key = convertionkey[key]
             new_dict[new_key] = value
         else:
             new_dict[key] = value  # Keep the key unchanged
     return new_dict
-
-
 
 def parse_tsv(filepath: str) -> List[Dict[str, Any]]:
     """Parses a TSV file and returns a list of dictionaries."""
@@ -771,28 +842,133 @@ def parse_tsv(filepath: str) -> List[Dict[str, Any]]:
 
 
 
-def addSamples(url, bearer, db, projectid:str):
+def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,db:str,user_id:str,instrument_id:str):
+
+    print("add scans to subsample", subsampleid)
+
+    body = {
+        "url": image_path,
+        "subsampleId": subsampleid,
+        "userId": user_id,
+        "type":"SCAN",
+        "instrumentId": instrument_id
+    }
+
+    print("body:",body)
+    # url = f"{db}scan/{instrument_id}/url"
+    url = f"{db}scan/{subsampleid}/url"
+    print("url:",url)
+
+    response = requests.put(url, json=body, headers=headers)
+
+    print("response: ", response)
+    if response.status_code == 200:
+        scan = response.json()
+        print("scan: ", scan)
+
+    else:
+
+        raise HTTPException(status_code=response.status_code, detail="Error importing scan: " + response.text)
+
+
+
+
+def transform_to_raw_string(input_str):
+    parts = input_str.rsplit('_', 1)
+    return f"{parts[0]}_raw_{parts[1]}"
+
+
+def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:str,db:str,bearer:str):
+
+    print("add subsamples to sample", sampleid)
+
+    for row in data_scan:
+        print("---------------------------")
+        print("Scan:",row)
+
+        data_converted = convertscankey(row)
+        print("converted:",data_converted)
+        
+        user_id = "658dd7ea24bc10a4bf1e37e2"
+        instrument_id = "65c4e0994653afb2f69b11ce"
+
+        body = {
+            "name": row['scanid'], #"p12",
+            "metadataModelId": "",
+            "data": {
+                "scan_id": data_converted['scan_id'], #"p11",
+                "sample_id": data_converted['sample_id'], #1,
+                "fraction_id": data_converted['frac_id'], #1
+                "fraction_number": data_converted['fraction_number'], #1
+                "scanning_operator": "seb", #data_converted['scanning_operator'], #TODO: get from user or create the missing user
+                "observation": data_converted['observation'],
+                "fraction_min_mesh": data_converted['fraction_min_mesh'],
+                "fraction_max_mesh": data_converted['fraction_max_mesh'],
+                "spliting_ratio": 1,
+                "remark_on_fraction": "",
+                "submethod": data_converted['submethod']
+            },
+            "user_id":user_id
+        }
+
+        url = f"{db}projects/{projectid}/samples/{sampleid}/subsamples"
+        print("url: ", url)
+        
+        headers = {
+            "Authorization": f"Bearer {bearer}",
+            "Content-Type": "application/json",
+            # "X-Transaction-Id": transactionId
+        }
+ 
+        print("headers: ", headers)
+        print("body: ", body)
+
+        response = requests.post(url, json=body, headers=headers)
+
+        print("response: ", response)
+        if response.status_code == 200:
+            subsample = response.json()
+            print("subsample: ", subsample)
+
+            
+            scan_name = transform_to_raw_string(data_converted['scan_id']) + ".tif"
+            print("scan_name: ", scan_name)
+
+            image_path = Path(path,"Zooscan_scan","_raw",scan_name).absolute()
+            print("image_path: ", image_path)
+
+            if image_path.exists():
+                print("image_path exists")
+                add_scans(image_path.as_posix(),projectid,data_converted['sample_id'],subsample['id'],headers,db,user_id,instrument_id)
+            else:
+                print("image_path does not exist")
+                continue
+
+
+
+def addSamples(path:str, bearer, db, projectid:str):
     print("addSample")
     print("projectid: ", projectid)
-    print("url: ", url)
+    print("path: ", path)
     print("bearer: ", bearer)
     print("db: ", db)
     testBearer(db,bearer)
 
-    path_sample = Path(url,"Zooscan_meta","zooscan_sample_header_table.csv")
-    path_scan = Path(url,"Zooscan_meta","zooscan_scan_header_table.csv")
+    path_sample = Path(path,"Zooscan_meta","zooscan_sample_header_table.csv")
+    path_scan = Path(path,"Zooscan_meta","zooscan_scan_header_table.csv")
 
     print("path_sample: ", path_sample)
     print("path_scan: ", path_scan)
 
     data = parse_tsv(path_sample)
+    data_scan = parse_tsv(path_scan)
 
     print("data:",data)
 
     if data:
         for row in data:
-            print("---------------------------")
-            print("Sample:",row)
+            # print("---------------------------")
+            # print("Sample:",row)
 
             data_converted_sample = convertsamplekey(row)
 
@@ -801,10 +977,10 @@ def addSamples(url, bearer, db, projectid:str):
                 "metadataModelId": "6565df171af7a84541c48b20",
                 "data":data_converted_sample
             }
-            print("body_sample:", json.dumps(body, indent=2))
+            # print("body_sample:", json.dumps(body, indent=2))
 
             url = f"{db}projects/{projectid}/samples"
-            print("url: ", url)
+            # print("url: ", url)
         
             headers = {
                 "Authorization": f"Bearer {bearer}",
@@ -812,9 +988,45 @@ def addSamples(url, bearer, db, projectid:str):
                 # "X-Transaction-Id": transactionId
             }
 
-            print("headers: ", headers)
+            # print("headers: ", headers)
 
             response = requests.post(url, json=body, headers=headers)
+
+            # print("================================")
+            # print("response:",response)
+            # print("response:",response.status_code)
+
+            if response.status_code == 200:
+                sample = response.json()
+                # print("sample", sample)
+                # print("sample id:", sample['id'])
+
+                # for row in data_scan:
+                #     data_converted = convertscankey(row)
+                #     print("data_scan:",row)
+                #     print("data_scan converted:",data_converted)
+
+                # print("Search sampleid: ", sample['name'] )
+                # print("data_scan",data_scan)
+
+                # vuescans = [s['scanid'] for s in data_scan ]#if s['sampleid'] == sample['sampleid']]
+                # print("vuescans:",vuescans)
+        
+
+                # scnas = data_scan.map(s):s.sampleid==sample.sampleid
+                subsamples = list(filter(lambda s: s['sampleid'] == sample['name'], data_scan))
+
+                # print("***********************************************")
+                # print("scans:", scans)
+
+
+
+                if subsamples:
+                    print("***********************************************")
+                    print("subsamples:",subsamples)
+                    add_subsamples(path,subsamples,projectid,sample['id'],db,bearer)
+                    # add_scans(data_scan,projectid,sample.id,db,bearer)
+
 
             print("import done")
 
@@ -1077,15 +1289,41 @@ def addSamples_rawmethod(url, bearer, db, projectid:str):
 #     print("import project response: ", response)
 #     print("response text: ", response.text)
 
+def getInstrumentFromSN(db,bearer,instrumentSN):
+    url = f"{db}instruments"
+    print("url: ", url)
+    
+    headers = {
+        "Authorization": f"Bearer {bearer}",
+        "Content-Type": "application/json",
+    }
+    print("headers: ", headers)
+    response = requests.get(url, headers=headers)
+    print("response: ", response)
+    if response.status_code == 200:
+        instruments = response.json()
+        print("instruments: ", instruments)
+        for instrument in instruments:
+            if instrument["sn"] == instrumentSN:
+                return instrument
+    return None
 
 @app.post("/import")
 def import_project(project:Project):
 
-    print("import project", project.path )
-    print("import project", project.bearer )
-    print("import project", project.db )
-    testBearer(project.db,project.bearer)
-    # if (project.bearer == None or project.db == None): 
+    print("import project path", project.path)
+    print("import project bearer", project.bearer)
+    print("import project db", project.db)
+    testBearer(project.db, project.bearer)
+
+    if Path(project.path).exists() == False:
+        raise HTTPException(status_code=404, detail=f"Project path '{project.path}' does not exist")
+
+    projectname = project.name if project.name != None else Path(project.path).name
+    instrumentSN = project.instrumentSerialNumber
+    if instrumentSN != None:
+        instrument = getInstrumentFromSN(project.db, project.bearer, instrumentSN)
+    # if (project.bearer == None or project.db == None):
     #     print("markTaskWithRunningStatus: bearer or db is None")
     #     # print("bearer: ", bearer)
     #     # print("db: ", db)
@@ -1096,10 +1334,9 @@ def import_project(project:Project):
     url = f"{project.db}projects"
     print("url: ", url)
 
-    body = {  
-        # "project_id": "null",
-        "name": 'SebProjectFromHappy',
-        # "thematic": "null",
+    body = {
+        # "name": 'SebProjectFromHappy',
+        "name" : projectname,
         "driveId": '65bd147e3ee6f56bc8737879',
         "instrumentId": '65c4e0e44653afb2f69b11d1',
         "acronym": 'acronym',
@@ -1118,23 +1355,26 @@ def import_project(project:Project):
     }
 
     print("headers: ", headers)
-
     response = requests.post(url, json=body, headers=headers)
-
-
     if response.status_code != 200:
-        print("import project response: ", response)
-        print("response text: ", response.text)
-        # try :
-            # RollBackTransaction(project.db, project.bearer, transactionId)
-        raise HTTPException(status_code=response.status_code, detail="Error importing project: " + response.text)
-        # except:
-        #     print("Error RollBackTransaction")
-        #     raise HTTPException(status_code=response.status_code, detail="Error importing project (2): " + response.text)
+        if response.status_code == 409:
+            print("project already exists")
+            if projectname:
+                url = f"{project.db}projects/{projectname}?name"
+                print("url: ", url)
+        #       response = requests.get(url, headers=headers)
+        #       if response.status_code != 200:
+                # raise HTTPException(status_code=response.status_code, detail="Error importing project (1): " + response.text)
+        # else:
+        #     print("import project response: ", response)
+        #     print("response text: ", response.text)
+        #     # try :
+        #     # RollBackTransaction(project.db, project.bearer, transactionId)
+            raise HTTPException(status_code=response.status_code, detail="Error importing project: " + response.text)
+            # raise HTTPException(status_code=response.status_code, detail="Error importing project (2): " + response.text)
 
     print("response: ", response)
-    print("response: ", response.status_code)
-          
+    print("response: ", response.status_code)  
     projectid = response.json().get("id")
 
 
