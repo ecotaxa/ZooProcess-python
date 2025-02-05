@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
 import json
-import os
+# import os
 from pathlib import Path
 # import csv
 from typing import List, Dict, Any

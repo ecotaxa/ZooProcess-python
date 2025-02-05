@@ -2,6 +2,7 @@
 # but it is not the good manner after talk with Marc
 
 import json
+import os
 from pathlib import Path
 import requests
 
