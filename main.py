@@ -252,7 +252,7 @@ def convert(image:ImageUrl):
         return file_out
     except:
         print("Cannot convert ", image.src)
-        raise HTTPException(status_code=500, detail="Folder not found") 
+        raise HTTPException(status_code=500, detail="Cannot convert the image") 
 
 
 class VignetteFolder(BaseModel):
