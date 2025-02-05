@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from importe import import_old_project
+from src.importe import import_old_project
 from src.Project import Project
 from src.separate_fn import separate_images
 # from src.tools import mkdir
