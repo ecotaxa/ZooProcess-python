@@ -3,6 +3,7 @@
 import requests
 import csv
 from typing import List, Dict, Any
+import re
 
 from fastapi import HTTPException
 from pathlib import Path
@@ -183,6 +184,7 @@ def convertscankey(subsamplejson):
     return new_dict
 
 
+
 def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,db:str,user_id:str,instrument_id:str):
 
     print("add scans to subsample", subsampleid)
@@ -211,6 +213,73 @@ def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,
 
         raise HTTPException(status_code=response.status_code, detail="Error importing scan: " + response.text)
 
+
+
+def extract_background_info(log_file_path):
+    with open(log_file_path, 'r') as f:
+        content = f.read()
+        match = re.search(r'Background_correct_using=\s*(.+)', content)
+        return match.group(1).strip() if match else None
+
+
+
+def pid_to_json(pid_filepath: str) -> dict:
+    """
+    Converts a .pid file into a structured JSON with sections, including data array of objects
+    """
+    result = {}
+    current_section = None
+    
+    with open(pid_filepath, 'r') as f:
+        lines = f.readlines()
+    
+    if not lines[0].strip().upper() == "PID":
+        raise ValueError("Not a valid PID file")
+    
+    lines = lines[1:]
+    data_header = None
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        if line == "[Data]":  # Changed to match exact case
+            current_section = "Data"
+            result[current_section] = []  # Initialize as empty array
+            continue
+            
+        if line == "[Image]":
+            current_section = "image"
+            result[current_section] = {}
+            continue
+            
+        if line.startswith("[") and line.endswith("]"):
+            current_section = line[1:-1]
+            result[current_section] = {}
+            continue
+            
+        if current_section == "Data":  # Changed to match case
+            if line.startswith("!"):
+                data_header = line[1:].strip().split(";")
+            elif data_header and ";" in line:
+                values = line.strip().split(";")
+                data_object = {}
+                for header, value in zip(data_header, values):
+                    if value.replace('.','',1).replace('-','',1).isdigit():
+                        data_object[header] = float(value) if '.' in value else int(value)
+                    else:
+                        data_object[header] = value
+                result["Data"].append(data_object)
+        elif "=" in line:
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+            
+            if current_section:
+                result[current_section][key] = value
+    
+    return result
 
 
 
