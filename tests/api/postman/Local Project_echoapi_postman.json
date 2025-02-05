@@ -1,0 +1,5765 @@
+{
+	"info": {
+		"name": "Local Project",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Samples",
+			"description": "",
+			"sort": 1,
+			"item": [
+				{
+					"name": "Create a new user",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://rest.echoapi.com/users",
+							"query": [],
+							"variable": [],
+							"host": [
+								"rest.echoapi.com"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": 0,\n\t\"username\": \"echo api\",\n\t\"firstName\": \"Echo\",\n\t\"lastName\": \"Api\",\n\t\"email\": \"support@echoapi.com\",\n\t\"password\": \"12345\",\n\t\"phone\": \"\",\n\t\"userStatus\": 0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 0
+				},
+				{
+					"name": "Get user info",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://rest.echoapi.com/users/{username}",
+							"query": [],
+							"variable": [
+								{
+									"key": "username",
+									"value": "echo api",
+									"description": ""
+								}
+							],
+							"host": [
+								"rest.echoapi.com"
+							]
+						}
+					},
+					"sort": 0
+				},
+				{
+					"name": "Update user info",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "https://rest.echoapi.com/users/{username}",
+							"query": [],
+							"variable": [
+								{
+									"key": "username",
+									"value": "echo api",
+									"description": ""
+								}
+							],
+							"host": [
+								"rest.echoapi.com"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": 0,\n\t\"username\": \"\",\n\t\"firstName\": \"Tom\",\n\t\"lastName\": \"\",\n\t\"email\": \"\",\n\t\"password\": \"\",\n\t\"phone\": \"\",\n\t\"userStatus\": 0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 0
+				},
+				{
+					"name": "Delete user",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "https://rest.echoapi.com/users/{username}",
+							"query": [],
+							"variable": [
+								{
+									"key": "username",
+									"value": "echo api",
+									"description": ""
+								}
+							],
+							"host": [
+								"rest.echoapi.com"
+							]
+						}
+					},
+					"sort": 0
+				}
+			]
+		},
+		{
+			"name": "ZooProcess",
+			"description": "",
+			"sort": 2,
+			"item": [
+				{
+					"name": "Task",
+					"description": "",
+					"sort": 1,
+					"item": [
+						{
+							"name": "Task list",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8081/v1/task",
+									"query": [],
+									"variable": [],
+									"host": [
+										"localhost:8081"
+									]
+								},
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4Nzk5MiwiZXhwIjoxNzMxMjQ3MTkyfQ.S784Y5XtLUFx3qK5Cr64lhpGGKvGuEu2Gzy3DplHdtA",
+											"type": "string"
+										}
+									]
+								}
+							},
+							"sort": 1
+						},
+						{
+							"name": "Task info",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8081/v1/task/{taskid}",
+									"query": [],
+									"variable": [
+										{
+											"key": "taskid",
+											"value": "672baa10cca3ffef81fc7126",
+											"description": ""
+										}
+									],
+									"host": [
+										"localhost:8081"
+									]
+								},
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4Nzk5MiwiZXhwIjoxNzMxMjQ3MTkyfQ.S784Y5XtLUFx3qK5Cr64lhpGGKvGuEu2Gzy3DplHdtA",
+											"type": "string"
+										}
+									]
+								}
+							},
+							"sort": 2
+						}
+					]
+				},
+				{
+					"name": "User",
+					"description": "",
+					"sort": 2,
+					"item": [
+						{
+							"name": "Login user",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://zooprocess.imev-mer.fr:8081/v1/login",
+									"query": [],
+									"variable": [],
+									"host": [
+										"zooprocess.imev-mer.fr:8081"
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\":\"seb@seb.com\",\n  \"password\":\"seb1234\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"sort": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ZooProcess Scan",
+			"description": "",
+			"auth": {
+				"type": "noauth"
+			},
+			"sort": 3,
+			"item": [
+				{
+					"name": "list background scan",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/background/:instrumentId",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "1345346453",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "post background scan",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/background/:instrumentId",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "projectId",
+									"description": "",
+									"type": "text",
+									"value": "655d3062983b92b6e29b3369",
+									"disabled": false
+								},
+								{
+									"key": "",
+									"description": "",
+									"type": "file",
+									"value": "",
+									"disabled": false
+								}
+							]
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "add scan url",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "658de2ba43a25af55929ff04",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDcwNzYyOSwiZXhwIjoxNzMwOTY2ODI5fQ.phl-mO-_6PyIp370mwrRt-Uvikwppa1Nwd8PitX9qtM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/Zooscan_scan/_raw/t_17_2_tot_1-1721292647186-513926591.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "get backgrounds from project",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "66685e4877fbfe58ebff221e",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyODU0NTgwNiwiZXhwIjoxNzI4ODA1MDA2fQ.6-1-EQnWl0PRRFVidXNfFpo-dxATZTuxRuc5YoV4MPs",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "get scans from project No instrument",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/backgrounds",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 5
+				},
+				{
+					"name": "add scan",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "678fb17644f40798c4378260",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_scan/_raw/dyfamed_20230111_200m_d1_raw_1.jpg\",\n\t\"subsampleId\": \"678fb17644f40798c4378260\",\n\t\"userId\": \"658dd7ea24bc10a4bf1e37e2\",\n\t\"instrumentId\": \"65c4e0994653afb2f69b11ce\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 6
+				},
+				{
+					"name": "get backgrounds from project Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/backgrounds",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 7
+				},
+				{
+					"name": "get background old url",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:scanId",
+							"query": [],
+							"variable": [
+								{
+									"key": "scanId",
+									"value": "667968bde4851147bc194f2d",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 8
+				},
+				{
+					"name": "get background",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/backgrounds/:scanId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								},
+								{
+									"key": "scanId",
+									"value": "667968bde4851147bc194f2d",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 9
+				},
+				{
+					"name": "post background multipart",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/background/:instrumentId",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "projectId",
+									"description": "",
+									"type": "text",
+									"value": "655d3062983b92b6e29b3369",
+									"disabled": false
+								},
+								{
+									"key": "fileName",
+									"description": "",
+									"type": "file",
+									"value": "",
+									"disabled": false
+								}
+							]
+						}
+					},
+					"sort": 10
+				},
+				{
+					"name": "add background url",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/background/:instrumentId/url?projectId=655d3062983b92b6e29b3369",
+							"query": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_back/20230918_1139_back_large_1.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 11
+				},
+				{
+					"name": "add background url Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/background/:instrumentId/url?projectId=655d3062983b92b6e29b3369",
+							"query": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/mon/chemin/vers/mon/image\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 12
+				},
+				{
+					"name": "show scan",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:scanId?show",
+							"query": [
+								{
+									"key": "show",
+									"value": "",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "scanId",
+									"value": "672a405e854bbaf0b8b50582",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 13
+				},
+				{
+					"name": "get scan Tiff",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:scanId",
+							"query": [
+								{
+									"key": "show",
+									"value": "",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "scanId",
+									"value": "672a405e854bbaf0b8b50582",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQwMzA1NywiZXhwIjoxNzMxNDAzMTE3fQ.SLcoNshB0nO7tNNGm47keXzJDIiO69xV6rnFEkNu9GM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 14
+				},
+				{
+					"name": "show scan Tiff show",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:scanId?show",
+							"query": [
+								{
+									"key": "show",
+									"value": "",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "scanId",
+									"value": "6683a73036dface9380417d5",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQwMzA1NywiZXhwIjoxNzMxNDAzMTE3fQ.SLcoNshB0nO7tNNGm47keXzJDIiO69xV6rnFEkNu9GM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 15
+				},
+				{
+					"name": "show scan no show",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:scanId/",
+							"query": [
+								{
+									"key": "show",
+									"value": "",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "scanId",
+									"value": "672a405e854bbaf0b8b50582",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk3MTU0NiwiZXhwIjoxNzMxMjMwNzQ2fQ.yAoVDTz46fczv6LhG_h4fBhe656T33_K4rL6SIOVRIY",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 16
+				},
+				{
+					"name": "add scan Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:subSampleId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "subSampleId",
+									"value": "65c4e0e44653afb2f69b11d1",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/16-07-2024/t_17_a_tot_1-1721104175830-255312912.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 17
+				},
+				{
+					"name": "add scan don't work bad must be subsampleId instead of instrumentId",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/t_17_a_tot_1-1721104175830-255312912.tif\",\n\t\"subsampleId\": \"658de2ba43a25af55929ff04\",\n\t\"userId\": \"658dd7ea24bc10a4bf1e37e2\",\n\t\"instrumentId\": \"65c4e0994653afb2f69b11ce\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 18
+				},
+				{
+					"name": "add scan don't work bad must be subsampleId instead of instrumentId Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/t_17_a_tot_1-1721104175830-255312912.tif\",\n\t\"subSampleId\": \"658de2ba43a25af55929ff04\",\n\t\"userId\": \"658dd7ea24bc10a4bf1e37e2\",\n\t\"instrumentId\": \"65c4e0994653afb2f69b11ce\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 19
+				},
+				{
+					"name": "get backgrounds from project 2",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/scans",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 20
+				},
+				{
+					"name": "get scan from project",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/backgrounds",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "65855956c35502b1e1adcabe",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 21
+				},
+				{
+					"name": "add scan url file don't exist",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "658de2ba43a25af55929ff04",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/mon/chemin/vers/mon/image\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 22
+				},
+				{
+					"name": "add scan from subsample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/subsamples/:subSampleId/scan",
+							"query": [],
+							"variable": [
+								{
+									"key": "subSampleId",
+									"value": "658de2ba43a25af55929ff04",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727770560865-906994996.jpg\",\n\t\"type\":\"MASK\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 23
+				},
+				{
+					"name": "add scan from subsample with bad id",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/subsamples/:subSampleId/scan",
+							"query": [],
+							"variable": [
+								{
+									"key": "subSampleId",
+									"value": "65c4e0e44653afb2f69b11d1",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727764546231-800724713.jpg\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 24
+				},
+				{
+					"name": "add scan from subsample no move",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/subsamples/:subSampleId/scan?nomove",
+							"query": [
+								{
+									"key": "nomove",
+									"value": "",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "subSampleId",
+									"value": "658de2ba43a25af55929ff04",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727771577652-46901916001.jpg\",\n\t\"type\":\"VIS\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 25
+				},
+				{
+					"name": "add scan from subsample no move use taskId",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/subsamples/:subSampleId/scan?nomove&task",
+							"query": [
+								{
+									"key": "nomove",
+									"value": "",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "task",
+									"value": "",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "subSampleId",
+									"value": "6736092676c36b419d041a11",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727771577652-46901916001.jpg\",\n\t\"type\":\"OUT\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 26
+				},
+				{
+					"name": "add background url from Happy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/background/65c4e0e44653afb2f69b11d1/url?projectId=6565b055ae8de1c051ae0ed0",
+							"query": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/Zooscan_backmedium_2024-12-11_20230920_1013_back_large_1-1733909990126-97577592.tif\", \n\t\"taskId\": \"67595df5fb1b27ed85d62bce\", \n\t\"type\": \"MEDIUM_BACKGROUND\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 27
+				},
+				{
+					"name": "add scan From Complex TEST",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_scan/_raw/apero2023_pp_wp2_009_st11_d_d2_raw_1.tif\",\n\t\"subsampleId\": \"65c4e0994653afb2f69b11ce\",\n\t\"userId\": \"658dd7ea24bc10a4bf1e37e2\",\n\t\"instrumentId\": \"65c4e0994653afb2f69b11ce\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 28
+				}
+			]
+		},
+		{
+			"name": "old",
+			"description": "",
+			"auth": {
+				"type": "noauth"
+			},
+			"sort": 4,
+			"item": [
+				{
+					"name": "projects/project/metadata?metadata=query",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:project/metadata?metadata=query,toto=toto",
+							"query": [
+								{
+									"key": "metadata",
+									"value": "query,toto=toto",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "project",
+									"value": "toto",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwNjY4OTA1NSwiZXhwIjoxNzA2OTQ4MjU1fQ.T06GZ3PMMvjIvvmtEYhmkvLgcIsig22FHj_kraO2zOA",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 26
+				},
+				{
+					"name": "/projects/{project}/samples/{sample}/background?id=1",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:project/samples/:sample/background?id=1",
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [
+								{
+									"key": "project",
+									"value": "myProject",
+									"description": ""
+								},
+								{
+									"key": "sample",
+									"value": "10",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 27
+				}
+			]
+		},
+		{
+			"name": "lmages",
+			"description": "",
+			"auth": {
+				"type": "noauth"
+			},
+			"sort": 5,
+			"item": [
+				{
+					"name": "post scan",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3001/api/upload",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:3001"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 29
+				}
+			]
+		},
+		{
+			"name": "Instruments",
+			"description": "",
+			"auth": {
+				"type": "noauth"
+			},
+			"sort": 6,
+			"item": [
+				{
+					"name": "instruments list",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/instruments",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 31
+				},
+				{
+					"name": "add instrument",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/instruments",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwNzM4NjI3MiwiZXhwIjoxNzA3NjQ1NDcyfQ.BtuCS-e6WUyG8XxQf5RDSGiLtKHzdlbNPWHPD-wWtPw",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"SN01\",\n\t\"sn\": \"SN01\",\n\t\"model\": \"Zooscan\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 32
+				},
+				{
+					"name": "get instrument",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/instruments/:instrumentId",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0994653afb2f69b11ce",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyOTUxMTcyNSwiZXhwIjoxNzI5NzcwOTI1fQ.uEMKbajUpMSL3NtnrRF2gQVci4mv5OhacA6PHC7kiaU",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 33
+				},
+				{
+					"name": "get calibration",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/instruments/:instrumentId/calibration/:calibrationId",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0e44653afb2f69b11d1",
+									"description": ""
+								},
+								{
+									"key": "calibrationId",
+									"value": "66f5435ed901b3ce7707e224",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyNzMyODA2MCwiZXhwIjoxNzI3NTg3MjYwfQ.MSKeQtrGY8N_BsOn3A-6k0HTPcXliIVpvvRovfd9WxY",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 34
+				},
+				{
+					"name": "update calibration",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/instruments/:instrumentId/calibration/:calibrationId",
+							"query": [],
+							"variable": [
+								{
+									"key": "instrumentId",
+									"value": "65c4e0e44653afb2f69b11d1",
+									"description": ""
+								},
+								{
+									"key": "calibrationId",
+									"value": "66f5435ed901b3ce7707e224",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyNzMyODA2MCwiZXhwIjoxNzI3NTg3MjYwfQ.MSKeQtrGY8N_BsOn3A-6k0HTPcXliIVpvvRovfd9WxY",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": \"66f5435ed901b3ce7707e224\",\n\t\"instrumentId\": \"65c4e0e44653afb2f69b11d1\",\n\t\"frame\": \"large\",\n\t\"xOffset\": 0,\n\t\"yOffset\": 0,\n\t\"xSize\": 0,\n\t\"ySize\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 35
+				}
+			]
+		},
+		{
+			"name": "Misc",
+			"description": "",
+			"auth": {
+				"type": "noauth"
+			},
+			"sort": 7,
+			"item": [
+				{
+					"name": "new Separator Task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/separator",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwOTU1NzQ3NiwiZXhwIjoxNzA5ODE2Njc2fQ.y-tDS3VmzMPZqhdcLtxo1pH-7oStc1GaxoD-0AuvAk4",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 37
+				},
+				{
+					"name": "get Separator Task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/separator/:taskId",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskId",
+									"value": "65f4082cd9eb219c81d5dcb9",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyMTI4OTExNiwiZXhwIjoxNzIxNTQ4MzE2fQ._1Np2tRnF0nlcTE73DxQ0lJFLoOgJxJqzEvU0e3FVpg",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 38
+				},
+				{
+					"name": "update Separator Task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/separator/:taskId",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskId",
+									"value": "65e5c903930f50fae433df9b",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwOTU1NzQ3NiwiZXhwIjoxNzA5ODE2Njc2fQ.y-tDS3VmzMPZqhdcLtxo1pH-7oStc1GaxoD-0AuvAk4",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_scan/_work/dyfamed_20230111_100m_d1_1/multiples_to_separate/result/dyfamed_20230111_100m_d1_1_309.jpg\",\n\t\"type\": \"mask\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 39
+				},
+				{
+					"name": "post task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/task",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxMDIzMDM4NywiZXhwIjoxNzEwNDg5NTg3fQ.5I0rkDLmDGF-TrPTbGD7GeiBGpwKrI9Vzyl3rOCoBRs",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"exec\": \"separate\",\n\t\"params\": {\n\t\t\"subsampleid\": \"\",\n\t\t\"projectid\": \"\",\n\t\t\"sampleid\": \"\",\n\t\t\"folder\": {\n\t\t\t\"src\": \"\",\n\t\t\t\"dst\": \"\"\n\t\t}\n\t},\n\t\"percent\": 0,\n\t\"log\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 40
+				},
+				{
+					"name": "run task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/task/:taskId/run",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskId",
+									"value": "65f15de88555926635ae3cca",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4ODYyOSwiZXhwIjoxNzMxMjQ3ODI5fQ.LHSr3oAmvI-XDgaJ4vosCFTZMqSLe1NSnrezl32iC10",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"taskId\": \"65f15de88555926635ae3cca\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 41
+				},
+				{
+					"name": "get task list",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/task",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxMDMxNzUwMSwiZXhwIjoxNzEwNTc2NzAxfQ.B_xWmAENNP60Gu6NfkWxgMZwuQjDFqHTKeMxMYA9cDg",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 42
+				},
+				{
+					"name": "get task info",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/task/65f1845eca63e27be0b73de2",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4ODYyOSwiZXhwIjoxNzMxMjQ3ODI5fQ.LHSr3oAmvI-XDgaJ4vosCFTZMqSLe1NSnrezl32iC10",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 43
+				},
+				{
+					"name": "update Separator Task Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/separator/:taskId",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskId",
+									"value": "65f2c5e29d8c3c7469ae047a",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxMDQxMTA5NCwiZXhwIjoxNzEwNjcwMjk0fQ.WXs0k5rpafD9aTjetn__PF8UtU8xO1ZYD_y20Wr6lHo",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"url\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_scan/_work/dyfamed_20230111_200m_d1_1/multiples_to_separate/mask/dyfamed_20230111_200m_d1_1_108_mask.png\",\n\t\"type\": \"mask\",\n\t\"scanId\": \"65eee3743811c212bf0ddcdc\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 44
+				}
+			]
+		},
+		{
+			"name": "Task",
+			"description": "",
+			"auth": {
+				"type": "noauth"
+			},
+			"sort": 8,
+			"item": [
+				{
+					"name": "add Task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"exec\": \"process\",\n\t\"params\": {\n\t\t\"projectid\": \"655d3062983b92b6e29b3369\",\n\t\t\"sampleid\": \"65739caf3122b96669402fe4\",\n\t\t\"subsampleid\": \"66fb8d5be198390173a6f087\",\n\t\t\"scanId\": \"42\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 46
+				},
+				{
+					"name": "get task info",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:taskid",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskid",
+									"value": "6757036e9b397f1261b46574",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						}
+					},
+					"sort": 47
+				},
+				{
+					"name": "process info",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectid/samples/:sampleid/subsamples/:subsampleid/process",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectid",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								},
+								{
+									"key": "sampleid",
+									"value": "65739caf3122b96669402fe4",
+									"description": ""
+								},
+								{
+									"key": "subsampleid",
+									"value": "66fbc7b2b06f43e88b023142",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4NTE4OCwiZXhwIjoxNzMxMjQ0Mzg4fQ.mvb4_zpkP32HexAt8NPWyrtbsrjFdVQm4-1nYuMk0sc",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 48
+				},
+				{
+					"name": "Delete All Process Task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/delete/all/process",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8081"
+							]
+						}
+					},
+					"sort": 49
+				},
+				{
+					"name": "get task list",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8081"
+							]
+						}
+					},
+					"sort": 50
+				},
+				{
+					"name": "post task change status",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:taskid",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskid",
+									"value": "6734da61750427c3ad934363",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\":\"FINISHED\",\n    \"log\":\"log\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 51
+				},
+				{
+					"name": "get task info Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:taskid",
+							"query": [],
+							"variable": [
+								{
+									"key": "taskid",
+									"value": "673f4c431e5039acf464dd9b",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 52
+				},
+				{
+					"name": "run task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:task/run",
+							"query": [],
+							"variable": [
+								{
+									"key": "task",
+									"value": "674043031e1dfce12984cb96",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"taskId\": \"674043031e1dfce12984cb96\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 53
+				},
+				{
+					"name": "run task Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:task/run",
+							"query": [],
+							"variable": [
+								{
+									"key": "task",
+									"value": "674057110a8faf34cf46ae46",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"taskId\": \"674043031e1dfce12984cb96\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 54
+				},
+				{
+					"name": "run task missing taskId",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:task/run",
+							"query": [],
+							"variable": [
+								{
+									"key": "task",
+									"value": "",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"taskId\": \"674043031e1dfce12984cb96\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 55
+				},
+				{
+					"name": "run task no body",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:task/run",
+							"query": [],
+							"variable": [
+								{
+									"key": "task",
+									"value": "674043031e1dfce12984cb96",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"taskId\": \"674043031e1dfce12984cb96\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 56
+				},
+				{
+					"name": "run task body taskiD : undefined",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/:task/run",
+							"query": [],
+							"variable": [
+								{
+									"key": "task",
+									"value": "674043031e1dfce12984cb96",
+									"description": ""
+								}
+							],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"taskId\": \"undefined\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 57
+				},
+				{
+					"name": "Delete All Task",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/v1/task/?projectId=all",
+							"query": [
+								{
+									"key": "projectId",
+									"value": "all",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"localhost:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 58
+				}
+			]
+		},
+		{
+			"name": "test manuel getBackgrounds",
+			"description": "",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/v1/projects/655d3062983b92b6e29b3369/backgrounds",
+					"query": [],
+					"variable": [],
+					"host": [
+						"localhost:8081"
+					]
+				},
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4ODYyOSwiZXhwIjoxNzMxMjQ3ODI5fQ.LHSr3oAmvI-XDgaJ4vosCFTZMqSLe1NSnrezl32iC10",
+							"type": "string"
+						}
+					]
+				}
+			},
+			"sort": 9
+		},
+		{
+			"name": "test server ping",
+			"description": "",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://zooprocess.imev-mer.fr:8081/v1/ping",
+					"query": [],
+					"variable": [],
+					"host": [
+						"zooprocess.imev-mer.fr:8081"
+					]
+				},
+				"auth": {
+					"type": "noauth"
+				}
+			},
+			"sort": 10
+		},
+		{
+			"name": "Process",
+			"description": "",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/655d3062983b92b6e29b3369/samples/6578721325c8e71d595a03e5/subsamples/6698c808e426373712f90dc9/process",
+					"query": [],
+					"variable": [],
+					"host": [
+						"zooprocess.imev-mer.fr:8081"
+					]
+				}
+			},
+			"sort": 11
+		},
+		{
+			"name": "Metadata",
+			"description": "",
+			"sort": 12,
+			"item": [
+				{
+					"name": "list metadata model whith sample associated",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/metadata?sample=true",
+							"query": [
+								{
+									"key": "sample",
+									"value": "true",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "get metadata model",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/metadata/:id",
+							"query": [],
+							"variable": [
+								{
+									"key": "id",
+									"value": "6565df171af7a84541c48b20",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "List Metadata",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/metadata",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxOTIzOTk5NywiZXhwIjoxNzE5NDk5MTk3fQ.pnPXEmeCSOVlJof2eE705tc1AfwrkrKyZn-QA1cd-ro",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "delete metadata model",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/metadata/:id",
+							"query": [],
+							"variable": [
+								{
+									"key": "id",
+									"value": "65913de284276feb0966551d",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "add metadata model",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/metadata",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"PIQv_Zooscan\",\n\t\"value\": \"{'scientific_program':'string','station_id':'string','bottom_depth':'string'}\",\n\t\"description\": \"metadata model use by the PIQv for the Zooscan\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 5
+				}
+			]
+		},
+		{
+			"name": "Drive",
+			"description": "",
+			"sort": 13,
+			"item": [
+				{
+					"name": "drive list",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/drives",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMDk4ODYyOSwiZXhwIjoxNzMxMjQ3ODI5fQ.LHSr3oAmvI-XDgaJ4vosCFTZMqSLe1NSnrezl32iC10",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 18
+				},
+				{
+					"name": "new drive",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/drives",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwNjg4Nzk0MywiZXhwIjoxNzA3MTQ3MTQzfQ.bkeTMbqhypJs2_Wtex0wdWDl7XzgA-Qh3U5vSz7W1y8",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Zooscan_archive_lov2\",\n\t\"url\": \"file://drives/zooscan_archive_lov2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 20
+				}
+			]
+		},
+		{
+			"name": "Project",
+			"description": "",
+			"sort": 14,
+			"item": [
+				{
+					"name": "get empty project",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "65855956c35502b1e1adcabe",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyNzk2NzM0NCwiZXhwIjoxNzI4MjI2NTQ0fQ.scTZCXc_aAdENWbic70DlInBYPtUbpjd91ZTeP0o2pE",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "get project",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6718b8446a417cb382c781e0",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "get project Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6718b8446a417cb382c781e0",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "LIST Projects",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "Project IS Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwNjg4Nzk0MywiZXhwIjoxNzA3MTQ3MTQzfQ.bkeTMbqhypJs2_Wtex0wdWDl7XzgA-Qh3U5vSz7W1y8",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"monproject_42\",\n\t\"drive\": \"Zooscan\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 5
+				},
+				{
+					"name": "Project IS Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"acronym\": \"aaa\",\n\t\"description\": \"toto\",\n\t\"drive\": {\n\t\t\"name\": \"Zooscan_archive_lov2\"\n\t},\n\t\"ecotaxa_project\": null,\n\t\"name\": \"Zooscan_zzzzaabb\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 6
+				},
+				{
+					"name": "Project IS",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"debug\",\n\t\"drive\": \"655cb8d55461b0e51c463b65\",\n\t\"acronym\": \"debug\",\n\t\"description\": null,\n\t\"ecotaxa_project_title\": null,\n\t\"ecotaxa_project\": null,\n\t\"scanningOptions\": \"1\",\n\t\"ecotaxa_project_name\": \"aaaaaa\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 7
+				},
+				{
+					"name": "LIST projects",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyMjM1MDgwOCwiZXhwIjoxNzIyNjEwMDA4fQ._CF18baU8-XWogB8xgI3EcoJ9ftNPLugja3swCER_40",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 8
+				},
+				{
+					"name": "update project Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": \"6565b055ae8de1c051ae0ed0\",\n\t\"name\": \"monproject2\",\n\t\"driveid\": \"655c5b54457834999b769d06\",\n\t\"description\": \"desc\",\n\t\"acronym\": \"\",\n\t\"scanningOptions\": \"1\",\n\t\"samples\": [\n\t\t{\n\t\t\t\"id\": \"656710188e5704edf3d6019d\",\n\t\t\t\"name\": \"mon sample 1\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t},\n\t\t{\n\t\t\t\"id\": \"65671129265afe04e78e0b8d\",\n\t\t\t\"name\": \"mon sample 2\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t},\n\t\t{\n\t\t\t\"id\": \"6567622b285b4e5dc0181e7b\",\n\t\t\t\"name\": \"mon sample 3\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t},\n\t\t{\n\t\t\t\"id\": \"6567697b3d2d32abf64ffc3a\",\n\t\t\t\"name\": \"Sample XXXX\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t}\n\t],\n\t\"updatedAt\": \"2023-11-28T09:18:13.180Z\",\n\t\"createdAt\": \"2023-11-28T09:18:13.180Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 9
+				},
+				{
+					"name": "update project",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": \"6565b055ae8de1c051ae0ed0\",\n\t\"name\": \"monproject2\",\n\t\"driveid\": \"655c5b54457834999b769d06\",\n\t\"description\": \"desc\",\n\t\"acronym\": \"\",\n\t\"scanningOptions\": \"1\",\n\t\"samples\": [\n\t\t{\n\t\t\t\"id\": \"656710188e5704edf3d6019d\",\n\t\t\t\"name\": \"mon sample 1\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t},\n\t\t{\n\t\t\t\"id\": \"65671129265afe04e78e0b8d\",\n\t\t\t\"name\": \"mon sample 2\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t},\n\t\t{\n\t\t\t\"id\": \"6567622b285b4e5dc0181e7b\",\n\t\t\t\"name\": \"mon sample 3\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t},\n\t\t{\n\t\t\t\"id\": \"6567697b3d2d32abf64ffc3a\",\n\t\t\t\"name\": \"Sample XXXX\",\n\t\t\t\"projectId\": \"6565b055ae8de1c051ae0ed0\",\n\t\t\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n\t\t}\n\t],\n\t\"updatedAt\": \"2023-11-28T09:18:13.180Z\",\n\t\"createdAt\": \"2023-11-28T09:18:13.180Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 10
+				},
+				{
+					"name": "Add new Project ",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Transaction-Id",
+								"value": "676c5252afd5e6b32ee382c5",
+								"disabled": false,
+								"description": ""
+							}
+						],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n        \"name\": \"SebProjectFromHappy\",\n        \"driveId\": \"65bd147e3ee6f56bc8737879\",\n        \"instrument\": \"65c4e0e44653afb2f69b11d1\",\n        \"acronym\": \"acronym\",\n        \"description\": \"dyfamed\",\n        \"scanningOptions\": \"LARGE\",\n        \"density\": \"2400\"\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 11
+				},
+				{
+					"name": "Delete Projexct SebProjectFromHappy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "SebProjectFromHappy",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 12
+				},
+				{
+					"name": "Add new Project  Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n        \"name\": \"SebProjectFromHappy\",\n        \"driveid\": \"65bd147e3ee6f56bc8737879\",\n        \"instrument\": \"65c4e0e44653afb2f69b11d1\",\n        \"acronym\": \"acronym\",\n        \"description\": \"dyfamed\",\n        \"ecotaxa_project_name\": \"ecotaxa project name\",\n        \"ecotaxa_project_title\": \"ecotaxa_project_title\",\n        \"ecotaxa_project\": 1234,\n        \"scanningOptions\": \"LARGE\",\n        \"density\": \"2400\"\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 13
+				},
+				{
+					"name": "Add new Project  Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n        \"name\": \"SebProjectFromHappy\",\n        \"drive\": \"65bd147e3ee6f56bc8737879\",\n        \"instrument\": \"65c4e0e44653afb2f69b11d1\",\n        \"acronym\": \"acronym\",\n        \"description\": \"dyfamed\",\n        \"ecotaxa_project_name\": \"ecotaxa project name\",\n        \"ecotaxa_project_title\": \"ecotaxa_project_title\",\n        \"ecotaxa_project\": 1234,\n        \"scanningOptions\": \"LARGE\",\n        \"density\": \"2400\"\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 14
+				}
+			]
+		},
+		{
+			"name": "Sample",
+			"description": "",
+			"sort": 15,
+			"item": [
+				{
+					"name": "add sample Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"dyfamed_wp2_2023_biotom_sn001_2\",\n\t\"metadataModelId\": \"6565df171af7a84541c48b20\",\n\t\"data\": {\n\t\t\"sample_id\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\t\"scientific_program\": \"ZooProcess\",\n\t\t\"latitude_ns\": 1,\n\t\t\"station_id\": \"dyfamed\",\n\t\t\"bottom_depth\": \"2400\",\n\t\t\"sampling_date\": \"2022-11-13T00:13:40.000Z\",\n\t\t\"Latitude_degree\": \"43\",\n\t\t\"longitude_degree\": \"7\",\n\t\t\"latitude_minute\": \"25\",\n\t\t\"longitude_minute\": \"51\",\n\t\t\"longitude_ew\": 1,\n\t\t\"tow_type\": \"1\",\n\t\t\"net_sampling_type\": \"WP2\",\n\t\t\"net_mesh\": \"200\",\n\t\t\"net_opening_surface\": \"0.25\",\n\t\t\"minimum_depth\": \"1\",\n\t\t\"maximum_depth\": \"1\",\n\t\t\"quality_flag_for_depth_measurement\": \"2\",\n\t\t\"ship_speed\": \"99999\",\n\t\t\"cable_speed\": \"99999\",\n\t\t\"cable_length\": \"99999\",\n\t\t\"cable_angle_from_vertical\": \"45\",\n\t\t\"sampling_duration\": \"5\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "add sample NOK Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\"metadataModelId\": \"6565df171af7a84541c48b20\",\n\t\"data\": {\n\t\t\"sample_id\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\t\"scientific_program\": \"ZooProcess\",\n\t\t\"latitude_ns\": 1,\n\t\t\"station_id\": \"dyfamed\",\n\t\t\"bottom_depth\": \"2400\",\n\t\t\"sampling_date\": \"2022-11-13T00:13:40.000Z\",\n\t\t\"Latitude_degree\": \"43\",\n\t\t\"longitude_degree\": \"7\",\n\t\t\"latitude_minute\": \"25\",\n\t\t\"longitude_minute\": \"51\",\n\t\t\"longitude_ew\": 1,\n\t\t\"tow_type\": \"1\",\n\t\t\"net_sampling_type\": \"WP2\",\n\t\t\"net_mesh\": \"200\",\n\t\t\"net_opening_surface\": \"0.25\",\n\t\t\"minimum_depth\": \"1\",\n\t\t\"maximum_depth\": \"1\",\n\t\t\"quality_flag_for_depth_measurement\": \"2\",\n\t\t\"ship_speed\": \"99999\",\n\t\t\"cable_speed\": \"99999\",\n\t\t\"cable_length\": \"99999\",\n\t\t\"cable_angle_from_vertical\": \"45\",\n\t\t\"sampling_duration\": \"5\",\n\t\t\"ship_name\": \"boat\",\n\t\t\"barcode\": \"barcode\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "add sample NOK",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"test sample\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "add sample Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\"metadataModelId\": \"6565df171af7a84541c48b20\",\n\t\"data\": {\n\t\t\"sample_id\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\t\"scientific_program\": \"ZooProcess\",\n\t\t\"latitude_ns\": 1,\n\t\t\"station_id\": \"dyfamed\",\n\t\t\"bottom_depth\": \"2400\",\n\t\t\"sampling_date\": \"2022-11-13T00:13:40.000Z\",\n\t\t\"Latitude_degree\": \"43\",\n\t\t\"longitude_degree\": \"7\",\n\t\t\"latitude_minute\": \"25\",\n\t\t\"longitude_minute\": \"51\",\n\t\t\"longitude_ew\": 1,\n\t\t\"tow_type\": \"1\",\n\t\t\"net_sampling_type\": \"WP2\",\n\t\t\"net_mesh\": \"200\",\n\t\t\"net_opening_surface\": \"0.25\",\n\t\t\"minimum_depth\": \"1\",\n\t\t\"maximum_depth\": \"1\",\n\t\t\"quality_flag_for_depth_measurement\": \"2\",\n\t\t\"ship_speed\": \"99999\",\n\t\t\"cable_speed\": \"99999\",\n\t\t\"cable_length\": \"99999\",\n\t\t\"cable_angle_from_vertical\": \"45\",\n\t\t\"sampling_duration\": \"5\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "add sample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"metadataModelId\": \"6565df171af7a84541c48b20\",\n\t\"name\": \"mon sample 4\",\n\t\"data\": {\n\t\t\"sample_id\": \"b\",\n\t\t\"scientific_program\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\t\"latitude_ns\": 1,\n\t\t\"station_id\": \"dyfamed\",\n\t\t\"bottom_depth\": \"2400\",\n\t\t\"sampling_date\": \"2022-11-13T00:13:40.000Z\",\n\t\t\"Latitude_degree\": \"43\",\n\t\t\"longitude_degree\": \"7\",\n\t\t\"latitude_minute\": \"25\",\n\t\t\"longitude_minute\": \"51\",\n\t\t\"longitude_ew\": 1,\n\t\t\"tow_type\": \"1\",\n\t\t\"net_sampling_type\": \"WP2\",\n\t\t\"net_mesh\": \"200\",\n\t\t\"net_opening_surface\": \"0.25\",\n\t\t\"minimum_depth\": \"1\",\n\t\t\"maximum_depth\": \"1\",\n\t\t\"quality_flag_for_depth_measurement\": \"2\",\n\t\t\"ship_speed\": \"99999\",\n\t\t\"cable_speed\": \"99999\",\n\t\t\"cable_length\": \"99999\",\n\t\t\"cable_angle_from_vertical\": \"45\",\n\t\t\"sampling_duration\": \"5\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 5
+				},
+				{
+					"name": "add sample NOK Copy 2",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\"metadataModelId\": \"6565df171af7a84541c48b20\",\n\t\"data\": {\n\t\t\"sample_id\": \"dyfamed_wp2_2023_biotom_sn001\",\n\t\t\"scientific_program\": \"ZooProcess\",\n\t\t\"latitude_ns\": 1,\n\t\t\"station_id\": \"dyfamed\",\n\t\t\"bottom_depth\": \"2400\",\n\t\t\"sampling_date\": \"2022-11-13T00:13:40.000Z\",\n\t\t\"Latitude_degree\": \"43\",\n\t\t\"longitude_degree\": \"7\",\n\t\t\"latitude_minute\": \"25\",\n\t\t\"longitude_minute\": \"51\",\n\t\t\"longitude_ew\": 1,\n\t\t\"tow_type\": \"1\",\n\t\t\"net_sampling_type\": \"WP2\",\n\t\t\"net_mesh\": \"200\",\n\t\t\"net_opening_surface\": \"0.25\",\n\t\t\"minimum_depth\": \"1\",\n\t\t\"maximum_depth\": \"1\",\n\t\t\"quality_flag_for_depth_measurement\": \"2\",\n\t\t\"ship_speed\": \"99999\",\n\t\t\"cable_speed\": \"99999\",\n\t\t\"cable_length\": \"99999\",\n\t\t\"cable_angle_from_vertical\": \"45\",\n\t\t\"sampling_duration\": \"5\",\n\t\t\"ship_name\": \"mon boat à moi super rapide\",\n\t\t\"ctd_reference\": \"1111SSS\",\n\t\t\"other_reference\": \"my ref\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 6
+				},
+				{
+					"name": "delete sample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "655db3a95ef7f584269ff27b",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 7
+				},
+				{
+					"name": "get sample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "65739caf3122b96669402fe4",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 8
+				},
+				{
+					"name": "delete sample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "6567622b285b4e5dc0181e7b",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 9
+				},
+				{
+					"name": "list sample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwNzkxOTI4NiwiZXhwIjoxNzA4MTc4NDg2fQ.vaPsDJI61u9tvli9fcBhp84WZNqS-g3UMnngLKElSIE",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 10
+				},
+				{
+					"name": "get sample Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "65739caf3122b96669402fe4",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 11
+				}
+			]
+		},
+		{
+			"name": "SubSample",
+			"description": "",
+			"sort": 16,
+			"item": [
+				{
+					"name": "get subsample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId/subsamples/:subsampleId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6718b8446a417cb382c781e0",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "6718eb7b6a417cb382c78395",
+									"description": ""
+								},
+								{
+									"key": "subsampleId",
+									"value": "658de2ba43a25af55929ff04",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "del sub samples",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId/subsamples/:subsampleId",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b3369",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "65739caf3122b96669402fe4",
+									"description": ""
+								},
+								{
+									"key": "subsampleId",
+									"value": "658df06cac7dea7f05850e17",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "add sub sample",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId/subsamples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "6567622b285b4e5dc0181e7b",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"p12\",\n\t\"metadataModelId\": \"\",\n\t\"data\": {\n\t\t\"scan_id\": \"p11\",\n\t\t\"sample_id\": 1,\n\t\t\"fraction_id\": 1,\n\t\t\"fraction_number\": 1,\n\t\t\"scanning_operator\": \"seb\",\n\t\t\"observation\": \"balmbala\",\n\t\t\"fraction_min_mesh\": 1,\n\t\t\"fraction_max_mesh\": 1,\n\t\t\"spliting_ratio\": 1,\n\t\t\"remark_on_fraction\": \"euh\",\n\t\t\"submethod\": \"motoda\"\n\t},\n\t\"user_id\": \"658dd7ea24bc10a4bf1e37e2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "add sub sample Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId/subsamples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "6565b055ae8de1c051ae0ed0",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "6567622b285b4e5dc0181e7b",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"p14\",\n\t\"metadataModelId\": \"\",\n\t\"data\": {\n\t\t\"scan_id\": \"p14\",\n\t\t\"sample_id\": 1,\n\t\t\"fraction_id\": 1,\n\t\t\"fraction_number\": 1,\n\t\t\"scanning_operator\": \"seb\",\n\t\t\"observation\": \"balmbala\",\n\t\t\"fraction_min_mesh\": 1,\n\t\t\"fraction_max_mesh\": 1,\n\t\t\"spliting_ratio\": 1,\n\t\t\"remark_on_fraction\": \"euh\",\n\t\t\"submethod\": \"motoda\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "add sub sample euh??",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "655d3062983b92b6e29b33691",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"projectId\": \"655d3062983b92b6e29b3369\",\n\t\"metadata\": \"{'scientific_program':'string','station_id':'string','bottom_depth':'string'}\",\n\t\"metadataModelId\": \"6565df171af7a84541c48b20\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 5
+				},
+				{
+					"name": "get subsamples",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects/:projectId/samples/:sampleId/subsamples/:subsamples",
+							"query": [],
+							"variable": [
+								{
+									"key": "projectId",
+									"value": "673de971ef462622d8376996",
+									"description": ""
+								},
+								{
+									"key": "sampleId",
+									"value": "673df22bad4f90863283fc99",
+									"description": ""
+								},
+								{
+									"key": "subsamples",
+									"value": "673f1a981abccbf4c6fe4938",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 6
+				}
+			]
+		},
+		{
+			"name": "User",
+			"description": "",
+			"sort": 17,
+			"item": [
+				{
+					"name": "Login Admin",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/login",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"admin@seb.com\",\n\t\"password\": \"seb1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "get user by id - Token up to date",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users/:id",
+							"query": [],
+							"variable": [
+								{
+									"key": "id",
+									"value": "658dd7ea24bc10a4bf1e37e2",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyODU3MjYzNSwiZXhwIjoxNzI4ODMxODM1fQ.I3RCP3J8RTZQBs_bfcXYjJ-o4eYImUl9QoTCuRBtRrA",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "get me",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users/me",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyOTUxMTcyNSwiZXhwIjoxNzI5NzcwOTI1fQ.uEMKbajUpMSL3NtnrRF2gQVci4mv5OhacA6PHC7kiaU",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "get user by id",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users/:id",
+							"query": [],
+							"variable": [
+								{
+									"key": "id",
+									"value": "658dd7ea24bc10a4bf1e37e2",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcyNzE3NzY1NiwiZXhwIjoxNzI3NDM2ODU2fQ.GyFF8yEGROYE2imbtiqLbiUfXEK5R6VF7fZYN0aNKGQ",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "add User",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"admin\",\n\t\"email\": \"admin@seb.com\",\n\t\"role\": \"Admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 5
+				},
+				{
+					"name": "del user",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users/:userId",
+							"query": [],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 6
+				},
+				{
+					"name": "list Users",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1YmQwOGUxNGZiZmIyNTg4NGUxMjdmYiIsImlhdCI6MTczNzQ2ODAzNCwiZXhwIjoxNzQwMDYwMDM0fQ.FKnJKYTsjgv2k2ux9maQtqwC-tLcGIlKfgIri9yHE1o",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 7
+				},
+				{
+					"name": "update user",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users/:userId",
+							"query": [],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "658dd7ea24bc10a4bf1e37e2",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"password\": \"seb1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 8
+				},
+				{
+					"name": "add  User (admin)",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"admin\",\n\t\"email\": \"admin@seb.com\",\n\t\"role\": \"Admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 9
+				},
+				{
+					"name": "Login",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/login",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"seb@seb.com\",\n\t\"password\": \"seb1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 10
+				},
+				{
+					"name": "get User by email",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/users?email=seb@seb.com",
+							"query": [
+								{
+									"key": "email",
+									"value": "seb@seb.com",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcwNzkxOTI4NiwiZXhwIjoxNzA4MTc4NDg2fQ.vaPsDJI61u9tvli9fcBhp84WZNqS-g3UMnngLKElSIE",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 11
+				},
+				{
+					"name": "Login Admin 2",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/login",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"admin2@seb.com\",\n\t\"password\": \"admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 12
+				}
+			]
+		},
+		{
+			"name": "Ecotaxa",
+			"description": "",
+			"sort": 18,
+			"item": [
+				{
+					"name": "/users/me",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://ecotaxa.obs-vlfr.fr/api/users/me",
+							"query": [],
+							"variable": [],
+							"host": [
+								"ecotaxa.obs-vlfr.fr"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ1c2VyX2lkIjoyMDc1fQ.ZbEWUA.8gsS5U1ZMT0Hy2FRlFi3jPc5SDc",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 20
+				},
+				{
+					"name": "/projects/search",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://ecotaxa.obs-vlfr.fr/api/projects/search?also_others=false&not_granted=false&for_managing=false&title_filter=Tara&instrument_filter=uvp5&filter_subset=true&order_field=instrument&window_start=0&window_size=100 ",
+							"query": [
+								{
+									"key": "also_others",
+									"value": "false",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "not_granted",
+									"value": "false",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "for_managing",
+									"value": "false",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "title_filter",
+									"value": "Tara",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "instrument_filter",
+									"value": "uvp5",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "filter_subset",
+									"value": "true",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "order_field",
+									"value": "instrument",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "window_start",
+									"value": "0",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "window_size",
+									"value": "100 ",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"ecotaxa.obs-vlfr.fr"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ1c2VyX2lkIjoyMDc1fQ.ZUdX0Q.jdD-hNG4cLc6Rh_M4T5OM3i6zCo",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 21
+				},
+				{
+					"name": "https://ecotaxa.obs-vlfr.fr/api/login",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://ecotaxa.obs-vlfr.fr/api/login",
+							"query": [],
+							"variable": [],
+							"host": [
+								"ecotaxa.obs-vlfr.fr"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"password\": \"password\",\n\t\"username\": \"sebastien.galvagno@imev-mer.fr\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 22
+				}
+			]
+		},
+		{
+			"name": "Ecotaxoguide",
+			"description": "",
+			"sort": 19,
+			"item": []
+		},
+		{
+			"name": "node",
+			"description": "",
+			"sort": 20,
+			"item": [
+				{
+					"name": "docs",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/docs",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8080"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 23
+				}
+			]
+		},
+		{
+			"name": "Validator",
+			"description": "",
+			"sort": 21,
+			"item": [
+				{
+					"name": "ping",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/ping",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 23
+				}
+			]
+		},
+		{
+			"name": "Prediction",
+			"description": "",
+			"sort": 22,
+			"item": [
+				{
+					"name": "NIKO - POST img",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "image/png",
+								"disabled": false,
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"disabled": false,
+								"description": ""
+							}
+						],
+						"url": {
+							"raw": "http://niko.obs-vlfr.fr:5000/v2/models/multi_plankton_separation/predict/?model=default_mask_multi_plankton&min_mask_score=0.9&min_mask_value=0.5&accept=image%2Fpng",
+							"query": [
+								{
+									"key": "model",
+									"value": "default_mask_multi_plankton",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "min_mask_score",
+									"value": "0.9",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "min_mask_value",
+									"value": "0.5",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "accept",
+									"value": "image%2Fpng",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"niko.obs-vlfr.fr:5000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "type",
+									"description": "",
+									"type": "text",
+									"value": "image/jpeg",
+									"disabled": false
+								},
+								{
+									"key": "image",
+									"description": "",
+									"type": "text",
+									"value": "@dyfamed_20230111_100m_d1_1_131.jpg",
+									"disabled": false
+								},
+								{
+									"key": "image=@dyfamed_20230111_100m_d1_1_186.jpg",
+									"description": "",
+									"type": "file",
+									"value": "",
+									"disabled": false
+								}
+							]
+						}
+					},
+					"sort": 23
+				},
+				{
+					"name": "version",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://niko.obs-vlfr.fr:5000",
+							"query": [],
+							"variable": [],
+							"host": [
+								"niko.obs-vlfr.fr:5000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 25
+				},
+				{
+					"name": "Local - POST img",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "image/png",
+								"disabled": false,
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"disabled": false,
+								"description": ""
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/v2/models/multi_plankton_separation/predict/?model=default_mask_multi_plankton&min_mask_score=0.9&min_mask_value=0.5&accept=image%2Fpng",
+							"query": [
+								{
+									"key": "model",
+									"value": "default_mask_multi_plankton",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "min_mask_score",
+									"value": "0.9",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "min_mask_value",
+									"value": "0.5",
+									"description": "",
+									"disabled": false
+								},
+								{
+									"key": "accept",
+									"value": "image%2Fpng",
+									"description": "",
+									"disabled": false
+								}
+							],
+							"variable": [],
+							"host": [
+								"localhost:5001"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "type",
+									"description": "",
+									"type": "text",
+									"value": "image/jpeg",
+									"disabled": false
+								},
+								{
+									"key": "image",
+									"description": "",
+									"type": "text",
+									"value": "@dyfamed_20230111_100m_d1_1_131.jpg",
+									"disabled": false
+								},
+								{
+									"key": "image=@dyfamed_20230111_100m_d1_1_186.jpg",
+									"description": "",
+									"type": "file",
+									"value": "",
+									"disabled": false
+								}
+							]
+						}
+					},
+					"sort": 26
+				}
+			]
+		},
+		{
+			"name": "Happy Pipeline",
+			"description": "",
+			"sort": 23,
+			"item": [
+				{
+					"name": "test query",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/items/23",
+							"query": [],
+							"variable": [],
+							"host": [
+								"127.0.0.1:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "Put folder",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/separate",
+							"query": [],
+							"variable": [],
+							"host": [
+								"127.0.0.1:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"path\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_scan/_work/dyfamed_20230111_200m_d1_1/multiples_to_separate/\",\n\t\"db\": \"http://zooprocess.imev-mer.fr:8081/v1\",\n\t\"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTcxMDQxMDY0MSwiZXhwIjoxNzEwNjY5ODQxfQ.bLPr5W6RmpXd-qJilznxfb0PqSWCEoUajLPuu5B2-Mw\",\n\t\"taskId\": \"65f2c5e29d8c3c7469ae047a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "test happy pipeline",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "test DEEP plankton separation - alive ?",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5001/",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:5001"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "get Separate",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/separate/toto",
+							"query": [],
+							"variable": [],
+							"host": [
+								"127.0.0.1:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 5
+				},
+				{
+					"name": "convert tiff 2 jpeg background Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 6
+				},
+				{
+					"name": "convert tiff 2 jpeg scan Copy Copy Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/26-06-2024/20240112_1518_back_large_1-imageJ-1719410146370-283260850.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 7
+				},
+				{
+					"name": "convert tiff 2 jpeg scan",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 8
+				},
+				{
+					"name": "Build separate images folder foireux",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/separate",
+							"query": [],
+							"variable": [],
+							"host": [
+								"127.0.0.1:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"path\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/images\",\n\t\"db\": \"http://zooprocess.imev-mer.fr:8081/v1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 9
+				},
+				{
+					"name": "convert tiff 2 jpeg background",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif\",\n\t\"dst\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.jpg\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 10
+				},
+				{
+					"name": "Build separate images folder foireux Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/separate",
+							"query": [],
+							"variable": [],
+							"host": [
+								"127.0.0.1:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"path\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_scan/_work/dyfamed_20230111_100m_d1_1/multiples_to_separate/\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 11
+				},
+				{
+					"name": "convert tiff 2 jpeg scan Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Drives/18-03-2024/medsea_mesocosme_wp220130310_c3_d2_raw_1-1710751210823-978326589.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 12
+				},
+				{
+					"name": "test DEEP plankton separation - seb alive ?",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://seb:5000/",
+							"query": [],
+							"variable": [],
+							"host": [
+								"seb:5000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 13
+				},
+				{
+					"name": "convert tiff 2 jpeg scan Copy Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Test__/dyfamed_20230111_100m_d1_1.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 14
+				},
+				{
+					"name": "convert tiff 2 jpeg scan Copy Copy Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/Zooscan_back/2024-07-02_20141003_1144_background_large_manual-1719903248547-136752006.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 15
+				},
+				{
+					"name": "convert tiff 2 jpeg scan Copy Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/Zooscan_back/2024-07-03_20230918_1139_back_large_raw_2-1720002718936-818429036.tif\",\n\t\"dst\": \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/show/Zooscan_back/2024-07-03_20230918_1139_back_large_raw_2-1720002718936-818429036.jpg\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 16
+				},
+				{
+					"name": "convert tiff 2 jpeg scan Copy Copy",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/convert",
+							"query": [],
+							"variable": [],
+							"host": [
+								"localhost:8000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"src\": \"/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Test__/dyfamed_20230111_100m_d1_1.tif\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 17
+				},
+				{
+					"name": "test DEEP plankton separation - niko alive ?",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://niko.obs-vlfr.fr:5000/",
+							"query": [],
+							"variable": [],
+							"host": [
+								"niko.obs-vlfr.fr:5000"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 18
+				},
+				{
+					"name": "Medium Background",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8000/background/",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8000"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"taskId\":\"67595df5fb1b27ed85d62bce\",\n\"instrumentId\": \"65c4e0e44653afb2f69b11d1\",\n  \"projectId\": \"6565b055ae8de1c051ae0ed0\",\n  \"background\": [\n    \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/Zooscan_back/2024-12-11_20230920_1013_back_large_1-1733909990126-97577592.tif\",\n    \"/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/drives/zooscan/monproject2/Zooscan_back/2024-12-11_20230919_0913_back_large_2-1733910003419-864918941.tif\"\n  ],\n  \"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM\",\n  \"db\": \"http://zooprocess.imev-mer.fr:8081/v1/\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 19
+				},
+				{
+					"name": "import old zooscan project",
+					"description": "",
+					"sort": 23,
+					"item": [
+						{
+							"name": "import zooscan project",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://zooprocess.imev-mer.fr:8000/import",
+									"query": [],
+									"variable": [],
+									"host": [
+										"zooprocess.imev-mer.fr:8000"
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"path\":\"/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_apero_tha_bioness_sup2000_sn033\",\n    \"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNjk0Njk1NCwiZXhwIjoxNzM5NTM4OTU0fQ.55GPj7fn8snvfcD_UHMr0K7f2Sa6Ws-JjFpgiBhBS0M\",\n    \"db\": \"http://zooprocess.imev-mer.fr:8081/v1/\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"sort": 1
+						},
+						{
+							"name": "ATTENTION import zooscan project from Complex",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://zooprocess.imev-mer.fr:8000/import",
+									"query": [],
+									"variable": [],
+									"host": [
+										"zooprocess.imev-mer.fr:8000"
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"path\":\"/Volumes/sgalvagno/plankton/zooscan_lov/Zooscan_apero_tha_bioness_sn033\",\n    \"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNjk0Njk1NCwiZXhwIjoxNzM5NTM4OTU0fQ.55GPj7fn8snvfcD_UHMr0K7f2Sa6Ws-JjFpgiBhBS0M\",\n    \"db\": \"http://zooprocess.imev-mer.fr:8081/v1/\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"sort": 2
+						},
+						{
+							"name": "import zooscan project formation",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://zooprocess.imev-mer.fr:8000/import",
+									"query": [],
+									"variable": [],
+									"host": [
+										"zooprocess.imev-mer.fr:8000"
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"path\":\"/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_formation_plankteco_sn033\",\n    \"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNjk0Njk1NCwiZXhwIjoxNzM5NTM4OTU0fQ.55GPj7fn8snvfcD_UHMr0K7f2Sa6Ws-JjFpgiBhBS0M\",\n    \"db\": \"http://zooprocess.imev-mer.fr:8081/v1/\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"sort": 3
+						},
+						{
+							"name": "import zooscan project from Complex TEST",
+							"description": "",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://zooprocess.imev-mer.fr:8000/import",
+									"query": [],
+									"variable": [],
+									"host": [
+										"zooprocess.imev-mer.fr:8000"
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"path\":\"/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002\",\n    \"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNjk0Njk1NCwiZXhwIjoxNzM5NTM4OTU0fQ.55GPj7fn8snvfcD_UHMr0K7f2Sa6Ws-JjFpgiBhBS0M\",\n    \"db\": \"http://zooprocess.imev-mer.fr:8081/v1/\",\n    \"project\":\"Zooscan_apero_pp_2023_wp2_sn002\",\n    \"drive\":\"zooscan_zooprocess_test\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"sort": 4
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Transaction",
+			"description": "",
+			"sort": 24,
+			"item": [
+				{
+					"name": "Begin Tansaction",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/transaction/begin",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 1
+				},
+				{
+					"name": "Roll Back Tansaction",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-transaction-id",
+								"value": "676127edf69f0be1c018d12a",
+								"disabled": false,
+								"description": ""
+							}
+						],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/transaction/rollback",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 2
+				},
+				{
+					"name": "Commit Tansaction",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-transaction-id",
+								"value": "676127edf69f0be1c018d12a",
+								"disabled": false,
+								"description": ""
+							}
+						],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/transaction/commit",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						}
+					},
+					"sort": 3
+				},
+				{
+					"name": "test_transaction",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8000/test_transaction",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8000"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"path\":\"/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_apero_tha_bioness_sup2000_sn033\",\n    \"bearer\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNDAxODExNiwiZXhwIjoxNzM2NjEwMTE2fQ.grXcAgaUutf6Nya7aSWy2eR9N2IqXec428D6rMG25Pg\",\n    \"db\": \"http://zooprocess.imev-mer.fr:8081/v1/\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 4
+				},
+				{
+					"name": "Add new Project short data with header",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/projects",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n        \"name\": \"SebProjectFromHappy\",\n        \"drive\": \"65bd147e3ee6f56bc8737879\",\n        \"instrument\": \"65c4e0e44653afb2f69b11d1\",\n        \"acronym\": \"acronym\",\n        \"description\": \"dyfamed\",\n        \"ecotaxa_project_name\": \"ecotaxa project name\",\n        \"ecotaxa_project_title\": \"ecotaxa_project_title\",\n        \"ecotaxa_project\": 1234,\n        \"scanningOptions\": \"LARGE\",\n        \"density\": \"2400\"\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 5
+				}
+			]
+		},
+		{
+			"name": "GoPro",
+			"description": "",
+			"sort": 25,
+			"item": [
+				{
+					"name": "gopro",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://172.22.117.51:8080/gopro/camera/camera_state",
+							"query": [],
+							"variable": [],
+							"host": [
+								"172.22.117.51:8080"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"sort": 46
+				}
+			]
+		},
+		{
+			"name": "QC",
+			"description": "",
+			"sort": 26,
+			"item": [
+				{
+					"name": "create qc using default     \"state\":\"PENDING\"",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/qc",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"sort": 27
+				},
+				{
+					"name": "get all qc",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/qc",
+							"query": [],
+							"variable": [],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 28
+				},
+				{
+					"name": "get qc",
+					"description": "",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://zooprocess.imev-mer.fr:8081/v1/qc/:qcId",
+							"query": [],
+							"variable": [
+								{
+									"key": "qcId",
+									"value": "673d8bdfd56532a15886a9c5",
+									"description": ""
+								}
+							],
+							"host": [
+								"zooprocess.imev-mer.fr:8081"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczMTQxNjQzNSwiZXhwIjoxNzM0MDA4NDM1fQ.v3vvWtzStAfu4a25jFVSNie0ZaJjSSMZQXGEhWYU5QM",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"sort": 29
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "bearer",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNDAxODExNiwiZXhwIjoxNzM2NjEwMTE2fQ.grXcAgaUutf6Nya7aSWy2eR9N2IqXec428D6rMG25Pg",
+			"type": "string"
+		}
+	],
+	"event": [],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OGRkN2VhMjRiYzEwYTRiZjFlMzdlMiIsImlhdCI6MTczNjk0Njk1NCwiZXhwIjoxNzM5NTM4OTU0fQ.55GPj7fn8snvfcD_UHMr0K7f2Sa6Ws-JjFpgiBhBS0M",
+				"type": "string"
+			}
+		]
+	}
+}
