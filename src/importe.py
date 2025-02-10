@@ -1,5 +1,7 @@
 # import old zooscan project
 
+import os
+from pydantic import BaseModel
 import requests
 import csv
 from typing import List, Dict, Any
@@ -185,7 +187,7 @@ def convertscankey(subsamplejson):
 
 
 
-def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,db:str,user_id:str,instrument_id:str):
+def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,db:str,user_id:str,instrument_id:str, type:str = "SCAN"):
 
     print("add scans to subsample", subsampleid)
 
@@ -193,7 +195,7 @@ def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,
         "url": image_path,
         "subsampleId": subsampleid,
         "userId": user_id,
-        "type":"SCAN",
+        "type": type,
         "instrumentId": instrument_id
     }
 
@@ -223,7 +225,7 @@ def extract_background_info(log_file_path):
 
 
 
-def pid_to_json(pid_filepath: str) -> dict:
+def pid2json(pid_filepath: str) -> dict:
     """
     Converts a .pid file into a structured JSON with sections, including data array of objects
     """
@@ -349,8 +351,23 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
                 print("image_path does not exist")
                 continue
 
-
-
+def list_background(background_path: str) -> Dict:
+    """Lists all background files in the given directory and groups them by date prefix"""
+    result = {}
+    
+    for file in os.listdir(background_path):
+        if os.path.isfile(os.path.join(background_path, file)):
+            parts = file.split('_back_', 1)
+            if len(parts) == 2:
+                prefix = parts[0]
+                suffix = 'back_' + parts[1]
+                
+                if prefix not in result:
+                    result[prefix] = {}
+                
+                result[prefix][suffix] = file
+    
+    return result
 
 def addSamples(path:str, bearer, db, projectid:str):
     print("addSample")
@@ -362,12 +379,14 @@ def addSamples(path:str, bearer, db, projectid:str):
 
     path_sample = Path(path,"Zooscan_meta","zooscan_sample_header_table.csv")
     path_scan = Path(path,"Zooscan_meta","zooscan_scan_header_table.csv")
+    path_background = Path(path,"Zooscan_back")
 
     print("path_sample: ", path_sample)
     print("path_scan: ", path_scan)
 
     data = parse_tsv(path_sample)
     data_scan = parse_tsv(path_scan)
+    list_backgrounds = list_background(path_background)
 
     print("data:",data)
 
@@ -438,6 +457,38 @@ def addSamples(path:str, bearer, db, projectid:str):
 
 
 
+def addBackground(path:str, bearer, db, projectid:str, instrumentid:str, userid:str):
+    print("addBackground")
+
+    path_background = Path(path,"Zooscan_back")
+
+
+    list_backgrounds = list_background(path_background)
+    print("list_backgrounds:",list_backgrounds)
+
+    for prefix, files in list_backgrounds.items():
+        print("prefix:",prefix)
+        print("files:",files)
+
+    # http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url
+
+
+
+def searchPidFile(path: str) -> str:
+    print("search_pid_file")
+    print("path: ", path)
+    work_path = Path(path, "Zooscan_scan", "_work")
+    print("work_path: ", work_path)
+    
+    # Get first directory in work_path
+    first_dir = next(work_path.iterdir())
+    
+    # Find first .pid file
+    for file in first_dir.iterdir():
+        if file.suffix == '.pid':
+            return str(file)
+            
+    return None
 
 
 def import_old_project(project:Project):
@@ -454,9 +505,21 @@ def import_old_project(project:Project):
         raise HTTPException(status_code=404, detail=f"Project path '{project.path}' does not exist")
 
     projectname = project.name if project.name != None else Path(project.path).name
+
     instrumentSN = project.instrumentSerialNumber
     if instrumentSN != None:
         instrument = getInstrumentFromSN(project.db, project.bearer, instrumentSN)
+        print("instrument: ", instrument)
+    # else:
+    if instrument == None:
+        # need to read a PID file to determine the instrument
+        # pidfile = searchPidFile(project.path)
+
+        # piddata = pid2json(pidfile)
+        # PID the project does not contain inforation about the instrument
+        # then user need to give the instrument serial number or create it before import
+        raise HTTPException(status_code=404, detail="Instrument serial number not found. You need to create the instrument before import")
+
     # if (project.bearer == None or project.db == None):
     #     print("markTaskWithRunningStatus: bearer or db is None")
     #     # print("bearer: ", bearer)
@@ -472,16 +535,34 @@ def import_old_project(project:Project):
         # "name": 'SebProjectFromHappy',
         "name" : projectname,
         "driveId": '65bd147e3ee6f56bc8737879',
-        "instrumentId": '65c4e0e44653afb2f69b11d1',
-        "acronym": 'acronym',
-        "description": 'dyfamed',
-        "ecotaxa_project_name": 'ecotaxa project name',
-        "ecotaxa_project_title": 'ecotaxa_project_title',
-        "ecotaxa_project": 1234,
+        "instrumentId": instrument['id'], #'65c4e0e44653afb2f69b11d1',
+        # "acronym": 'acronym',
+        # "description": 'dyfamed',
+        # "ecotaxa_project_name": 'ecotaxa project name',
+        # "ecotaxa_project_title": 'ecotaxa_project_title',
+        # "ecotaxa_project": 1234,
         "scanningOptions": 'LARGE',
         "density": '2400'
     }
+
+    if project.acronym != None:
+        body["acronym"] = project.acronym
+
+    if project.description != None:
+        body["description"] = project.description
+
+    if project.ecotaxaProjectID != None:
+        body["ecotaxa_project"] = project.ecotaxaProjectID
+        # TODO request ecotaxa project to fill the name and the title, but need to know the credential, can ask to zooprocess API, but not sure it's relevant to do here
+        # body["ecotaxa_project_name"] = "ecotaxa_project_name"
+        # body["ecotaxa_project_title"] = "ecotaxa_project_title"
+
+    print("body: ", body)
+
+    # load a PID file 
+    pidfile = searchPidFile(project.path)
     
+
     headers = {
         "Authorization": f"Bearer {project.bearer}",
         "Content-Type": "application/json",
@@ -509,11 +590,13 @@ def import_old_project(project:Project):
 
     print("response: ", response)
     print("response: ", response.status_code)  
+    imported_project = response.json()
     projectid = response.json().get("id")
 
 
     addSamples(project.path, project.bearer, project.db, projectid)
 
+    addBackground(project.path, project.bearer, project.db, projectid,instrumentid=instrument['id'], userid="toto")
 
     # CommitTransaction(project.db, project.bearer, transactionId)
     

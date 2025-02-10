@@ -1,7 +1,7 @@
 
 
 import json
-from src.importe import pid_to_json
+from src.importe import pid2json
 
 
 import unittest
@@ -18,7 +18,7 @@ class Test_PID(unittest.TestCase):
 
         pid_filepath = '/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_scan/_work/apero2023_pp_wp2_001_st01_d_d1_1/apero2023_pp_wp2_001_st01_d_d1_1_dat1.pid'
 
-        json_data = pid_to_json(pid_filepath)
+        json_data = pid2json(pid_filepath)
 
         print("json: ", json_data)
 

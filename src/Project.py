@@ -9,10 +9,14 @@ class Project(BaseModel):
         bearer: the bearer token to use for the request
         db: the database to use for the request
         name: [optional] the name of the project else take the name of the project folder
-        instrumentSerialNumber: [optional] the serial number of the instrument else instrument will marked undefine in the DB
+        instrumentSerialNumber: the serial number of the instrument else instrument will marked undefine in the DB
+        ecotaxaProjectID: [optional] the id of the ecotaxa project
     """
     path: str 
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
+    bearer: str #Union[str, None] = None
+    db: str #Union[str, None] = None
     name: Union[str, None] = None
-    instrumentSerialNumber: Union[str, None] = None 
+    instrumentSerialNumber: str #Union[str, None] = None 
+    acronym: Union[str, None] = None 
+    description: Union[str, None] = None
+    ecotaxaProjectID: Union[str, None] = None
