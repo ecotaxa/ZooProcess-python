@@ -5,4 +5,4 @@ from src.importe import getInstrumentFromSN
 
 class Test_main(unittest.TestCase):
 
-    
+    pass
