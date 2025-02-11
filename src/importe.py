@@ -492,6 +492,9 @@ def searchPidFile(path: str) -> str:
 
 
 def import_old_project(project:Project):
+    """
+    Import a project made with legacy zooprocess
+    """
     # print("import_old_project")
     # print("project: ", project)
 
