@@ -21,7 +21,16 @@ pip install numpy
 ```
 uvicorn main:app --reload
 ```
-ne fonctionne pas en venv ????? why ???
+
+# run it to VENV
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+#pip install uvicorn  # if issue run manually uviicorn installation
+uvicorn main:app --reload
+```
+
 
 
 # online docs

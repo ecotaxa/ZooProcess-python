@@ -1,3 +1,4 @@
+
 from typing import List, Union
 
 from src.importe import import_old_project
@@ -19,6 +20,7 @@ from pathlib import Path
 # import csv
 from typing import List, Dict, Any
 
+from src.Models import Scan, Folder, BMProcess, Background
 
 # import requests
 
@@ -43,7 +45,7 @@ nikoserver = Server("http://niko.obs-vlfr.fr:5000", "/")
 separateServer = SeparateServer(tunnelserver,dbserver)
 
 
-app = FastAPI()
+# app = FastAPI()
 
 # from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.cors import CORSMiddleware
@@ -119,40 +121,6 @@ def read_root():
 #     return {"item_name": item.name, "item_id": item_id}
 
 
-class Folder(BaseModel):
-    path: str
-    # bearer: str | None = None
-    # bd: str | None = None
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
-    taskId: Union[str, None] = None
-    scanId: Union[str, None] = None
-
-class Background(BaseModel):
-    # path: str
-    # bearer: str | None = None
-    # bd: str | None = None
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
-    taskId: Union[str, None] = None
-    # back1scanId: str
-    # back2scanId: str
-    projectId: str
-    background: List[str]
-    instrumentId: str
-
-class BMProcess(BaseModel):
-    src: str
-    dst: Union[str, None] = None
-    scan: str
-    back: str
-    taskId: Union[str, None] = None
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
-
-class Scan(BaseModel):
-    scanId: str
-    bearer: str
 
 @app.post("/separator/scan")
 def separate(scan: Scan):
