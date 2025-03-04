@@ -108,26 +108,42 @@ def convertsamplekey(samplejson):
         except ValueError:
             return longitude
 
+    # for key, value in samplejson.items():
+    #     if key in convertionkey:
+    #         new_key = convertionkey[key]
+    #         match (key):
+    #             case 'longitude':
+    #                 new_value = longitude_correction(value)
+    #             case 'longitude_end':
+    #                 new_value = longitude_correction(value)
+    #             case 'latitude':
+    #                 new_value = latitude_correction(value)
+    #             case 'latitude_end':
+    #                 new_value = latitude_correction(value)
+    #             case _:
+    #                 new_value = value
+    #         new_dict[new_key] = new_value
+    #     else:
+    #         new_dict[key] = value  # Keep the key unchanged
+    # return new_dict
+    # match not supported  in 3.13.3 ???
     for key, value in samplejson.items():
         if key in convertionkey:
             new_key = convertionkey[key]
-            match key:
-                case 'longitude':
-                    new_value = longitude_correction(value)
-                case 'longitude_end':
-                    new_value = longitude_correction(value)
-                case 'latitude':
-                    new_value = latitude_correction(value)
-                case 'latitude_end':
-                    new_value = latitude_correction(value)
-                case _:
-                    new_value = value
+            if key == 'longitude':
+                new_value = longitude_correction(value)
+            elif key == 'longitude_end':
+                new_value = longitude_correction(value)
+            elif key == 'latitude':
+                new_value = latitude_correction(value)
+            elif key == 'latitude_end':
+                new_value = latitude_correction(value)
+            else:
+                new_value = value
             new_dict[new_key] = new_value
         else:
             new_dict[key] = value  # Keep the key unchanged
     return new_dict
-
-
 
 def parse_tsv(filepath: str) -> List[Dict[str, Any]]:
     """Parses a TSV file and returns a list of dictionaries."""
