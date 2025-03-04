@@ -21,6 +21,10 @@ def getInstrumentFromSN(db,bearer,instrumentSN):
         for instrument in instruments:
             if instrument["sn"] == instrumentSN:
                 return instrument
+    if response.status_code == 401:
+        raise HTTPException(status_code=401, detail="Unauthorized - Please, update your bearer")
+    if response.status_code == 403:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     return None
 
 
