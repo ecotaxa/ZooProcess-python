@@ -300,8 +300,11 @@ def pid2json(pid_filepath: str) -> dict:
     return result
 
 
-
+users: dict[str, str] = {}
 def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:str,db:str,bearer:str):
+    """
+    add the subsample in other words the scan
+    """
 
     print("add subsamples to sample", sampleid)
 
@@ -312,8 +315,12 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
         data_converted = convertscankey(row)
         print("converted:",data_converted)
         
-        user_id = "658dd7ea24bc10a4bf1e37e2"
-        instrument_id = "65c4e0994653afb2f69b11ce"
+        #user_id = "658dd7ea24bc10a4bf1e37e2"
+        user_id = None
+        if data_converted['scanning_operator'] in users:
+            user_id = users[data_converted['scanning_operator']]
+
+        instrument_id = "65c4e0994653afb2f69b11ce" # TODO: remove this line
 
         body = {
             "name": row['scanid'], #"p12",
@@ -323,7 +330,8 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
                 "sample_id": data_converted['sample_id'], #1,
                 "fraction_id": data_converted['frac_id'], #1
                 "fraction_number": data_converted['fraction_number'], #1
-                "scanning_operator": "seb", #data_converted['scanning_operator'], #TODO: get from user or create the missing user
+                #"scanning_operator": "seb"
+                "scanning_operator": data_converted['scanning_operator'], #TODO: get from user or create the missing user
                 "observation": data_converted['observation'],
                 "fraction_min_mesh": data_converted['fraction_min_mesh'],
                 "fraction_max_mesh": data_converted['fraction_max_mesh'],
@@ -331,8 +339,12 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
                 "remark_on_fraction": "",
                 "submethod": data_converted['submethod']
             },
-            "user_id":user_id
+            #"user_id":user_id
         }
+
+        if user_id:
+            print("use user_id cached")
+            body["user_id"] = user_id
 
         url = f"{db}projects/{projectid}/samples/{sampleid}/subsamples"
         print("url: ", url)
@@ -353,6 +365,9 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
             subsample = response.json()
             print("subsample: ", subsample)
 
+            # add user_id to the cache
+            if not user_id:
+                users[data_converted['scanning_operator']] = subsample['userId']
             
             scan_name = transform_to_raw_string(data_converted['scan_id']) + ".tif"
             print("scan_name: ", scan_name)
@@ -362,7 +377,7 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
 
             if image_path.exists():
                 print("image_path exists")
-                add_scans(image_path.as_posix(),projectid,data_converted['sample_id'],subsample['id'],headers,db,user_id,instrument_id)
+                add_scans(image_path.as_posix(),projectid,data_converted['sample_id'],subsample['id'],headers,db,subsample['userId'],instrument_id)
             else:
                 print("image_path does not exist")
                 continue
@@ -382,6 +397,15 @@ def list_background(background_path: str) -> Dict:
                     result[prefix] = {}
                 
                 result[prefix][suffix] = file
+            else:
+                print("not _back_ segment in file")
+                parts = file.split('_background_', 1)
+                if len(parts) == 2:
+                    prefix = parts[0]
+                    if prefix not in result:
+                        result[prefix] = {}
+                    result[prefix]["background"] = file
+            
     
     return result
 
@@ -412,6 +436,8 @@ def addSamples(path:str, bearer, db, projectid:str):
             # print("Sample:",row)
 
             data_converted_sample = convertsamplekey(row)
+
+            # TODO: verify if data is compatible with metadataModelId, to do on the API server
 
             body = {
                 "name" : data_converted_sample["sample_id"],
@@ -487,6 +513,7 @@ def addBackground(path:str, bearer, db, projectid:str, instrumentid:str, userid:
         print("files:",files)
 
     # http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url
+
 
 
 
