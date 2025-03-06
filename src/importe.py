@@ -301,7 +301,7 @@ def pid2json(pid_filepath: str) -> dict:
 
 
 users: dict[str, str] = {}
-def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:str,db:str,bearer:str):
+def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:str,db:str,bearer:str, instrumentId: str):
     """
     add the subsample in other words the scan
     """
@@ -320,7 +320,7 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
         if data_converted['scanning_operator'] in users:
             user_id = users[data_converted['scanning_operator']]
 
-        instrument_id = "65c4e0994653afb2f69b11ce" # TODO: remove this line
+        # instrumentId = "65c4e0994653afb2f69b11ce" # TODO: remove this line
 
         body = {
             "name": row['scanid'], #"p12",
@@ -377,7 +377,7 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
 
             if image_path.exists():
                 print("image_path exists")
-                add_scans(image_path.as_posix(),projectid,data_converted['sample_id'],subsample['id'],headers,db,subsample['userId'],instrument_id)
+                add_scans(image_path.as_posix(),projectid,data_converted['sample_id'],subsample['id'],headers,db,subsample['userId'],instrumentId)
             else:
                 print("image_path does not exist")
                 continue
@@ -409,7 +409,7 @@ def list_background(background_path: str) -> Dict:
     
     return result
 
-def addSamples(path:str, bearer, db, projectid:str):
+def addSamples(path:str, bearer, db, projectid:str, instrumentId:str):
     print("addSample")
     print("projectid: ", projectid)
     print("path: ", path)
@@ -490,8 +490,8 @@ def addSamples(path:str, bearer, db, projectid:str):
 
                 if subsamples:
                     print("***********************************************")
-                    print("subsamples:",subsamples)
-                    add_subsamples(path,subsamples,projectid,sample['id'],db,bearer)
+                    print("subsamples:", subsamples)
+                    add_subsamples(path, subsamples, projectid, sample['id'], db, bearer, instrumentId)
                     # add_scans(data_scan,projectid,sample.id,db,bearer)
 
 
@@ -640,7 +640,7 @@ def import_old_project(project:Project):
     projectid = response.json().get("id")
 
 
-    addSamples(project.path, project.bearer, project.db, projectid)
+    addSamples(project.path, project.bearer, project.db, projectid, instrument['id'])
 
     addBackground(project.path, project.bearer, project.db, projectid,instrumentid=instrument['id'], userid="toto")
 
