@@ -2,7 +2,38 @@
 from tools import create_folder
 
 from pathlib import Path
+from src.DB import DB
 
+
+
+# class Scan(BaseModel):
+#     path:Path
+
+# class SubSample(BaseModel):
+#     data: Dict[str, Any]
+#     scan: List[Scan]
+
+# class Sample(BaseModel):
+#     data: Dict[str, Any]
+
+
+# class Project(BaseModel):
+#     path:Path
+#     name: str
+#     data: Dict[str, Any]
+    
+#     samples = List(Sample)
+
+    # def __init__(self, path, name, data):
+    #     self.path = path
+    #     self.name = name
+    #     self.data=data
+    #     self.samples = []
+
+    # def addSample(self, sample):
+    #     self.samples.append(sample)
+
+# samples = List(Sample) = []
 class ProjectClass():
     """
     Properties:
@@ -11,6 +42,7 @@ class ProjectClass():
         folder: the project path
     """
 
+    db:DB = None
     def __init__(self, project_name, piqvFolder , outputFolder = None) -> None:
         self.project_name = project_name
         # if project_name:
@@ -27,6 +59,7 @@ class ProjectClass():
             self.outputFolder = self.home
         
         self._createFolders()
+        
 
 
     def _createFolders(self):
@@ -48,4 +81,4 @@ class ProjectClass():
     def tempFolder(self):
         return self.tempFolder.absolute().as_posix()
 
-
+        

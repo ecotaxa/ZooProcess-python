@@ -140,3 +140,19 @@ docker run -ti -p 5000:5000 -p 6006:6006 -p 8888:8888  zooprocess-multiple-separ
 openapigenerator generate -i http://localhost:5000/openapi.json -g python -o ./src
 ```
 
+# run unit test
+
+
+```bash
+python3 -m venv test_venv
+source test_venv/bin/activate
+pip install --upgrade pip 
+pip install -r requirements.txt
+
+python3 -m unittest discover tests
+```
+
+or one test
+```bash
+python -m unittest tests/*.py
+```

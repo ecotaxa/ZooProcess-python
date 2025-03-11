@@ -2,6 +2,7 @@
 from typing import List, Union
 
 from src.importe import import_old_project
+
 from src.Project import Project
 from src.separate_fn import separate_images
 # from src.tools import mkdir
@@ -23,6 +24,11 @@ from typing import List, Dict, Any
 from src.Models import Scan, Folder, BMProcess, Background
 
 # import requests
+
+# for /test 
+from src.importe import addVignettes, listWorkFolders,addVignettesFromSample
+
+
 
 # from src.separate import separate_multiple
 
@@ -634,3 +640,19 @@ def import_project(project:Project):
     return json
 
     
+
+@app.get("/test")
+def test():
+
+    path = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_scan/_work"
+    folders = listWorkFolders(path) 
+    print("folders",folders)
+    # return folders
+
+    for folder in folders:
+        print("folder",folder)
+        folder_path = Path(path, folder)
+        print("folder_path:",folder_path)
+        addVignettesFromSample(folder_path, folder, "Bearer", "db", "projectId")
+
+    return "test"

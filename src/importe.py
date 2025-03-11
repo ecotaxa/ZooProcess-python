@@ -6,6 +6,7 @@ import requests
 import csv
 from typing import List, Dict, Any
 import re
+import json
 
 from fastapi import HTTPException
 from pathlib import Path
@@ -14,10 +15,6 @@ from pathlib import Path
 from src.Project import Project
 from src.connection import testBearer
 from src.request import getInstrumentFromSN
-
-
-
-
 
 
 def convertsamplekey(samplejson):
@@ -29,7 +26,8 @@ def convertsamplekey(samplejson):
         'ship': 'ship_name', # 'thalassa', 
         'scientificprog': 'scientific_program', # 'apero', 
         'stationid': 'station_id', # '66', 
-        'date': 'sampling_date' , # '20230704-0503', 
+        # 'date': 'sampling_date' , # '20230704-0503', 
+        'createdAt': 'sampling_date' , # '20230704-0503', 
         'latitude': 'latitude_start', # '51.5293', 
         'longitude': 'longitude_start', # '19.2159', 
         'depth': 'bottom_depth', # '99999', 
@@ -233,6 +231,65 @@ def add_scans(image_path:str,projectid:str,sampleid:str,subsampleid:str,headers,
 
 
 
+def listWorkFolders(path):
+    """
+    list all the folders from the path folder
+    """
+    # List all folders in the specified path
+    folders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
+    return folders
+
+
+def convert_workpid2json(path):
+    json_data = pid2json(path)
+
+    # print("json: ", json_data)
+    json_filepath = str(path).replace('.pid', '.json')
+    # Save to JSON file
+    with open(json_filepath, 'w') as f:
+        json.dump(json_data, f, indent=4)
+    return json_filepath
+
+
+def addVignettesFromSample(path, folder, bearer, db, projectId):
+    """
+    """
+
+    # pid_path = Path(path, "Zooscan_scan", "_work", folder, folder + "_dat1.pid")
+    pid_path = Path(path, path, folder + "_dat1.pid")
+    print("pid_path:", pid_path)
+    json_filepath = convert_workpid2json(pid_path)
+    print("json_filepath:", json_filepath)
+
+    # Read the JSON file
+    with open(json_filepath, 'r') as f:
+        data = json.load(f)
+
+        # Extract the data array
+        background_correct_using = data["Image_Process"]["Background_correct_using"]
+        print("background_correct_using:", background_correct_using)
+        image = data["Image_Process"]["Image"]
+        print("image:", image)
+
+
+
+
+def addVignettes(path, bearer, db, projectId):
+    """
+
+    """
+    print("path:", path)
+    
+    path_work = Path(path,"Zooscan_scan","_work")
+    print("path_work:", path_work)
+    # List all folders in the specified path
+    folders = listWorkFolders(path_work)
+
+    for folder in folders:
+        print("folder:", folder)
+        addVignettesFromSample(path, folder, bearer, db, projectId)
+
+
 def extract_background_info(log_file_path):
     with open(log_file_path, 'r') as f:
         content = f.read()
@@ -372,22 +429,24 @@ def add_subsamples(path,data_scan:List[Dict[str, Any]],projectid:str,sampleid:st
             scan_name = transform_to_raw_string(data_converted['scan_id']) + ".tif"
             print("scan_name: ", scan_name)
 
-            image_path = Path(path,"Zooscan_scan","_raw",scan_name).absolute()
+            image_path = Path(path,"Zooscan_scan", "_raw", scan_name).absolute()
             print("image_path: ", image_path)
 
             if image_path.exists():
                 print("image_path exists")
-                add_scans(image_path.as_posix(),projectid,data_converted['sample_id'],subsample['id'],headers,db,subsample['userId'],instrumentId)
+                add_scans(image_path.as_posix(), projectid, data_converted['sample_id'], subsample['id'], headers, db, subsample['userId'], instrumentId)
             else:
                 print("image_path does not exist")
                 continue
+
+# list_backgrounds : Dict = {}
 
 def list_background(background_path: str) -> Dict:
     """Lists all background files in the given directory and groups them by date prefix"""
     result = {}
     
     for file in os.listdir(background_path):
-        if os.path.isfile(os.path.join(background_path, file)):
+        if os.path.isfile(os.path.join(background_path, file)) and not file.startswith('.'):
             parts = file.split('_back_', 1)
             if len(parts) == 2:
                 prefix = parts[0]
@@ -419,14 +478,14 @@ def addSamples(path:str, bearer, db, projectid:str, instrumentId:str):
 
     path_sample = Path(path,"Zooscan_meta","zooscan_sample_header_table.csv")
     path_scan = Path(path,"Zooscan_meta","zooscan_scan_header_table.csv")
-    path_background = Path(path,"Zooscan_back")
+    # path_background = Path(path,"Zooscan_back")
 
     print("path_sample: ", path_sample)
     print("path_scan: ", path_scan)
 
     data = parse_tsv(path_sample)
     data_scan = parse_tsv(path_scan)
-    list_backgrounds = list_background(path_background)
+    # list_backgrounds = list_background(path_background)
 
     print("data:",data)
 
@@ -497,7 +556,13 @@ def addSamples(path:str, bearer, db, projectid:str, instrumentId:str):
 
             print("import done")
 
-
+scanType : dict[str, str] = {
+    "back_large_1.tif":"BACKGROUND",
+    "back_large_2.tif":"BACKGROUND",
+    "back_large_raw_1.tif":"RAW_BACKGROUND",
+    "back_large_raw_2.tif":"RAW_BACKGROUND",
+    "background":"MEDIUM_BACKGROUND"
+}
 
 def addBackground(path:str, bearer, db, projectid:str, instrumentid:str, userid:str):
     print("addBackground")
@@ -512,8 +577,57 @@ def addBackground(path:str, bearer, db, projectid:str, instrumentid:str, userid:
         print("prefix:",prefix)
         print("files:",files)
 
-    # http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url
+        # if prefix == "back_large_manual_log.txt": continue
 
+        # http://zooprocess.imev-mer.fr:8081/v1/scan/:instrumentId/url
+        for file in files:
+
+            print("file type:",file)
+            print("file name:",files[file])
+
+            if file == "back_large_manual_log.txt": continue
+
+            url = Path(path_background,files[file]).as_posix()
+            print("url:",url)
+            type = scanType[file]
+            print("type:",type)
+
+
+            body = {
+                "url": url,
+                # "subsampleId": subsampleid,
+                "projectId": projectid,
+
+                "userId": userid,
+                "type": type,
+                "instrumentId": instrumentid
+            }
+            print("body: ", body)
+
+            headers = {
+                "Authorization": f"Bearer {bearer}",
+                "Content-Type": "application/json",
+                # "X-Transaction-Id": transactionId
+            }    
+            print("headers: ", headers)
+            
+
+            # url = f"{db}scan/{instrument_id}/url"
+            # url = f"{db}scan/{subsampleid}/url"
+            url = f"{db}scan/*/url"
+            print("url:", url)
+
+            # continue
+
+            response = requests.put(url, json=body, headers=headers)
+
+            print("response: ", response)
+            if response.status_code == 200:
+                scan = response.json()
+                print("scan: ", scan)
+
+            else:
+                raise HTTPException(status_code=response.status_code, detail="Error importing scan: " + response.text)
 
 
 
@@ -639,10 +753,14 @@ def import_old_project(project:Project):
     imported_project = response.json()
     projectid = response.json().get("id")
 
+    # path_background = Path(project.path,"Zooscan_back")
+    # list_backgrounds = list_background(path_background)
 
     addSamples(project.path, project.bearer, project.db, projectid, instrument['id'])
 
-    addBackground(project.path, project.bearer, project.db, projectid,instrumentid=instrument['id'], userid="toto")
+    addBackground(project.path, project.bearer, project.db, projectid, instrumentid=instrument['id'], userid="toto")
+
+    addVignettes(project.path, project.bearer, project.db, projectid)
 
     # CommitTransaction(project.db, project.bearer, transactionId)
     

@@ -4,9 +4,9 @@ import requests
 
 class Server:
 
-    def __init__(self, url, testurl):
+    def __init__(self, url, testurl="/ping"):
         self.url = url
-        self.testurl = self.url+testurl
+        self.testurl = self.url.rstrip("/") +testurl
 
     def test_server(self) -> bool :
         result = requests.get(self.testurl, timeout=2.50)

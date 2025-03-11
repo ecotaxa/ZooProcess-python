@@ -43,9 +43,8 @@ def convertRawScan(pathProject, scan_filename):
 def convert( sample: SampleClass ):
 
     
-
     image = loadimage(sample.rawPath())
-    median,mean = picheral_median(image)
+    median, mean = picheral_median(image)
     min, max = minAndMax(median)
     histolut = converthisto16to8(min,max)
     
