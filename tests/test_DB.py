@@ -4,9 +4,14 @@ from src.DB import DB
 import unittest
 from unittest import mock
 
+import sys
+
 
 class Test_DB(unittest.TestCase):
 
+    def setUp(self):
+        self.maxDiff = None
+        self.capturedOutput = sys.stdout
 
     @mock.patch('src.DB.requests')
     def test_init_with_valid_bearer_and_default_db(self, mocker):
@@ -72,9 +77,38 @@ class Test_DB(unittest.TestCase):
     # Handles empty URL parameter
     @mock.patch('requests.get')
     def test_get_handles_empty_url_parameter(self, mock_get):
-        db = DB("test_token", "http://test-url.com")  # Remove trailing slash here
+        db = DB("test_token", "http://test-url.com")  
         db.get("")
         mock_get.assert_called_once_with(
-            "http://test-url.com",  # Remove trailing slash here
+            "http://test-url.com/",  
             headers={"Authorization": "Bearer test_token", "Content-Type": "application/json"}
         )
+
+
+    def test_get_db_from_config(self):
+        # Arrange
+        from src.DB import DB
+        from src.config import config
+
+        # Act
+        db = DB("test_token")
+
+        # print("url", db.makeUrl("/test"))
+
+        # Assert
+        self.assertEqual(db.db, "http://zooprocess.imev-mer.fr:8081/v1")
+        self.assertEqual(db.bearer, "test_token")
+        self.assertEqual(db.db, config.dbserver)
+
+        self.assertEqual(db.makeUrl("/test"), "http://zooprocess.imev-mer.fr:8081/v1/test")
+
+
+    def test_db_init_with_swapped_parameters(self):
+        db_url = "http://test-url.com"
+        bearer_token = "test_bearer"
+        
+        with self.assertRaises(ValueError) as context:
+            db_instance = DB(db=bearer_token, bearer=db_url)
+        
+        self.assertEqual(str(context.exception), "Invalid DB URL format")
+        

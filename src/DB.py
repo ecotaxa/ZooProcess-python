@@ -23,10 +23,16 @@ class DB(BaseTest):
         put(url: str, body: dict): Sends a PUT request with a JSON body.
         patch(url: str, body: dict): Sends a PATCH request with a JSON body.
     """    
-    def __init__(self,bearer:str, db:str = config.dbserver):
+    def __init__(self, bearer:str, db:str = config.dbserver):
         if not bearer:
             raise ValueError("Bearer token is required")
         self.bearer = bearer
+
+        # test if db begin with http
+        if not db.startswith("http"):
+            raise ValueError("Invalid DB URL format")
+            # raise ValueError({"error":"Invalid DB URL format","message":"db must start with http[s]://"})
+
         self.db = db.rstrip('/')
 
 
@@ -37,9 +43,15 @@ class DB(BaseTest):
             "Content-Type": type
         }
     
-    def makeUrl(self, path:str = "/"):
-        """Constructs the full URL for a given path."""
-        return f"{self.db}{path}"
+    # def makeUrl(self, path:str = "/"):
+    #     """Constructs the full URL for a given path."""
+    #     return f"{self.db}{path}"
+    
+    def makeUrl(self, url: str) -> str:
+        base_url = self.db.rstrip('/')
+        clean_url = url.lstrip('/')
+        return f"{base_url}/{clean_url}"
+
     def get(self, url:str):
         """Sends a GET request to the specified URL."""
         response = requests.get(self.makeUrl(url), headers=self.getHeader())
