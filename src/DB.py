@@ -23,7 +23,7 @@ class DB(BaseTest):
         put(url: str, body: dict): Sends a PUT request with a JSON body.
         patch(url: str, body: dict): Sends a PATCH request with a JSON body.
     """    
-    def __init__(self,bearer:str, db:str = config.db):
+    def __init__(self,bearer:str, db:str = config.dbserver):
         if not bearer:
             raise ValueError("Bearer token is required")
         self.bearer = bearer
