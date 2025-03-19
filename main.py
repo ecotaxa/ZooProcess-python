@@ -1,7 +1,7 @@
 
 from typing import List, Union
 
-from src.importe import import_old_project
+from src.importe import import_old_project, getDat1Path, pid2json
 
 from src.Project import Project
 from src.separate_fn import separate_images
@@ -225,7 +225,9 @@ def convert(image:ImageUrl):
 
     try:
         file_out = convert_tiff_to_jpeg(image.src, image.dst)
+        print("file_out: ", file_out)
         return file_out
+        # return {"dst" : file_out }
     except:
         print("Cannot convert ", image.src)
         raise HTTPException(status_code=500, detail="Cannot convert the image") 
@@ -639,20 +641,204 @@ def import_project(project:Project):
     json = import_old_project(project)
     return json
 
-    
+from src.DB import DB
+
+
+def getProjectDataFromDB(name:str, db:DB):
+        
+        print("getProjectDataFromDB name" , name)
+        # print("getProjectDataFromDB db" , db)
+
+        # url = db.makeUrl(f'/projects/{name}')
+        # print("url:",url)
+        # response = db.get(url)
+
+        # response = db.get(f'/projects/{name}')
+        # print("get projectData", response)
+        # if response["status"] != "success":
+        #     print("Failed to retrieve project data")
+        #     return HTTPException(status_code=404, detail="Project not found")
+
+        # print("Project data retrieved successfully")
+        # if not response["data"]:
+        #     print("Failed to retrieve project data")
+        #     return HTTPException(status_code=404, detail="Project not found")
+        
+        # projectData = response["data"]
+        projectData = db.get(f'/projects/{name}')
+        return projectData
 
 @app.get("/test")
-def test():
+def test(project:Project):
+    """
+    Temporary API to test the import of a project
+    try to link background and subsamples 
+    try because old project have not information about the links
+    links appear only when scan are processed
+    then need to parse 
+    """
 
-    path = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_scan/_work"
-    folders = listWorkFolders(path) 
-    print("folders",folders)
-    # return folders
+    print("test")
+    print("project",project)
+    # path = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_scan/_work"
+    # workpath = Path(project.path,"Zooscan_scan/_work")
+    # print("workpath",workpath)
 
-    for folder in folders:
-        print("folder",folder)
-        folder_path = Path(path, folder)
-        print("folder_path:",folder_path)
-        addVignettesFromSample(folder_path, folder, "Bearer", "db", "projectId")
+    # folders = listWorkFolders(workpath) 
+    # # print("folders",folders)
+    # # return folders
 
-    return "test"
+    # for folder in folders:
+    #     print("folder",folder)
+    #     folder_path = Path(workpath, folder)
+    #     print("folder_path:",folder_path)
+    #     addVignettesFromSample(folder_path, folder, "Bearer", "db", "projectId")
+
+        # from src.ProjectClass import ProjectClass
+
+        # projectClass = ProjectClass(project.name,"")
+
+
+
+    try:
+        db = DB(bearer=project.bearer, db=project.db)
+
+        # response = db.get(f'/projects/{project.id}')
+        # print("get projectData", response)
+        # if response["status"] != "success":
+        #     print("Failed to retrieve project data")
+        #     return HTTPException(status_code=404, detail="Project not found")
+
+        # print("Project data retrieved successfully")
+        # if not response["data"]:
+        #     print("Failed to retrieve project data")
+        #     return HTTPException(status_code=404, detail="Project not found")
+        
+        # projectData = response["data"]
+
+        if not project.name:
+            print("Project name is required")
+            project.name = Path(project.path).name
+            if not project.name:
+                print("Failed to retrieve project data")
+                raise HTTPException(status_code=400, detail="Project name is required")
+
+        print("project.name",project.name)
+        projectData = getProjectDataFromDB(project.name, db)
+        # print("projectData",projectData)
+
+
+        print("projecctData.id",projectData["id"])
+        # response = db.get(f'/projects/{projectData.id}/backgrounds')
+
+        # print("response",response)
+        # if response.status_code == 200:
+        #     project.backgrounds = response.json()
+        #     print("project.backgrounds",project.backgrounds)
+        # else:
+        #     print("Failed to retrieve backgrounds")
+        #     raise HTTPException(status_code=400, detail="Backgrounds not found")
+
+        # project.backgrounds = db.get(f'/projects/{projectData["id"]}/backgrounds')
+        backgrounds = db.get(f'/projects/{projectData["id"]}/backgrounds')
+
+        # print("backgrounds",backgrounds)
+
+        workpath = Path(project.path,"Zooscan_scan/_work")
+        print("workpath",workpath)
+
+        samples = projectData["samples"]
+        # return samples
+
+        folders = listWorkFolders(workpath) 
+        # print("folders",folders)
+
+        for folder in folders:
+            print("folder",folder)
+            folder_path = Path(workpath, folder)
+            print("folder_path:",folder_path)
+
+            dat_path = getDat1Path(folder_path)
+            json_dat = pid2json(dat_path)
+
+            background_correct_using = json_dat["Image_Process"]["Background_correct_using"]
+            print("background_correct_using:", background_correct_using)
+            image = json_dat["Image_Process"]["Image"]
+            print("image name:", image)
+
+            sampleName = json_dat["Sample"]["SampleId"]
+            print("sampleName:", sampleName)
+            subsampleName = image.replace(".tif", "")
+            print("subsample:", subsampleName)
+
+            def searchSample(samples,name):
+                for sample in samples:
+                    if sample["name"] == name:
+                        return sample
+
+                return None    
+            
+            def searchSubSample(subsamples,name):
+                for sub in subsamples:
+                    # if subsampleName in sub[subsampleName]:
+                    if sub["name"] == name:
+                        return sub
+                return None
+    
+            def searchScan(scans,type):
+                for scan in scans:
+                    if scan["type"] == type:
+                        return scan
+                return None
+                    
+            sample = searchSample(samples,sampleName)
+            subsample = searchSubSample(sample["subsample"],subsampleName)
+
+            scan = searchScan(sample["scan"],"SCAN")
+            if scan is None:
+                raise HTTPException(status_code=400, detail="Scan not found")
+                # continue
+
+            userId = scan["userId"]
+
+
+            prefix = background_correct_using.split('_back', 1)[0]
+            print("prefix:", prefix)
+
+            for back in backgrounds:
+                file = Path(back["url"]).name
+                
+                if file.startswith(prefix):
+                    print("file:", file)
+                    print("back:", back)
+                    
+                    # remove the back from the backgrounds list
+                    backgrounds.remove(back)
+
+                    #update back with userId
+                    back["userId"] = userId
+                    back["subsampleId"] = subsample["id"]
+
+                    subsample["scan"].append(back)
+                    # update the DB
+                    db.put(f'/backgrounds/{back["id"]}', back)
+
+            # print("sample",sample)
+            # print("subsample",subsample)
+
+            return subsample
+            return sample
+            return sample["subsample"]
+            # return sample["name"] == folder
+            return {sample, subsample}
+            return 1
+        
+
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"Failed: {e}")
+        
+
+
+    return "test OK"

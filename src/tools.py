@@ -40,8 +40,9 @@ def create_folder(path: Path):
             #os.mkdir(path)
             #os.makedirs(path, exist_ok=True)
             p.mkdir(parents=True, exist_ok=True)
+            print("folder created: ", path.absolute())
     except OSError as error: 
-        path_str = str(p.absolute)
+        path_str = str(p.absolute())
 
         eprint("cannot create folder: ", path_str ,", ", str(error))
                

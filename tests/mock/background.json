@@ -1,0 +1,902 @@
+[
+	{
+		"id": "67cfe9b86ba4c633f6dd796a",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20231010_1509_background_large_manual.tif",
+		"type": "MEDIUM_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd796c",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20231010_1509_back_large_raw_1.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd796e",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20231010_1509_back_large_1.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7970",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20231010_1509_back_large_2.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7972",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20231010_1509_back_large_raw_2.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7974",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230922_0816_back_large_2.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7976",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230922_0816_background_large_manual.tif",
+		"type": "MEDIUM_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7978",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230922_0816_back_large_raw_1.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd797a",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230922_0816_back_large_raw_2.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd797c",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230922_0816_back_large_1.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd797e",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230914_0917_back_large_2.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7980",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230914_0917_back_large_raw_2.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7982",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230914_0917_back_large_1.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7984",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230914_0917_back_large_raw_1.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7986",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230914_0917_background_large_manual.tif",
+		"type": "MEDIUM_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7988",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230925_1218_back_large_1.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd798a",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230925_1218_back_large_2.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd798c",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230925_1218_back_large_raw_2.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd798e",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230925_1218_background_large_manual.tif",
+		"type": "MEDIUM_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b86ba4c633f6dd7990",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230925_1218_back_large_raw_1.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b96ba4c633f6dd7992",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230915_0712_back_large_raw_1.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b96ba4c633f6dd7994",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230915_0712_back_large_2.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b96ba4c633f6dd7996",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230915_0712_back_large_raw_2.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9b96ba4c633f6dd7998",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230915_0712_background_large_manual.tif",
+		"type": "MEDIUM_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9be6ba4c633f6dd799a",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230915_0712_back_large_1.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9be6ba4c633f6dd799c",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230913_0950_back_large_1.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9be6ba4c633f6dd799e",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230913_0950_background_large_manual.tif",
+		"type": "MEDIUM_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9be6ba4c633f6dd79a0",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230913_0950_back_large_2.tif",
+		"type": "BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9be6ba4c633f6dd79a2",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230913_0950_back_large_raw_2.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	},
+	{
+		"id": "67cfe9be6ba4c633f6dd79a4",
+		"url": "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20230913_0950_back_large_raw_1.tif",
+		"type": "RAW_BACKGROUND",
+		"createdAt": "9999-03-07T08:26:38.988Z",
+		"userId": "658dd7ea24bc10a4bf1e37e2",
+		"instrumentId": "65c4e0e44653afb2f69b11d1",
+		"subSampleId": null,
+		"background": true,
+		"archived": false,
+		"deleted": false,
+		"deletedAt": null,
+		"projectId": "67cfe9b56ba4c633f6dd779f",
+		"instrument": {
+			"id": "65c4e0e44653afb2f69b11d1",
+			"model": "Zooscan",
+			"name": "SN01",
+			"sn": "SN01"
+		},
+		"SubSample": null,
+		"user": {
+			"id": "658dd7ea24bc10a4bf1e37e2",
+			"email": "seb@seb.com",
+			"name": "seb",
+			"image": null,
+			"emailVerified": null,
+			"password": "seb1234",
+			"role": "USER"
+		}
+	}
+]

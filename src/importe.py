@@ -14,8 +14,9 @@ from pathlib import Path
 
 from src.Project import Project
 from src.connection import testBearer
-from src.request import getInstrumentFromSN
+from src.request import getInstrumentFromSN, getDriveId
 
+from src.DB import DB
 
 def convertsamplekey(samplejson):
 
@@ -250,13 +251,40 @@ def convert_workpid2json(path):
         json.dump(json_data, f, indent=4)
     return json_filepath
 
-
-def addVignettesFromSample(path, folder, bearer, db, projectId):
+def workpid2json(path,save=False):
     """
+    convert a workpid file to json
+    """
+    json_data = pid2json(path)
+
+    # print("json: ", json_data)
+    # Save to JSON file
+    if save:
+        json_filepath = str(path).replace('.pid', '.json')
+        with open(json_filepath, 'w') as f:
+            json.dump(json_data, f, indent=4)
+    return json_filepath
+
+
+
+
+def getDat1Path(path):
+    """
+    reurn path of the dat1.pid file
+    """
+    folder = Path(path).name
+    pid_path = Path(path, folder + "_dat1.pid")
+    print("pid_path:", pid_path)
+    return pid_path
+
+def addVignettesFromSample(path, folder, db:DB, projectId):
+    """
+    get vignette data from sample and add them to the DB
+    to finish
     """
 
     # pid_path = Path(path, "Zooscan_scan", "_work", folder, folder + "_dat1.pid")
-    pid_path = Path(path, path, folder + "_dat1.pid")
+    pid_path = Path(path, folder, folder + "_dat1.pid")
     print("pid_path:", pid_path)
     json_filepath = convert_workpid2json(pid_path)
     print("json_filepath:", json_filepath)
@@ -274,9 +302,9 @@ def addVignettesFromSample(path, folder, bearer, db, projectId):
 
 
 
-def addVignettes(path, bearer, db, projectId):
+def addVignettes(path, db:DB, projectId):
     """
-
+    parse _work folder and add the vignettes to the DB
     """
     print("path:", path)
     
@@ -287,7 +315,7 @@ def addVignettes(path, bearer, db, projectId):
 
     for folder in folders:
         print("folder:", folder)
-        addVignettesFromSample(path, folder, bearer, db, projectId)
+        addVignettesFromSample(path, folder, db, projectId)
 
 
 def extract_background_info(log_file_path):
@@ -655,6 +683,7 @@ def import_old_project(project:Project):
     # print("import_old_project")
     # print("project: ", project)
 
+    db = DB(db=project.db,bearer=project.bearer)
 
     print("import project path", project.path)
     print("import project bearer", project.bearer)
@@ -665,10 +694,17 @@ def import_old_project(project:Project):
         raise HTTPException(status_code=404, detail=f"Project path '{project.path}' does not exist")
 
     projectname = project.name if project.name != None else Path(project.path).name
+    driveName = project.drive if project.drive != None else Path(project.path).parent.name
 
-    instrumentSN = project.instrumentSerialNumber
-    if instrumentSN != None:
-        instrument = getInstrumentFromSN(project.db, project.bearer, instrumentSN)
+    driveId = getDriveId(db, driveName)
+    print("driveId: ", driveId)
+    if driveId == None:
+        raise HTTPException(status_code=404, detail=f"Drive '{driveName}' does not exist")
+
+    # instrumentSN = project.instrumentSerialNumber
+    if project.instrumentSerialNumber != None:
+        # instrument = getInstrumentFromSN(project.db, project.bearer, instrumentSN)
+        instrument = getInstrumentFromSN(db, project.instrumentSerialNumber)
         print("instrument: ", instrument)
     # else:
     if instrument == None:
@@ -694,7 +730,7 @@ def import_old_project(project:Project):
     body = {
         # "name": 'SebProjectFromHappy',
         "name" : projectname,
-        "driveId": '65bd147e3ee6f56bc8737879',
+        "driveId": driveId, #'65bd147e3ee6f56bc8737879',
         "instrumentId": instrument['id'], #'65c4e0e44653afb2f69b11d1',
         # "acronym": 'acronym',
         # "description": 'dyfamed',
@@ -760,7 +796,7 @@ def import_old_project(project:Project):
 
     addBackground(project.path, project.bearer, project.db, projectid, instrumentid=instrument['id'], userid="toto")
 
-    addVignettes(project.path, project.bearer, project.db, projectid)
+    #addVignettes(project.path, project.bearer, project.db, projectid)
 
     # CommitTransaction(project.db, project.bearer, transactionId)
     

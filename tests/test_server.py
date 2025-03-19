@@ -41,6 +41,7 @@ class Test_server(unittest.TestCase):
 
     def test_dbserver_withconfig(self):
         from src.config import config
+        # print(config.dbserver)
         server = Server(config.dbserver)
         self.assertTrue(server.test_server())
 

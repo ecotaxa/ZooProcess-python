@@ -2,30 +2,70 @@
 
 from fastapi import HTTPException
 import requests
+from  src.DB import DB
 
-
-def getInstrumentFromSN(db,bearer,instrumentSN):
-    url = f"{db}instruments"
-    print("url: ", url)
+# def getInstrumentFromSN(db,bearer,instrumentSN):
+    # url = f"{db}instruments"
+    # print("url: ", url)
     
-    headers = {
-        "Authorization": f"Bearer {bearer}",
-        "Content-Type": "application/json",
-    }
-    print("headers: ", headers)
-    response = requests.get(url, headers=headers)
-    print("response: ", response)
-    if response.status_code == 200:
-        instruments = response.json()
+    # headers = {
+    #     "Authorization": f"Bearer {bearer}",
+    #     "Content-Type": "application/json",
+    # }
+    # print("headers: ", headers)
+    # response = requests.get(url, headers=headers)
+    # print("response: ", response)
+    # if response.status_code == 200:
+    #     instruments = response.json()
+    #     print("instruments: ", instruments)
+    #     for instrument in instruments:
+    #         if instrument["sn"] == instrumentSN:
+    #             return instrument
+    # if response.status_code == 401:
+    #     raise HTTPException(status_code=401, detail="Unauthorized - Please, update your bearer")
+    # if response.status_code == 403:
+    #     raise HTTPException(status_code=401, detail="Unauthorized")
+
+def getInstrumentFromSN(db,instrumentSN):
+    instruments = db.get("instruments")
+    for instrument in instruments:
         print("instruments: ", instruments)
-        for instrument in instruments:
-            if instrument["sn"] == instrumentSN:
-                return instrument
-    if response.status_code == 401:
-        raise HTTPException(status_code=401, detail="Unauthorized - Please, update your bearer")
-    if response.status_code == 403:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        if instrument["sn"] == instrumentSN:
+            return instrument
     return None
+
+def getDriveId(db:DB,driveName) -> str :
+    # url = f"{db}drives"
+    # print("url: ", url) 
+
+    # headers = {
+    #     "Authorization": f"Bearer {bearer}",
+    #     "Content-Type": "application/json",
+    # }
+    # print("headers: ", headers)
+    # response = requests.get(url, headers=headers)   
+    # print("response: ", response)
+    # if response.status_code == 200:
+    #     drives = response
+    #     print("drives: ", drives)
+    #     for drive in drives:
+    #         if drive["name"] == driveName:
+    #             return drive["id"]
+    #         return drive["id"]
+    #     return None
+    # if response.status_code == 401:
+    #     raise HTTPException(status_code=401, detail="Unauthorized - Please, update your bearer")
+    # if response.status_code == 403:
+    #     raise HTTPException(status_code=401, detail="Unauthorized")
+    # return None
+    
+    drives = db.get("drives")
+    print("response: ", drives)    
+    for drive in drives:
+        if drive["name"] == driveName:
+            return drive["id"]
+    return None
+
 
 
 

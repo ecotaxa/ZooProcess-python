@@ -5,6 +5,7 @@ from tests import BaseTest
 # from src import config
 # import src.config
 from src.config import config
+from fastapi import HTTPException
 
 
 class DB(BaseTest):
@@ -52,24 +53,38 @@ class DB(BaseTest):
         clean_url = url.lstrip('/')
         return f"{base_url}/{clean_url}"
 
+    def status(self, response):
+        if response.status_code == 200:
+            return response.json()
+        else:
+            if response.status_code == 401:
+                raise HTTPException(status_code=401, detail="Unauthorized - Please, update your bearer")
+            if response.status_code == 403:
+                raise HTTPException(status_code=401, detail="Unauthorized")
+            raise ValueError(f"Error: {response.status_code} - {response.text}")
+
     def get(self, url:str):
         """Sends a GET request to the specified URL."""
         response = requests.get(self.makeUrl(url), headers=self.getHeader())
-        return response.json()
+        # return response.json()
+        return self.status(response)
     
     def post(self, url:str, body:dict):
         """Sends a POST request with a JSON body."""
         response = requests.post(self.makeUrl(url), json=body, headers=self.getHeader())
-        return response.json()
+        # return response.json()
+        return self.status(response)
     
     def put(self, url:str, body:dict):
         """Sends a PUT request with a JSON body."""
         response = requests.put(self.makeUrl(url), json=body, headers=self.getHeader())
-        return response.json()
+        # return response.json()
+        return self.status(response)
     
     def patch(self, url:str, body:dict):
-        """"Sends a PATCH request with a JSON body."""
+        """Sends a PATCH request with a JSON body."""
         response = requests.patch(self.makeUrl(url), json=body, headers=self.getHeader())
-        return response.json()
+        # return response.json()
+        return self.status(response)
 
 
