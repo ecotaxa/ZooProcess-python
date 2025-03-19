@@ -8,22 +8,23 @@ from .img_tools import rename
 
 from pathlib import Path
 
-def create_folder(path: Path):
+from src.tools import create_folder
+
+# def create_folder(path: Path):
     
-    print("create folder:" , path.as_posix())
-    p = Path(path)
-    try :
-        if not os.path.isdir(path):
-            #os.mkdir(path)
-            #os.makedirs(path, exist_ok=True)
-            p.mkdir(parents=True, exist_ok=True)
-            print("folder created: ", path.absolute)
-    except OSError as error: 
-        path_str = str(p.absolute)
+#     print("create folder:" , path.as_posix())
+#     p = Path(path)
+#     try :
+#         if not os.path.isdir(path):
+#             #os.mkdir(path)
+#             #os.makedirs(path, exist_ok=True)
+#             p.mkdir(parents=True, exist_ok=True)
+#             print("folder created: ", path.absolute())
+#     except OSError as error: 
+#         path_str = str(p.absolute())
 
-        # eprint("cannot create folder: ", path_str ,", ", str(error))
-        print("cannot create folder: ", path_str ,", ", str(error))
-
+#         # eprint("cannot create folder: ", path_str ,", ", str(error))
+#         print("cannot create folder: ", path_str ,", ", str(error))
 def print_exif(data):
 
     for datum in data:
@@ -69,13 +70,15 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
     if ( path_out == None):
         print("path_out == None")
         path_out = rename(path, extraname=None, ext="jpg")
-        print("path_out: ", path_out)
+    print("path_out: ", path_out)
 
     if os.path.isfile(path_out) and force != True:
+        print("file already exists: ", path_out)
         return path_out
 
     #TODO : reflechir si on crée le dossier si il n'existe pas ou si on lève une exception
     folder = os.path.dirname(path_out)
+    print("folder: ", folder)
     if os.path.isdir(folder) == False:
         print("folder does not exist, creating it", folder)
         create_folder(Path(folder))
