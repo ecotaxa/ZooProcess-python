@@ -154,5 +154,11 @@ python3 -m unittest discover tests
 
 or one test
 ```bash
-python -m unittest tests/*.py
+python -m unittest tests/*.py 
+```
+add -v for verbose mode, and ahave list of test functions
+
+Run only on test function
+```bash
+python -m unittest tests.test_server.Test_server.test_dbserver_withconfig
 ```
