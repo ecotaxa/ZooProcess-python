@@ -504,7 +504,7 @@ def mediumBackground(back1url, back2url):
 
     # Obtenir juste le filename
     filename = path_obj.name
-    extraname = "medium_" + filename
+    extraname = "_medium_" + filename
     print("mediumBackground path: ", path)
     print("mediumBackground filename: ", filename)
     print("mediumBackground extraname: ", extraname)
