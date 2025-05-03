@@ -492,6 +492,9 @@ def mediumBackground(back1url, back2url):
     import numpy as np
 
     print("POST /background/", back1url, back2url)
+    from ZooProcess_lib.Processor import Processor
+    # @see ZooProcess_lib repo for examples, some config is needed here.
+    processor = Processor()
 
     # back : np.ndarray
 
