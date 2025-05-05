@@ -11,4 +11,5 @@ numpy
 # matplotlib
 opencv-python # cv2
 Pillow # PIL
+ZooProcess-lib@git+https://github.com/ecotaxa/ZooProcess-lib.git@v0.1.0
 
