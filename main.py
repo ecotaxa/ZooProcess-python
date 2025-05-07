@@ -221,11 +221,11 @@ def convert(image:ImageUrl):
     # dst = image + ".jpg"
     # dst = /Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif
 
-    print("converts ", image.src, " to ", image.dst)
+    # print("converts ", image.src, " to ", image.dst)
 
     try:
         file_out = convert_tiff_to_jpeg(image.src, image.dst)
-        print("file_out: ", file_out)
+        # print("file_out: ", file_out)
         return file_out
         # return {"dst" : file_out }
     except:
@@ -348,6 +348,7 @@ def markTaskWithDoneStatus(taskId,db,bearer,message="done"):
         print("db: ", db)
 
         return
+    
     url = f"{dbserver.getUrl()}/task/{taskId}"
     print("url: ", url)
     body = {
@@ -369,6 +370,7 @@ def markTaskWithRunningStatus(taskId,db,bearer,message="running"):
         print("db: ", db)
 
         return
+    
     url = f"{dbserver.getUrl()}/task/{taskId}"
     print("url: ", url)
     body = {
@@ -491,39 +493,68 @@ def mediumBackground(back1url, back2url):
     """
     import numpy as np
 
-    print("POST /background/", back1url, back2url)
-    from ZooProcess_lib.Processor import Processor
+    print("mediumBackground", back1url, back2url)
+    from ZooProcess_lib.Processor import Processor, Lut
     # @see ZooProcess_lib repo for examples, some config is needed here.
-    processor = Processor()
+    lut = Lut()
+    processor = Processor(None,lut)
+
 
     # back : np.ndarray
 
     from pathlib import Path
 
-    path_obj = Path(back1url)
+    path_obj1 = Path(back1url)
+    path_obj2 = Path(back2url)
 
     # Obtenir le chemin sans le filename
-    path = str(path_obj.parent)
+    path = str(path_obj1.parent)
 
     # Obtenir juste le filename
-    filename = path_obj.name
+    filename = path_obj1.name
     extraname = "_medium_" + filename
     print("mediumBackground path: ", path)
     print("mediumBackground filename: ", filename)
     print("mediumBackground extraname: ", extraname)
     print("mediumBackground back1url: ", back1url)
     print("mediumBackground back2url: ", back2url)  
-    print("mediumBackground path_obj: ", path_obj)
-    print("mediumBackground path_obj.parent: ", path_obj.parent)
-    print("mediumBackground path_obj.name: ", path_obj.name)
-    print("mediumBackground path_obj.stem: ", path_obj.stem)
-    print("mediumBackground path_obj.suffix: ", path_obj.suffix)
+    print("mediumBackground path_obj: ", path_obj1)
+    print("mediumBackground path_obj.parent: ", path_obj1.parent)
+    print("mediumBackground path_obj.name: ", path_obj1.name)
+    print("mediumBackground path_obj.stem: ", path_obj1.stem)
+    print("mediumBackground path_obj.suffix: ", path_obj1.suffix)
 
-    img = loadimage(back1url)
-    backurl = saveimage(img,filename=extraname,path=path)   
-    print("mediumBackground backurl: ", backurl)
 
-    return  backurl
+    _8bits_back1url = Path(path , f"{path_obj1.stem}_8bits{path_obj1.suffix}")
+    print("_8bits_back1url: ", _8bits_back1url)
+    _8bits_back2url = Path(path , f"{path_obj2.stem}_8bits{path_obj2.suffix}")
+    print("_8bits_back2url: ", _8bits_back2url)
+    # _8bits_back1url = Path(path_obj1.parent, path_obj1.stem, "_8bits" , ".tif" )
+    # print("_8bits_back1url: ", _8bits_back1url)
+    # _8bits_back2url = Path(path_obj2.parent, path_obj2.stem, "_8bits" , ".tif" )
+    # print("_8bits_back2url: ", _8bits_back2url)
+
+    processor.converter.do_file_to_file(Path(back1url), Path(_8bits_back1url))
+    processor.converter.do_file_to_file(Path(back2url), Path(_8bits_back2url))
+
+    print("8 bit convert OK")
+
+    # img = loadimage(back1url)
+    # backurl = saveimage(img,filename=extraname,path=path)   
+    # print("mediumBackground backurl: ", backurl)
+
+    source_files = [ _8bits_back1url , _8bits_back2url ]
+    backurl = Path(path_obj1.parent, f"{path_obj1.stem}_background_large_manual.tif" )
+    output_path = backurl
+
+    # print("backurl:", backurl.as_uri() )
+    print("backurl:", backurl.as_posix() )
+
+    print("Processing bg_combiner")
+    processor.bg_combiner.do_files(source_files, output_path)
+    print("Processing bg_combiner done")
+
+    return  backurl.as_posix()
 
 
 
@@ -580,6 +611,7 @@ def background(background:Background):
         markTaskWithDoneStatus( background.taskId, background.db, background.bearer, response.json().get("id"))
         print(response.json())
         # return response.json().get("id")
+        markTaskWithDoneStatus( background.taskId, background.db, background.bearer, "Finished")
         return response.json()
     else:
         print("response.status_code:",response.status_code)
@@ -830,11 +862,11 @@ def test(project:Project):
             # print("subsample",subsample)
 
             return subsample
-            return sample
-            return sample["subsample"]
-            # return sample["name"] == folder
-            return {sample, subsample}
-            return 1
+            # return sample
+            # return sample["subsample"]
+            # # return sample["name"] == folder
+            # return {sample, subsample}
+            # return 1
         
 
 
