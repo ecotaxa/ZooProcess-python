@@ -28,7 +28,8 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 #pip install uvicorn  # if issue run manually uviicorn installation
-uvicorn main:app --reload
+# uvicorn main:app --reload
+python -m uvicorn main:app --reload
 ```
 
 
