@@ -66,24 +66,24 @@ def get_ExifTag(exifdata, tag):
 
 def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
     PIL.Image.MAX_IMAGE_PIXELS = 375000000
-    print("EXIF")
+    # print("EXIF")
     if ( path_out == None):
-        print("path_out == None")
+        # print("path_out == None")
         path_out = rename(path, extraname=None, ext="jpg")
-    print("path_out: ", path_out)
+    # print("path_out: ", path_out)
 
     if os.path.isfile(path_out) and force != True:
-        print("file already exists: ", path_out)
+        # print("file already exists: ", path_out)
         return path_out
 
     #TODO : reflechir si on crée le dossier si il n'existe pas ou si on lève une exception
     folder = os.path.dirname(path_out)
-    print("folder: ", folder)
+    # print("folder: ", folder)
     if os.path.isdir(folder) == False:
-        print("folder does not exist, creating it", folder)
+        # print("folder does not exist, creating it", folder)
         create_folder(Path(folder))
 
-    print("open image: " , path)
+    # print("open image: " , path)
     # image = Image.open(path)
     # Open the TIFF image
     try:
@@ -91,9 +91,9 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
 
         exif_dict = tiff_image.getexif()
 
-        print("converting")
+        # print("converting")
         BitsPerSample = get_ExifTag(exif_dict,"BitsPerSample")
-        print("BitsPerSample:", BitsPerSample)
+        # print("BitsPerSample:", BitsPerSample)
 
         if (BitsPerSample == 16 ): # "uint16"):
 
