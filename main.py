@@ -28,6 +28,9 @@ from src.Models import Scan, Folder, BMProcess, Background
 # for /test 
 from src.importe import addVignettes, listWorkFolders,addVignettesFromSample
 
+from src.TaskStatus import TaskStatus
+from src.DB import DB
+
 
 
 # from src.separate import separate_multiple
@@ -427,6 +430,13 @@ def process(folder:BMProcess):
 
     dst = folder.dst if folder.dst != "" else folder.src
 
+
+    db = DB(folder.bearer,folder.db)
+    taskStatus = TaskStatus(folder.taskId, db)
+
+    #markTaskWithRunningStatus( folder.taskId, folder.db, folder.bearer, "running")
+    taskStatus.sendRunning()
+
     # if ( folder.taskId != None ): 
     #     ret = {
     #         "taskId": folder.taskId,
@@ -434,43 +444,56 @@ def process(folder:BMProcess):
     #     }
         # return ret
 
-    db = folder.db
+    # db = folder.db
     # db = dbserver
 
     if ( folder.scan == "" ) :
         print("scan is not defined")
-        markTaskWithErrorStatus(folder.taskId,db,folder.bearer,"no scan found")
+        # markTaskWithErrorStatus(folder.taskId, folder.db, folder.bearer, "no scan found")
+        taskStatus.sendError( "no scan found")
         raise HTTPException(status_code=404, detail="Scan not found")
     if ( folder.back == "" ):
         print("back is not defined")
-        markTaskWithErrorStatus(folder.taskId,db,folder.bearer,"no background found")
+        # markTaskWithErrorStatus(folder.taskId, folder.db, folder.bearer, "no background found")
+        taskStatus.sendError( "no background found")
         raise HTTPException(status_code=404, detail="Background not found")
 
     # out = "/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727764546231-800724713.jpg"
     # out = "/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727771577652-46901916001.jpg"
 
-    out = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_out1.gif"
-    mask = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_msk1.gif"
-    vis = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_vis1.tif"
+    # out = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_out1.gif"
+    # mask = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_msk1.gif"
+    # vis = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_vis1.tif"
 
-    ret = {
-        "scan": folder.scan,
-        "back": folder.back,
-        "mask": mask,
-        "out": out,
-        "vis": vis,
-        "dst": dst,
-    }
 
-    print("ret:",ret)
+    from src.Process import Process
+    
+    process = Process(folder.scan, folder.back, taskStatus, db) 
 
-    if (folder.taskId != None and folder.bearer != None and db != None):
-        sendImageProcessed(folder.taskId,db,folder.bearer,"MASK",mask)
-        sendImageProcessed(folder.taskId,db,folder.bearer,"OUT",out)
-        sendImageProcessed(folder.taskId,db,folder.bearer,"VIS",vis)
-        markTaskWithDoneStatus(folder.taskId,db,folder.bearer,json.dumps(ret))
+    process.run()
 
-    return ret
+
+
+    # ret = {
+    #     "scan": folder.scan,
+    #     "back": folder.back,
+    #     "mask": mask,
+    #     "out": out,
+    #     "vis": vis,
+    #     "dst": dst,
+    # }
+
+    # print("ret:",ret)
+
+    # if (folder.taskId != None and folder.bearer != None and folder.db != None):
+    #     sendImageProcessed(folder.taskId,folder.db,folder.bearer,"MASK",mask)
+    #     sendImageProcessed(folder.taskId,folder.db,folder.bearer,"OUT",out)
+    #     sendImageProcessed(folder.taskId,folder.db,folder.bearer,"VIS",vis)
+    #     markTaskWithDoneStatus(folder.taskId,folder.db,folder.bearer,json.dumps(ret))
+
+    # return ret
+
+
 
 
 def getScanFromDB(scanId):
