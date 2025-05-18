@@ -1,5 +1,5 @@
 import os
-import unittest
+import pytest
 from pathlib import Path
 
 from src.config import WORKING_DIR, config
@@ -7,7 +7,7 @@ from src.sqlite_db import SQLAlchemyDB, init_db
 from src.db_models import Example, User
 
 
-class TestSQLAlchemyDB(unittest.TestCase):
+class TestSQLAlchemyDB:
     """Test the SQLAlchemyDB class and SQLAlchemy ORM functionality."""
 
     def test_db_creation(self):
@@ -16,15 +16,15 @@ class TestSQLAlchemyDB(unittest.TestCase):
         db_path = init_db()
 
         # Check that the database file exists
-        self.assertTrue(os.path.exists(db_path))
-        self.assertEqual(os.path.basename(db_path), config.DB_NAME)
+        assert os.path.exists(db_path)
+        assert os.path.basename(db_path) == config.DB_NAME
 
     def test_db_session(self):
         """Test that we can create a SQLAlchemy session."""
         db = SQLAlchemyDB()
         with db:
             # Check that the session is created
-            self.assertIsNotNone(db.session)
+            assert db.session is not None
 
     def test_orm_query(self):
         """Test that we can use SQLAlchemy ORM to query the database."""
@@ -39,9 +39,9 @@ class TestSQLAlchemyDB(unittest.TestCase):
             result = db.session.query(Example).filter_by(name="test_orm").first()
 
             # Check that the record was inserted correctly
-            self.assertIsNotNone(result)
-            self.assertEqual(result.name, "test_orm")
-            self.assertEqual(result.value, "orm_value")
+            assert result is not None
+            assert result.name == "test_orm"
+            assert result.value == "orm_value"
 
             # Clean up
             db.session.delete(result)
@@ -65,16 +65,12 @@ class TestSQLAlchemyDB(unittest.TestCase):
             result = db.session.query(User).filter_by(id="test123").first()
 
             # Check that the user was inserted correctly
-            self.assertIsNotNone(result)
-            self.assertEqual(result.id, "test123")
-            self.assertEqual(result.name, "Test User")
-            self.assertEqual(result.email, "test@example.com")
-            self.assertEqual(result.password, "encrypted_password_hash")
+            assert result is not None
+            assert result.id == "test123"
+            assert result.name == "Test User"
+            assert result.email == "test@example.com"
+            assert result.password == "encrypted_password_hash"
 
             # Clean up
             db.session.delete(result)
             db.session.commit()
-
-
-if __name__ == "__main__":
-    unittest.main()
