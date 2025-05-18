@@ -7,7 +7,7 @@ env = os.environ.get("APP_ENV", "development")
 WORKING_DIR = os.environ.get("WORKING_DIR", os.getcwd())
 # Get the database file name from the environment variable or use the default
 DB_NAME = os.environ.get("DB_NAME", "v10.sqlite")
-# Get the drives list from the environment variable or use an empty list
+# Get the drive list from the environment variable or use an empty list
 DRIVES = os.environ.get("DRIVES", "").split(",") if os.environ.get("DRIVES") else []
 
 # Import the environment-specific configuration

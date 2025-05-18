@@ -53,6 +53,32 @@ app = FastAPI()
 # Security scheme for JWT bearer token authentication
 security = HTTPBearer()
 
+# Import sys for DRIVES validation
+import sys
+from src.config import config
+
+
+def validate_drives():
+    """Validate DRIVES at application startup"""
+    if not config.DRIVES:
+        print(
+            "ERROR: DRIVES environment variable is empty or not set. Application startup failed."
+        )
+        sys.exit(1)
+
+    # Check if all paths in DRIVES exist and are accessible
+    invalid_drives = []
+    for drive in config.DRIVES:
+        if drive and not os.path.exists(drive):
+            invalid_drives.append(drive)
+
+    if invalid_drives:
+        print(
+            f"ERROR: The following drives do not exist or are not accessible: {', '.join(invalid_drives)}"
+        )
+        sys.exit(1)
+
+
 origins = [
     "*",
     "localhost",
@@ -924,3 +950,8 @@ def test(project: Project):
         raise HTTPException(status_code=500, detail=f"Failed: {e}")
 
     return "test OK"
+
+
+# Call validate_drives when the application starts up
+if __name__ == "__main__":
+    validate_drives()
