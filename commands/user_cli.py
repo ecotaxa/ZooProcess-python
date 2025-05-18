@@ -13,7 +13,7 @@ Usage:
 
 """
 
-import typer
+import click
 import uuid
 from typing import Optional
 from rich.console import Console
@@ -23,27 +23,35 @@ from sqlalchemy.exc import IntegrityError
 from src.db_models import User
 from src.sqlite_db import SQLAlchemyDB
 
-app = typer.Typer(help="Manage users in the ZooProcess application")
 console = Console()
 
 
+@click.group(help="Manage users in the ZooProcess application")
+def app():
+    """Manage users in the ZooProcess application."""
+    pass
+
+
 @app.command()
-def add(
-    name: str = typer.Option(..., help="User's full name"),
-    email: str = typer.Option(..., help="User's email address"),
-    password: str = typer.Option(
-        ..., help="User's password", prompt=True, hide_input=True
-    ),
-    confirm_password: str = typer.Option(
-        ..., help="Confirm password", prompt=True, hide_input=True
-    ),
-) -> None:
+@click.option("--name", required=True, help="User's full name")
+@click.option("--email", required=True, help="User's email address")
+@click.option(
+    "--password", required=True, help="User's password", prompt=True, hide_input=True
+)
+@click.option(
+    "--confirm-password",
+    required=True,
+    help="Confirm password",
+    prompt=True,
+    hide_input=True,
+)
+def add(name, email, password, confirm_password) -> None:
     """
     Add a new user to the database.
     """
     if password != confirm_password:
         console.print("[bold red]Passwords do not match![/bold red]")
-        raise typer.Exit(code=1)
+        click.exit(1)
 
     # Generate a unique ID for the user
     user_id = str(uuid.uuid4())
@@ -66,18 +74,15 @@ def add(
             )
         except IntegrityError:
             console.print("[bold red]Error: Email already exists![/bold red]")
-            raise typer.Exit(code=1)
+            click.exit(1)
 
 
 @app.command()
-def update(
-    id: str = typer.Option(..., help="User ID"),
-    name: Optional[str] = typer.Option(None, help="User's new name"),
-    email: Optional[str] = typer.Option(None, help="User's new email address"),
-    password: Optional[str] = typer.Option(
-        None, help="User's new password", prompt=False, hide_input=True
-    ),
-) -> None:
+@click.option("--id", required=True, help="User ID")
+@click.option("--name", help="User's new name")
+@click.option("--email", help="User's new email address")
+@click.option("--password", help="User's new password", hide_input=True)
+def update(id, name, email, password) -> None:
     """
     Update an existing user in the database.
     """
@@ -86,7 +91,7 @@ def update(
 
         if not user:
             console.print(f"[bold red]User with ID {id} not found![/bold red]")
-            raise typer.Exit(code=1)
+            click.exit(1)
 
         if name:
             user.name = name
@@ -95,10 +100,10 @@ def update(
             user.email = email
 
         if password:
-            confirm_password = typer.prompt("Confirm password", hide_input=True)
+            confirm_password = click.prompt("Confirm password", hide_input=True)
             if password != confirm_password:
                 console.print("[bold red]Passwords do not match![/bold red]")
-                raise typer.Exit(code=1)
+                click.exit(1)
             user.password = password  # In a real application, this should be hashed
 
         try:
@@ -106,16 +111,13 @@ def update(
             console.print(f"[bold green]User {id} updated successfully![/bold green]")
         except IntegrityError:
             console.print("[bold red]Error: Email already exists![/bold red]")
-            raise typer.Exit(code=1)
+            click.exit(1)
 
 
 @app.command()
-def remove(
-    id: str = typer.Option(..., help="User ID"),
-    force: bool = typer.Option(
-        False, "--force", "-f", help="Force removal without confirmation"
-    ),
-) -> None:
+@click.option("--id", required=True, help="User ID")
+@click.option("--force", "-f", is_flag=True, help="Force removal without confirmation")
+def remove(id, force) -> None:
     """
     Remove a user from the database.
     """
@@ -124,15 +126,15 @@ def remove(
 
         if not user:
             console.print(f"[bold red]User with ID {id} not found![/bold red]")
-            raise typer.Exit(code=1)
+            click.exit(1)
 
         if not force:
-            confirm = typer.confirm(
+            confirm = click.confirm(
                 f"Are you sure you want to remove user {user.name} ({user.email})?"
             )
             if not confirm:
                 console.print("[bold yellow]Operation cancelled![/bold yellow]")
-                raise typer.Exit()
+                click.exit(0)
 
         db.session.delete(user)
         db.session.commit()

@@ -5,8 +5,6 @@ from typing import Union, Optional, Any, Dict
 
 from PIL.ExifTags import TAGS
 
-from .img_tools import rename
-
 from pathlib import Path
 
 from src.tools import create_folder
@@ -69,18 +67,18 @@ def get_ExifTag(exifdata: Dict[Any, Any], tag: str) -> Optional[Any]:
 
 
 def convert_tiff_to_jpeg(
-    path: Union[str, Path],
-    path_out: Optional[Union[str, Path]] = None,
+    path: Path,
+    path_out: Optional[Path] = None,
     force: Optional[bool] = None,
-) -> Optional[str]:
+) -> Optional[Path]:
     PIL.Image.MAX_IMAGE_PIXELS = 375000000
     # print("EXIF")
-    if path_out == None:
+    if path_out is None:
         # print("path_out == None")
-        path_out = rename(path, extraname=None, ext="jpg")
+        path_out = path.with_suffix("jpg")
     # print("path_out: ", path_out)
 
-    if os.path.isfile(path_out) and force != True:
+    if path_out.is_file() and force is not True:
         # print("file already exists: ", path_out)
         return path_out
 

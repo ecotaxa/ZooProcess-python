@@ -2,7 +2,7 @@ import os
 import unittest
 from pathlib import Path
 
-from src.config import WORKING_DIR
+from src.config import WORKING_DIR, config
 from src.sqlite_db import SQLiteDB, init_db
 
 
@@ -16,7 +16,7 @@ class TestSQLiteDB(unittest.TestCase):
 
         # Check that the database file exists
         self.assertTrue(os.path.exists(db_path))
-        self.assertEqual(os.path.basename(db_path), "v10.sqlite")
+        self.assertEqual(os.path.basename(db_path), config.DB_NAME)
 
     def test_db_connection(self):
         """Test that we can connect to the database."""

@@ -6,7 +6,7 @@ This module contains tests for the user management CLI commands.
 
 import pytest
 from unittest.mock import patch, MagicMock
-from typer.testing import CliRunner
+from click.testing import CliRunner
 from sqlalchemy.exc import IntegrityError
 
 from commands.user_cli import app

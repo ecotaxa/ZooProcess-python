@@ -1,32 +1,27 @@
 # import os
+import os
 from pathlib import Path
 from typing import Union
-import os
-import requests
 
-# from fastapi import FastAPI
+import requests
+from ZooProcess_lib.Processor import Processor, Lut
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from ZooProcess_lib.Processor import Processor, Lut
 
 from src.Models import Scan, Folder, BMProcess, Background, User
-from src.db_dependencies import get_db
 from src.Project import Project
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
 from src.convert import convert_tiff_to_jpeg
+from src.db_dependencies import get_db
 from src.demo_get_vignettes import generate_json
-from src.logger import logger
-
-# from src.tools import mkdir
-from src.img_tools import mkdir
 from src.importe import import_old_project, getDat1Path, pid2json
-from src.sqlite_db import db_path as sqlite_db_path
-
 # for /test
 from src.importe import listWorkFolders
+from src.logger import logger
+from src.process import Process
 from src.separate import Separate
 from src.separate_fn import separate_images
 from src.server import Server
@@ -147,8 +142,8 @@ def separate(folder: Folder):
         mask_folder = f"{srcFolder}mask/"
         result_folder = f"{srcFolder}result/"
 
-        mkdir(mask_folder)
-        mkdir(result_folder)
+        # mkdir(mask_folder)
+        # mkdir(result_folder)
 
         db = dbserver
         bearer = None
@@ -438,8 +433,6 @@ def process(folder: BMProcess):
     # out = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_out1.gif"
     # mask = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_msk1.gif"
     # vis = "/Users/sebastiengalvagno/piqv/plankton/zooscan_lov/Zooscan_iado_wp2_2023_sn002/Zooscan_scan/_work/t_17_2_tot_1/t_17_2_tot_1_vis1.tif"
-
-    from src.Process import Process
 
     process = Process(folder.scan, folder.back, taskStatus, db)
 

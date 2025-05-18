@@ -45,15 +45,14 @@ def eprint(*args, **kwargs):
 
 def create_folder(path: Path):
     logger.info(f"create folder: {path.as_posix()}")
-    p = Path(path)
     try:
-        if not os.path.isdir(path):
+        if not path.is_dir():
             # os.mkdir(path)
             # os.makedirs(path, exist_ok=True)
-            p.mkdir(parents=True, exist_ok=True)
+            path.mkdir(parents=True, exist_ok=True)
             logger.info(f"folder created: {path.absolute()}")
     except OSError as error:
-        path_str = str(p.absolute())
+        path_str = str(path.absolute())
 
         logger.error(f"cannot create folder: {path_str}, {str(error)}")
         eprint("cannot create folder: ", path_str, ", ", str(error))

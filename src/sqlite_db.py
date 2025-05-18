@@ -2,7 +2,7 @@ import os
 import sqlite3
 from pathlib import Path
 from sqlalchemy.orm import Session
-from src.config import WORKING_DIR
+from src.config import WORKING_DIR, config
 from src.db_models import (
     get_engine,
     get_session_maker,
@@ -23,13 +23,16 @@ class SQLiteDB:
         connection (sqlite3.Connection): The SQLite database connection.
     """
 
-    def __init__(self, db_name="v10.sqlite"):
+    def __init__(self, db_name=None):
         """
         Initialize the SQLite database.
 
         Args:
-            db_name (str): The name of the SQLite database file. Defaults to "v10.sqlite".
+            db_name (str, optional): The name of the SQLite database file.
+                If None, uses the DB_NAME from config. Defaults to None.
         """
+        if db_name is None:
+            db_name = config.DB_NAME
         self.db_path = os.path.join(WORKING_DIR, db_name)
         self.connection = None
         self.engine = get_engine(db_name)
@@ -128,13 +131,16 @@ class SQLAlchemyDB:
         session (sqlalchemy.orm.Session): The SQLAlchemy session.
     """
 
-    def __init__(self, db_name="v10.sqlite"):
+    def __init__(self, db_name=None):
         """
         Initialize the SQLAlchemy database.
 
         Args:
-            db_name (str): The name of the SQLite database file. Defaults to "v10.sqlite".
+            db_name (str, optional): The name of the SQLite database file.
+                If None, uses the DB_NAME from config. Defaults to None.
         """
+        if db_name is None:
+            db_name = config.DB_NAME
         self.engine = get_engine(db_name)
         self.SessionMaker = get_session_maker(self.engine)
         self.session = None

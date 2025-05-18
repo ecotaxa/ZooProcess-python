@@ -1,4 +1,4 @@
-import unittest
+import pytest
 
 from src.debug_tools import dump_structure
 from src.img_tools import mkdir
@@ -20,20 +20,17 @@ zooscan_result_folder = project + "result/"
 #     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-class Test_separate(unittest.TestCase):
+def _test_separate():
+    mkdir(zooscan_mask_folder)
+    mkdir(zooscan_result_folder)
+    images = separate_images(
+        path=path,
+        path_out=zooscan_mask_folder,
+        path_result=zooscan_result_folder,
+        db=None,
+    )
 
-    def _test_separate(self):
-
-        mkdir(zooscan_mask_folder)
-        mkdir(zooscan_result_folder)
-        images = separate_images(
-            path=path,
-            path_out=zooscan_mask_folder,
-            path_result=zooscan_result_folder,
-            db=None,
-        )
-
-        dump_structure(images)
+    dump_structure(images)
 
     # def _test_separate_images(self):
 
@@ -57,16 +54,15 @@ class Test_separate(unittest.TestCase):
     #     saveimage(img,img_dst)
     #     print("image merged: ", img_dst)
 
-    def test_image_to_public(self):
 
-        mkdir(zooscan_mask_folder)
-        dest = (
-            "/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/separated/"
-        )
-        mkdir(dest)
+def test_image_to_public():
 
-        images = separate_images(
-            path=path, path_out=zooscan_mask_folder, path_result=dest, taskId=None
-        )
+    mkdir(zooscan_mask_folder)
+    dest = "/Users/sebastiengalvagno/Work/test/nextui/zooprocess_v10/public/separated/"
+    mkdir(dest)
 
-        dump_structure(images)
+    images = separate_images(
+        path=path, path_out=zooscan_mask_folder, path_result=dest, taskId=None
+    )
+
+    dump_structure(images)

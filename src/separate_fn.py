@@ -1,8 +1,11 @@
 import cv2
 import numpy as np
 import requests
+from typing import List, Optional, Union
 
 from .server import Server
+from .logger import logger
+from ZooProcess_lib.img_tools import loadimage, saveimage
 
 # server = "http://niko.obs-vlfr.fr:5000"
 # server2 = "http://localhost:5001"
@@ -22,7 +25,9 @@ dbserver = Server("http://zooprocess.imev-mer.fr:8081/v1/", "/ping")
 #         raise Exception("Server not responding")
 
 
-def send_img_to_separator(filename, out_path=None):
+def send_img_to_separator(
+    filename: str, out_path: Optional[str] = None
+) -> requests.Response:
 
     with open(filename, "rb") as imageData:
 
@@ -39,18 +44,25 @@ def send_img_to_separator(filename, out_path=None):
             # 'Content-Type': 'multipart/form-data'
         }
 
-        print("Request")
-        print("url: ", url)
-        print("headers: ", headers)
-        print("files: ", file_dict)
+        logger.info("Request")
+        logger.info(f"url: {url}")
+        logger.info(f"headers: {headers}")
+        logger.info(f"files: {file_dict}")
 
         response = requests.post(url, files=file_dict, headers=headers)
-        print(response)
+        logger.info(response)
 
         return response
 
 
-def separate_img(path, filename, path_out, taskId=None, bearer=None, db=None):
+def separate_img(
+    path: str,
+    filename: str,
+    path_out: str,
+    taskId: Optional[int] = None,
+    bearer: Optional[str] = None,
+    db: Optional[Server] = None,
+) -> Optional[str]:
 
     fullfilename = path + filename
 
@@ -59,14 +71,14 @@ def separate_img(path, filename, path_out, taskId=None, bearer=None, db=None):
         img = response.content
 
         mask_img = getPath(filename, extraname="mask", ext="png", path=path_out)
-        print("mask file", mask_img)
+        logger.info(f"mask file {mask_img}")
 
         with open(mask_img, "wb") as f:
             f.write(response.content)
 
         if taskId != None:
             data = {"url": mask_img, "type": "mask"}
-            print(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
+            logger.info(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
             if db != None and bearer != None:
                 requests.put(
                     url=f"${dbserver.getUrl()}separator/{taskId}",
@@ -77,11 +89,11 @@ def separate_img(path, filename, path_out, taskId=None, bearer=None, db=None):
         return mask_img
 
     else:
-        print(response.raise_for_status())
+        logger.info(response.raise_for_status())
         return None
 
 
-def separate_apply_mask(filename_image, filename_mask) -> np.ndarray:
+def separate_apply_mask(filename_image: str, filename_mask: str) -> np.ndarray:
 
     img = loadimage(filename_image)
     mask = loadimage(filename_mask)
@@ -98,23 +110,28 @@ def separate_apply_mask(filename_image, filename_mask) -> np.ndarray:
 
 
 def separate_images(
-    path, path_out, path_result, db=None, bearer=None, taskId=None
-) -> list:
+    path: str,
+    path_out: str,
+    path_result: str,
+    db: Optional[Server] = None,
+    bearer: Optional[str] = None,
+    taskId: Optional[int] = None,
+) -> List[str]:
 
     import glob
     import os
 
-    print(" in: ", path)
-    print("out: ", path_out)
+    logger.info(f" in: {path}")
+    logger.info(f"out: {path_out}")
 
     regex = f"{path}*.jpg"
-    print("regex: ", regex)
+    logger.info(f"regex: {regex}")
 
     images = []
 
     if taskId != None:
         data = {"url": img_dst, "type": "merge"}
-        print(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
+        logger.info(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
         requests.put(
             url=f"${dbserver.getUrl()}separator/{taskId}",
             data=data,
@@ -128,19 +145,19 @@ def separate_images(
         mask_img = separate_img(
             path, name, path_out, db=db, taskId=taskId, bearer=bearer
         )
-        print("mask: ", mask_img)
+        logger.info(f"mask: {mask_img}")
 
         img_src = path + name
         img = separate_apply_mask(img_src, mask_img)
 
         img_dst = path_result + name
         saveimage(img, img_dst)
-        print("image merged: ", img_dst)
+        logger.info(f"image merged: {img_dst}")
 
         # taskId = 1
         if taskId != None:
             data = {"url": img_dst, "type": "merge"}
-            print(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
+            logger.info(f"Post to DB: {dbserver.getUrl()}separator/{taskId} < {data}")
             requests.put(
                 url=f"${dbserver.getUrl()}separator/{taskId}",
                 data=data,
@@ -201,6 +218,6 @@ def getFolder(scanId):
 
 def separate_multiple(scanId, bearer):
 
-    print("separate multiple scanId: ", scanId)
+    logger.info(f"separate multiple scanId: {scanId}")
 
     multiples = getFolder(scanId)

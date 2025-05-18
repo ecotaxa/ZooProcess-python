@@ -2,7 +2,7 @@ import os
 import unittest
 from pathlib import Path
 
-from src.config import WORKING_DIR
+from src.config import WORKING_DIR, config
 from src.sqlite_db import SQLAlchemyDB, init_db
 from src.db_models import Example, User
 
@@ -17,7 +17,7 @@ class TestSQLAlchemyDB(unittest.TestCase):
 
         # Check that the database file exists
         self.assertTrue(os.path.exists(db_path))
-        self.assertEqual(os.path.basename(db_path), "v10.sqlite")
+        self.assertEqual(os.path.basename(db_path), config.DB_NAME)
 
     def test_db_session(self):
         """Test that we can create a SQLAlchemy session."""

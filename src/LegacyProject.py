@@ -1,10 +1,11 @@
-
-
-import ProjectClass
+from .ProjectClass import ProjectClass
 from pathlib import Path
-import Project
+
+# import Project
 
 from importe import getInstrumentFromSN
+from src.Project import Project
+
 
 class LegacyProject(ProjectClass):
     """
@@ -14,8 +15,8 @@ class LegacyProject(ProjectClass):
         folder: the project path
     """
 
-    def __init__(self, project_name, piqvFolder , outputFolder = None) -> None:
-        super().__init__(project_name, piqvFolder , outputFolder)
+    def __init__(self, project_name, piqvFolder, outputFolder=None) -> None:
+        super().__init__(project_name, piqvFolder, outputFolder)
 
     # def __init__(self,path:str):
     #     self.project_name=Path(path).name
@@ -29,8 +30,10 @@ class LegacyProject(ProjectClass):
 
     def __init__(self, project: Project):
         # self.project_name = Path(project.path).name
-        self.project_name = project.name if project.name != None else Path(project.path).name
-        self.piqvhome=self.project_name.parent
+        self.project_name = (
+            project.name if project.name != None else Path(project.path).name
+        )
+        self.piqvhome = self.project_name.parent
         self.home = Path(self.piqvhome)
         self.folder = Path(project.path)
 
@@ -40,9 +43,11 @@ class LegacyProject(ProjectClass):
 
         self.instrumentSN = project.instrumentSerialNumber
         if self.instrumentSN != None:
-            self.instrument = getInstrumentFromSN(project.db, project.bearer, self.instrumentSN)
+            self.instrument = getInstrumentFromSN(
+                project.db, project.bearer, self.instrumentSN
+            )
             print("instrument: ", self.instrument)
-    # else:
+        # else:
         if self.instrument == None:
             # need to read a PID file to determine the instrument
             # pidfile = searchPidFile(project.path)
@@ -52,9 +57,7 @@ class LegacyProject(ProjectClass):
             # then user need to give the instrument serial number or create it before import
             # raise HTTPException(status_code=404, detail="Instrument serial number not found. You need to create the instrument before import")
             raise "Instrument serial number not found. You need to create the instrument before import"
-        
-
 
     def importProject(self):
-    
+
         pass
