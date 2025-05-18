@@ -1,6 +1,51 @@
 import jwt
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
 from typing import Dict, Optional
+from starlette.requests import Request
+
+from src.db_dependencies import get_db
+
+
+class CustomHTTPBearer(HTTPBearer):
+    """
+    Custom HTTP Bearer token authentication that returns 401 instead of 403 when no token is provided.
+    """
+
+    async def __call__(
+        self, request: Request
+    ) -> Optional[HTTPAuthorizationCredentials]:
+        authorization = request.headers.get("Authorization")
+        scheme, credentials = self.get_authorization_scheme_param(authorization)
+        if not (authorization and scheme and credentials):
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Not authenticated",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            else:
+                return None
+        if scheme.lower() != "bearer":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication credentials",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            else:
+                return None
+        return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
+
+    def get_authorization_scheme_param(self, authorization_header: str):
+        if not authorization_header:
+            return "", ""
+        scheme, _, param = authorization_header.partition(" ")
+        return scheme, param
+
+
+security = CustomHTTPBearer()
 
 # Secret key for JWT token signing and verification
 # In a real application, this should be stored securely (e.g., environment variable)
@@ -99,3 +144,39 @@ def get_user_from_db(email: str, db):
     from src.db_models import User
 
     return db.query(User).filter(User.email == email).first()
+
+
+async def get_current_user_from_credentials(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+):
+    """
+    FastAPI dependency that extracts and validates the user from credentials.
+
+    Args:
+        credentials: The HTTP authorization credentials
+        db: The database session
+
+    Returns:
+        The user object if authentication is successful
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    # Extract the token from the authorization header
+    token = credentials.credentials
+
+    # Validate the JWT token and extract user information
+    user_data = get_user_from_token(token)
+
+    # Get the user from the database to ensure they exist
+    user = get_user_from_db(user_data["email"], db)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user

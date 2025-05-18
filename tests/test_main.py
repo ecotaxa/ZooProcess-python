@@ -109,3 +109,77 @@ def test_users_me_endpoint_with_invalid_token(client):
 
     # Check that the response is 401 Unauthorized
     assert response.status_code == 401
+
+
+@patch("src.auth.get_user_from_db")
+@patch("src.DB.DB.get")
+def test_projects_endpoint_with_valid_token(mock_db_get, mock_get_user_from_db, client):
+    """Test that the /projects endpoint returns project information with a valid token"""
+    # Set up the mock to return our mock user
+    mock_get_user_from_db.return_value = client["mock_user"]
+
+    # Set up the mock to return a list of projects
+    mock_projects = [
+        {
+            "id": "project1",
+            "name": "Project 1",
+            "path": "/path/to/project1",
+            "instrumentSerialNumber": "SN001",
+            "description": "Test Project 1",
+        },
+        {
+            "id": "project2",
+            "name": "Project 2",
+            "path": "/path/to/project2",
+            "instrumentSerialNumber": "SN002",
+            "description": "Test Project 2",
+        },
+    ]
+    mock_db_get.return_value = mock_projects
+
+    # First, get a valid token by logging in
+    login_data = {"email": "test@example.com", "password": "test_password"}
+    with patch("src.auth.get_user_from_db", return_value=client["mock_user"]):
+        login_response = client["client"].post("/login", json=login_data)
+        token = login_response.json()
+
+    # Make request to the /projects endpoint with the token
+    response = client["client"].get(
+        "/projects", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    # Check that the response is successful
+    assert response.status_code == 200
+
+    # Check that the response contains project information
+    projects_data = response.json()
+    assert projects_data is not None
+    assert len(projects_data) == 2
+    assert projects_data[0]["name"] == "Project 1"
+    assert projects_data[1]["name"] == "Project 2"
+
+    # Verify that get_user_from_db was called with the correct arguments
+    mock_get_user_from_db.assert_called_with(login_data["email"], client["mock_db"])
+
+    # Verify that DB.get was called with the correct arguments
+    mock_db_get.assert_called_once_with("/projects")
+
+
+def test_projects_endpoint_without_token(client):
+    """Test that the /projects endpoint returns 401 without a token"""
+    # Make request to the /projects endpoint without a token
+    response = client["client"].get("/projects")
+
+    # Check that the response is 401 Unauthorized
+    assert response.status_code == 401
+
+
+def test_projects_endpoint_with_invalid_token(client):
+    """Test that the /projects endpoint returns 401 with an invalid token"""
+    # Make request to the /projects endpoint with an invalid token
+    response = client["client"].get(
+        "/projects", headers={"Authorization": "Bearer invalid_token"}
+    )
+
+    # Check that the response is 401 Unauthorized
+    assert response.status_code == 401

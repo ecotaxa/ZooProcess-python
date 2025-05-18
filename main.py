@@ -7,6 +7,7 @@ import requests
 from ZooProcess_lib.Processor import Processor, Lut
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from src.auth import get_current_user_from_credentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -14,6 +15,7 @@ from src.Models import Scan, Folder, BMProcess, Background, User, LoginReq
 from src.Project import Project
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
+from src.config import config
 from src.convert import convert_tiff_to_jpeg
 from src.db_dependencies import get_db
 from src.demo_get_vignettes import generate_json
@@ -716,34 +718,42 @@ def login(login_req: LoginReq, db: Session = Depends(get_db)):
 
 @app.get("/users/me")
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
+    user=Depends(get_current_user_from_credentials),
 ):
     """
     Returns information about the currently authenticated user.
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    from src.auth import get_user_from_token, get_user_from_db
-
-    # Extract the token from the authorization header
-    token = credentials.credentials
-
-    # Validate the JWT token and extract user information
-    user_data = get_user_from_token(token)
-
-    # Get the user from the database to ensure they exist and get up-to-date information
-    user = get_user_from_db(user_data["email"], db)
-
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
     # Return the user information
     return User(id=user.id, name=user.name, email=user.email)
+
+
+@app.get("/projects")
+def get_projects(
+    user=Depends(get_current_user_from_credentials),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """
+    Returns a list of all projects.
+
+    This endpoint requires authentication using a JWT token obtained from the /login endpoint.
+    """
+    from src.DB import DB
+
+    # Create a DB instance with the user's token
+    token = credentials.credentials
+    db_client = DB(bearer=token, db=config.dbserver)
+
+    # Get all projects from the database
+    try:
+        projects = db_client.get("/projects")
+        return projects
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve projects: {str(e)}",
+        )
 
 
 @app.get("/test")
