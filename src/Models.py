@@ -1,6 +1,12 @@
-
 from typing import List, Union
+
 from pydantic import BaseModel
+
+
+class User(BaseModel):
+    id: str
+    name: str
+    email: str
 
 
 class Folder(BaseModel):
@@ -11,6 +17,7 @@ class Folder(BaseModel):
     db: Union[str, None] = None
     taskId: Union[str, None] = None
     scanId: Union[str, None] = None
+
 
 class Background(BaseModel):
     # path: str
@@ -25,6 +32,7 @@ class Background(BaseModel):
     background: List[str]
     instrumentId: str
 
+
 class BMProcess(BaseModel):
     src: str
     dst: Union[str, None] = None
@@ -33,6 +41,7 @@ class BMProcess(BaseModel):
     taskId: Union[str, None] = None
     bearer: Union[str, None] = None
     db: Union[str, None] = None
+
 
 class Scan(BaseModel):
     scanId: str

@@ -1,6 +1,7 @@
 import os
 import PIL
-from PIL import Image 
+from PIL import Image
+from typing import Union, Optional, Any, Dict
 
 from PIL.ExifTags import TAGS
 
@@ -11,7 +12,7 @@ from pathlib import Path
 from src.tools import create_folder
 
 # def create_folder(path: Path):
-    
+
 #     print("create folder:" , path.as_posix())
 #     p = Path(path)
 #     try :
@@ -20,54 +21,61 @@ from src.tools import create_folder
 #             #os.makedirs(path, exist_ok=True)
 #             p.mkdir(parents=True, exist_ok=True)
 #             print("folder created: ", path.absolute())
-#     except OSError as error: 
+#     except OSError as error:
 #         path_str = str(p.absolute())
+
 
 #         # eprint("cannot create folder: ", path_str ,", ", str(error))
 #         print("cannot create folder: ", path_str ,", ", str(error))
-def print_exif(data):
+def print_exif(data: Dict[Any, Any]) -> None:
 
     for datum in data:
         tag = TAGS.get(datum, datum)
         value = data.get(datum)
-        # decode bytes 
+        # decode bytes
         if isinstance(value, bytes):
             value = value.decode()
         print(f"{tag:20}: {value}")
 
-def get_BitsPerSample(data):
+
+def get_BitsPerSample(data: Dict[Any, Any]) -> Optional[Any]:
 
     for datum in data:
         tag = TAGS.get(datum, datum)
         value = data.get(datum)
-        # decode bytes 
+        # decode bytes
         if isinstance(value, bytes):
             value = value.decode()
         # print(f"{tag:20}: {value}")
         if tag == "BitsPerSample":
             return value
-    
+
     return None
 
 
-def get_ExifTag(exifdata, tag):
+def get_ExifTag(exifdata: Dict[Any, Any], tag: str) -> Optional[Any]:
 
     for datum in exifdata:
         embendedtag = TAGS.get(datum, datum)
         value = exifdata.get(datum)
-        # decode bytes 
+        # decode bytes
         if isinstance(value, bytes):
             value = value.decode()
         # print(f"{tag:20}: {value}")
         if embendedtag == tag:
             return value
-    
+
     return None
 
-def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
+
+def convert_tiff_to_jpeg(
+    path: Union[str, Path],
+    path_out: Optional[Union[str, Path]] = None,
+    force: Optional[bool] = None,
+) -> Optional[str]:
     PIL.Image.MAX_IMAGE_PIXELS = 375000000
     # print("EXIF")
-    if ( path_out == None):
+    if path_out == None:
         # print("path_out == None")
         path_out = rename(path, extraname=None, ext="jpg")
     # print("path_out: ", path_out)
@@ -76,7 +84,7 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
         # print("file already exists: ", path_out)
         return path_out
 
-    #TODO : reflechir si on crée le dossier si il n'existe pas ou si on lève une exception
+    # TODO : reflechir si on crée le dossier si il n'existe pas ou si on lève une exception
     folder = os.path.dirname(path_out)
     # print("folder: ", folder)
     if os.path.isdir(folder) == False:
@@ -92,10 +100,10 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
         exif_dict = tiff_image.getexif()
 
         # print("converting")
-        BitsPerSample = get_ExifTag(exif_dict,"BitsPerSample")
+        BitsPerSample = get_ExifTag(exif_dict, "BitsPerSample")
         # print("BitsPerSample:", BitsPerSample)
 
-        if (BitsPerSample == 16 ): # "uint16"):
+        if BitsPerSample == 16:  # "uint16"):
 
             # Convert the image to JPEG format
             # jpeg_image = tiff_image.convert("RGB")
@@ -105,7 +113,9 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
             print("uint16")
 
             # tiff_image.mode = 'I' # a fonctionne mais plus ????
-            jpeg_image = tiff_image.point(lambda i:i*(1./256)).convert('L') # .save('my.jpeg')
+            jpeg_image = tiff_image.point(lambda i: i * (1.0 / 256)).convert(
+                "L"
+            )  # .save('my.jpeg')
             # jpeg_image.save('my.jpeg')
             # tiff_image.point(lambda i:i*(1./256)).convert('L').save(path_out)
 
@@ -119,21 +129,15 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
             # jpeg_image = tiff_image.convert("L")
             jpeg_image = tiff_image
             # print(f"jpeg_image {jpeg_image.dtype}")
-            
 
         # Save the JPEG image
         print("saving")
         jpeg_image.save(path_out)
 
-
-        print("image saved >", path_out, "<")    
-        return path_out 
-
+        print("image saved >", path_out, "<")
+        return path_out
 
     except:
         print(f"Error: can not open image file: {path}")
         raise Exception("Can not open image file: {path}")
         return None
-    
-
-   

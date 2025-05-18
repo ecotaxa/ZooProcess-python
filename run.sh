@@ -1,3 +1,3 @@
-source venv/bin/activate
-python -m uvicorn main:app --reload
+source venv312/bin/activate
+python3 -m uvicorn main:app --reload
 

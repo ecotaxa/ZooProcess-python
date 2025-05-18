@@ -1,6 +1,6 @@
 
 # API Pipeline
- 
+
 A REST API to pilot the Ecotaxa pipelines
 
 
@@ -30,6 +30,32 @@ pip install -r requirements.txt
 #pip install uvicorn  # if issue run manually uviicorn installation
 # uvicorn main:app --reload
 python -m uvicorn main:app --reload
+```
+
+# Environment Variables
+
+The application uses the following environment variables:
+
+- `APP_ENV`: Determines which configuration to use (`development` or `production`). Defaults to `development`.
+- `WORKING_DIR`: The working directory where the application will look for configuration files and other resources. Defaults to the current working directory.
+
+You can set these environment variables before running the application:
+
+```bash
+# Set the environment to production
+export APP_ENV=production
+
+# Set the working directory
+export WORKING_DIR=/path/to/your/working/directory
+
+# Run the application
+python -m uvicorn main:app --reload
+```
+
+Or you can set them when running the application:
+
+```bash
+APP_ENV=production WORKING_DIR=/path/to/your/working/directory python -m uvicorn main:app --reload
 ```
 
 
@@ -163,3 +189,117 @@ Run only on test function
 ```bash
 python -m unittest tests.test_server.Test_server.test_dbserver_withconfig
 ```
+
+# Database with SQLAlchemy
+
+The application uses SQLAlchemy as an ORM (Object-Relational Mapping) to interact with the SQLite database. This provides a more Pythonic way to work with the database and makes it easier to maintain and extend the database schema.
+
+## Database Models
+
+Database models are defined in `src/db_models.py`. Each model represents a table in the database and inherits from the SQLAlchemy `Base` class.
+
+Example model:
+```python
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class Example(Base):
+    __tablename__ = "example"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    value = Column(String)
+```
+
+## Using SQLAlchemy in Your Code
+
+There are two ways to interact with the database:
+
+1. Using the backward-compatible `SQLiteDB` class (recommended for existing code):
+```python
+from src.sqlite_db import SQLiteDB
+
+# Using the context manager
+with SQLiteDB() as db:
+    # Execute raw SQL queries
+    cursor = db.execute("SELECT * FROM example")
+    results = cursor.fetchall()
+```
+
+2. Using the new `SQLAlchemyDB` class (recommended for new code):
+```python
+from src.sqlite_db import SQLAlchemyDB
+from src.db_models import Example
+
+# Using the context manager
+with SQLAlchemyDB() as db:
+    # Create a new record
+    example = Example(name="test", value="value")
+    db.session.add(example)
+    db.session.commit()
+
+    # Query records
+    results = db.session.query(Example).filter_by(name="test").all()
+```
+
+See the example script in `examples/sqlalchemy_example.py` for a complete example of using SQLAlchemy in the project.
+
+# Command-Line Interface (CLI)
+
+The application provides a command-line interface (CLI) for various administrative tasks. The CLI is built using Typer and provides a user-friendly interface with rich formatting.
+
+## User Management CLI
+
+The User Management CLI allows you to add, update, remove, and list users in the database.
+
+### Installation
+
+Make sure you have installed the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Usage
+
+```bash
+# Show help
+python -m commands.user_cli --help
+
+# Add a new user
+python -m commands.user_cli add --name "John Doe" --email "john@example.com"
+# You will be prompted to enter and confirm a password
+
+# Update an existing user
+python -m commands.user_cli update --id "user_id" --name "New Name" --email "new@example.com"
+# If you want to update the password, you will be prompted to enter and confirm it
+
+# Remove a user
+python -m commands.user_cli remove --id "user_id"
+# You will be asked to confirm the removal unless you use the --force option
+
+# List all users
+python -m commands.user_cli list
+```
+
+### Commands
+
+- `add`: Add a new user to the database
+  - `--name`: User's full name (required)
+  - `--email`: User's email address (required)
+  - `--password`: User's password (will be prompted if not provided)
+  - `--confirm-password`: Confirm password (will be prompted if not provided)
+
+- `update`: Update an existing user in the database
+  - `--id`: User ID (required)
+  - `--name`: User's new name (optional)
+  - `--email`: User's new email address (optional)
+  - `--password`: User's new password (optional, will be prompted if provided)
+
+- `remove`: Remove a user from the database
+  - `--id`: User ID (required)
+  - `--force` or `-f`: Force removal without confirmation (optional)
+
+- `list`: List all users in the database
