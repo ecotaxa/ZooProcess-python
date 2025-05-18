@@ -1,24 +1,22 @@
 # gunicorn
-# fastapi>=0.112.0,<0.113.0
-fastapi==0.112.4
-# pydantic>=2.7.0,<3.0.0
+fastapi==0.115.12
 pydantic==2.11.4
-uvicorn[standard]==0.23.2
+uvicorn==0.34.2
 requests==2.32.3
-# numpy>=1.24.0,<2.0.0
+numpy==2.2.6
 # pandas
 # matplotlib
 opencv-python==4.11.0.86 # cv2
-Pillow==10.4.0 # PIL
-PyJWT==2.10.1 # For JWT token validation
-SQLAlchemy==2.0.41 # ORM for database operations
+pillow==11.2.1 # PIL
+pyjwt==2.10.1 # For JWT token validation
+sqlalchemy==2.0.41 # ORM for database operations
 ZooProcess-lib @ git+https://github.com/ecotaxa/ZooProcess-lib.git@v0.1.0
 
 # CLI dependencies
-click==8.1.7 # CLI framework
-rich==13.9.4 # Rich text and formatting for CLI
+click==8.2.0 # CLI framework
+rich==14.0.0 # Rich text and formatting for CLI
 
 # Testing dependencies
-pytest==7.4.4
-pytest-cov==4.1.0
-httpx==0.25.2 # Required for FastAPI TestClient
+pytest==8.3.5
+pytest-cov==6.1.1
+httpx==1.0.0b0 # Required for FastAPI TestClient
