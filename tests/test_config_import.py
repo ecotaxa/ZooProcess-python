@@ -143,13 +143,3 @@ else:
         os.unlink(script_path)
         shutil.rmtree(temp_dir1)
         shutil.rmtree(temp_dir2)
-
-
-if __name__ == "__main__":
-    print("Testing empty drives...")
-    test_empty_drives()
-    print("\nTesting invalid drives...")
-    test_invalid_drives()
-    print("\nTesting valid drives...")
-    test_valid_drives()
-    print("\nAll tests passed!")
