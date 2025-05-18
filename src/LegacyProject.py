@@ -1,8 +1,6 @@
 from .ProjectClass import ProjectClass
 from pathlib import Path
 
-# import Project
-
 from .importe import getInstrumentFromSN
 from src.Project import Project
 

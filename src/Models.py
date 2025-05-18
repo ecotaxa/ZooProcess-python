@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class User(BaseModel):
@@ -46,3 +46,14 @@ class BMProcess(BaseModel):
 class Scan(BaseModel):
     scanId: str
     bearer: str
+
+
+class LoginReq(BaseModel):
+    """Login request model as defined in the OpenAPI specification"""
+
+    email: str = Field(
+        ...,
+        description="User email used during registration",
+        example="ecotaxa.api.user@gmail.com",
+    )
+    password: str = Field(..., description="User password", example="test!")

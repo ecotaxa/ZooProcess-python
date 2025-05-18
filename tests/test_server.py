@@ -1,8 +1,7 @@
-
-
 import unittest
 
 from src.server import Server
+from src.config import config
 
 
 class Test_server(unittest.TestCase):
@@ -15,7 +14,6 @@ class Test_server(unittest.TestCase):
 
         self.assertTrue(online)
 
-
     @unittest.skip("")
     def test_Seb_server(self):
 
@@ -23,8 +21,6 @@ class Test_server(unittest.TestCase):
         online = server.test_server()
 
         self.assertTrue(online)
-
-
 
     @unittest.skip("")
     def test_Localhost_server(self):
@@ -38,12 +34,11 @@ class Test_server(unittest.TestCase):
 
         self.assertTrue(server.test_server())
 
-
     def test_dbserver_withconfig(self):
-        from src.config import config
         # print(config.dbserver)
         server = Server(config.dbserver)
         self.assertTrue(server.test_server())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -1,12 +1,10 @@
+from unittest.mock import patch, MagicMock
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-import json
 from fastapi.testclient import TestClient
 
 from main import app, get_db
-from src.Models import User, LoginReq
-from src.importe import getInstrumentFromSN
-from src.auth import decode_jwt_token, get_user_from_db
+from src.auth import decode_jwt_token
 from src.db_models import User as DBUser
 
 
@@ -59,7 +57,9 @@ def test_login_endpoint(mock_get_user_from_db, client):
     assert decoded["email"] == login_data["email"]
 
     # Verify that get_user_from_db was called with the correct arguments
-    mock_get_user_from_db.assert_called_once_with(login_data["email"], client["mock_db"])
+    mock_get_user_from_db.assert_called_once_with(
+        login_data["email"], client["mock_db"]
+    )
 
 
 @patch("src.auth.get_user_from_db")

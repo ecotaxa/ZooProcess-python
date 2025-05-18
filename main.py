@@ -7,10 +7,10 @@ import requests
 from ZooProcess_lib.Processor import Processor, Lut
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from src.Models import Scan, Folder, BMProcess, Background, User
+from src.Models import Scan, Folder, BMProcess, Background, User, LoginReq
 from src.Project import Project
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
@@ -18,6 +18,7 @@ from src.convert import convert_tiff_to_jpeg
 from src.db_dependencies import get_db
 from src.demo_get_vignettes import generate_json
 from src.importe import import_old_project, getDat1Path, pid2json
+
 # for /test
 from src.importe import listWorkFolders
 from src.logger import logger
@@ -213,17 +214,6 @@ class VignetteFolder(BaseModel):
     src: str
     base: str
     output: str
-
-
-class LoginReq(BaseModel):
-    """Login request model as defined in the OpenAPI specification"""
-
-    email: str = Field(
-        ...,
-        description="User email used during registration",
-        example="ecotaxa.api.user@gmail.com",
-    )
-    password: str = Field(..., description="User password", example="test!")
 
 
 @app.get("/vignettes/")
