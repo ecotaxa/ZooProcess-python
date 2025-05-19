@@ -22,13 +22,15 @@ pip install numpy
 uvicorn main:app --reload
 ```
 
-# run it to VENV
+# Development Setup
+
+For detailed installation instructions, please refer to the [Installation Guide](docs/installation.md).
+
+## Quick Start
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-#pip install uvicorn  # if issue run manually uviicorn installation
-# uvicorn main:app --reload
 python -m uvicorn main:app --reload
 ```
 
