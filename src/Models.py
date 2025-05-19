@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Literal
 
 from pydantic import BaseModel, Field
 
@@ -65,6 +65,15 @@ class LoginReq(BaseModel):
         example="ecotaxa.api.user@gmail.com",
     )
     password: str = Field(..., description="User password", example="test!")
+
+
+class Instrument(BaseModel):
+    """Instrument model as defined in the OpenAPI specification"""
+
+    id: str
+    model: Literal["Zooscan"]
+    name: str
+    sn: str
 
 
 class Project(BaseModel):

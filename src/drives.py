@@ -1,10 +1,32 @@
-import os
-import sys
 import builtins
 import importlib
+import os
+import sys
+from pathlib import Path
+from typing import Optional
 
 # Use builtins.print to make it easier to mock in tests
 print = builtins.print
+
+
+def get_drive_path(drive_name) -> Optional[Path]:
+    """
+    Returns the full path of a drive from its name (end of path).
+
+    Args:
+        drive_name (str): The name of the drive (last component of the path)
+
+    Returns:
+        Path: The full path of the drive if found, None otherwise
+    """
+    from src.config import config
+
+    for drive_path in config.DRIVES:
+        drive = Path(drive_path)
+        if drive.name == drive_name:
+            return Path(drive_path)
+
+    return None
 
 
 def validate_drives():

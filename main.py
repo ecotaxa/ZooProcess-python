@@ -8,11 +8,10 @@ import requests
 from ZooProcess_lib.Processor import Processor, Lut
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from src.auth import get_current_user_from_credentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from src.DB import DB
 
+from src.DB import DB
 from src.Models import (
     Scan,
     Folder,
@@ -25,10 +24,11 @@ from src.Models import (
 )
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
+from src.auth import get_current_user_from_credentials
 from src.convert import convert_tiff_to_jpeg
 from src.db_dependencies import get_db
 from src.demo_get_vignettes import generate_json
-from src.drives import validate_drives
+from src.drives import validate_drives, get_drive_path
 from src.importe import import_old_project, getDat1Path, pid2json
 
 # for /test
@@ -756,28 +756,60 @@ def get_current_user(
 
 
 @app.get("/projects")
+@app.get("/projects/{project_id}")
 def get_projects(
+    project_id: str = None,
     user=Depends(get_current_user_from_credentials),
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> List[Project]:
+) -> Union[Project, List[Project]]:
     """
-    Returns a list of subdirectories inside each element of DRIVES.
+    Returns a list of subdirectories inside each element of DRIVES or a specific project if project_id is provided.
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
+
+    Args:
+        project_id: Optional. If provided, returns the project with the specified ID.
     """
+    if project_id is None:
+        return list_all_projects()
+
+    else:
+        # If project_id is provided, return the specific project
+        drive_name, project_name = project_id.split("|")
+        drive_path = get_drive_path(drive_name)
+        if drive_path is None:
+            raise HTTPException(
+                status_code=404, detail=f"Project with ID {project_id} not found"
+            )
+        project_path = Path(drive_path) / project_name
+        if not (project_path.exists() and project_path.is_dir()):
+            raise HTTPException(
+                status_code=404, detail=f"Project with ID {project_id} not found"
+            )
+        drive_model = Drive(
+            id=drive_path.name, name=drive_path.name, url=str(drive_path)
+        )
+        project = Project(
+            path=project_path.as_posix(),
+            id=project_id,
+            name=project_name,
+            instrumentSerialNumber="TEST123",
+            drive=drive_model,
+        )
+        return project
+
+
+def list_all_projects():
     # Create a list to store all projects
     all_projects = []
-
     # Check if we're in a test environment
     is_test = "pytest" in sys.modules
-
     # Use a list of drives based on the environment
     if is_test:
         # In test mode, use a hardcoded list of drives
         drives_to_check = ["/path/to/drive1"]
     else:
         drives_to_check = config.DRIVES
-
     # Iterate through each drive in the list
     for drive_path in drives_to_check:
         drive = Path(drive_path)
@@ -788,6 +820,9 @@ def get_projects(
             # Get all subdirectories in the drive
             try:
                 for item in drive.iterdir():
+                    # TODO: Should be in lib
+                    if item.name in ("Zooprocess", "Zooscan", "Background"):
+                        continue
                     unq_id = f"{drive.name}|{item.name}"
                     if item.is_dir():
                         # Check if we're in test mode
@@ -813,7 +848,6 @@ def get_projects(
                         all_projects.append(project)
             except Exception as e:
                 logger.error(f"Error in GET /projects, drive {drive_path}: {str(e)}")
-
     return all_projects
 
 
