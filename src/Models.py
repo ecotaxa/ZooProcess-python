@@ -79,11 +79,12 @@ class Project(BaseModel):
     """
 
     path: str
-    bearer: str  # Union[str, None] = None
-    db: str  # Union[str, None] = None
+    id: str
+    bearer: str = ""  # Union[str, None] = None
+    db: str = ""  # Union[str, None] = None
     name: Union[str, None] = None
     instrumentSerialNumber: str  # Union[str, None] = None
     acronym: Union[str, None] = None
     description: Union[str, None] = None
     ecotaxaProjectID: Union[str, None] = None
-    drive: Union[str, None] = None
+    drive: Union[Drive, None] = None

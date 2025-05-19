@@ -781,36 +781,38 @@ def get_projects(
     # Iterate through each drive in the list
     for drive_path in drives_to_check:
         drive = Path(drive_path)
+        drive_model = Drive(id=drive.name, name=drive.name, url=drive_path)
 
         # Check if the drive exists and is a directory
         if drive.exists() and drive.is_dir():
             # Get all subdirectories in the drive
             try:
                 for item in drive.iterdir():
+                    unq_id = f"{drive.name}|{item.name}"
                     if item.is_dir():
                         # Check if we're in test mode
                         if is_test:
                             # In test mode, use a hardcoded instrumentSerialNumber
                             project = Project(
                                 path=str(item),
-                                bearer=credentials.credentials,
-                                db=config.dbserver,
+                                id=unq_id,
                                 name=item.name,
                                 instrumentSerialNumber="TEST123",
+                                drive=drive_model,
                             )
                         else:
                             # In production mode, create a Project object for each subdirectory
                             # Note: In a real implementation, you would need to get the instrumentSerialNumber from somewhere
                             project = Project(
                                 path=str(item),
-                                bearer=credentials.credentials,
-                                db=config.dbserver,
+                                id=unq_id,
                                 name=item.name,
                                 instrumentSerialNumber="PROD123",  # This should be replaced with a real value
+                                drive=drive_model,
                             )
                         all_projects.append(project)
             except Exception as e:
-                logger.error(f"Error accessing drive {drive_path}: {str(e)}")
+                logger.error(f"Error in GET /projects, drive {drive_path}: {str(e)}")
 
     return all_projects
 
