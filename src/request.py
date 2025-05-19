@@ -25,11 +25,12 @@ from src.DB import DB
 
 
 def getInstrumentFromSN(db, instrumentSN):
-    instruments = db.get("instruments")
+    from src.DB import get_instruments
+
+    instruments = get_instruments()
     for instrument in instruments:
-        print("instruments: ", instruments)
-        if instrument["sn"] == instrumentSN:
-            return instrument
+        if instrument.sn == instrumentSN:
+            return instrument.dict()
     return None
 
 

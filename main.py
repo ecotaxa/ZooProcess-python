@@ -11,6 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from src.DB import DB
 from src.Models import (
     Scan,
@@ -21,6 +22,7 @@ from src.Models import (
     LoginReq,
     Project,
     Drive,
+    Instrument,
 )
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
@@ -814,40 +816,23 @@ def list_all_projects():
     for drive_path in drives_to_check:
         drive = Path(drive_path)
         drive_model = Drive(id=drive.name, name=drive.name, url=drive_path)
+        drive_zoo = ZooscanDrive(drive_path)
 
-        # Check if the drive exists and is a directory
-        if drive.exists() and drive.is_dir():
-            # Get all subdirectories in the drive
+        for a_prj_path in drive_zoo.list():
+            sn = "TEST123" if is_test else "PROD123"
+            unq_id = f"{drive.name}|{a_prj_path.name}"
             try:
-                for item in drive.iterdir():
-                    # TODO: Should be in lib
-                    if item.name in ("Zooprocess", "Zooscan", "Background"):
-                        continue
-                    unq_id = f"{drive.name}|{item.name}"
-                    if item.is_dir():
-                        # Check if we're in test mode
-                        if is_test:
-                            # In test mode, use a hardcoded instrumentSerialNumber
-                            project = Project(
-                                path=str(item),
-                                id=unq_id,
-                                name=item.name,
-                                instrumentSerialNumber="TEST123",
-                                drive=drive_model,
-                            )
-                        else:
-                            # In production mode, create a Project object for each subdirectory
-                            # Note: In a real implementation, you would need to get the instrumentSerialNumber from somewhere
-                            project = Project(
-                                path=str(item),
-                                id=unq_id,
-                                name=item.name,
-                                instrumentSerialNumber="PROD123",  # This should be replaced with a real value
-                                drive=drive_model,
-                            )
-                        all_projects.append(project)
+                project = Project(
+                    path=str(a_prj_path),
+                    id=unq_id,
+                    name=a_prj_path.name,
+                    instrumentSerialNumber=sn,
+                    drive=drive_model,
+                )
+                all_projects.append(project)
             except Exception as e:
                 logger.error(f"Error in GET /projects, drive {drive_path}: {str(e)}")
+
     return all_projects
 
 
@@ -1038,6 +1023,40 @@ def test(project: Project):
         raise HTTPException(status_code=500, detail=f"Failed: {e}")
 
     return "test OK"
+
+
+@app.get("/instruments")
+def get_instruments():
+    """
+    Returns a list of all instruments.
+    """
+    from src.DB import get_instruments as get_all_instruments
+
+    return get_all_instruments()
+
+
+@app.get("/instruments/{instrument_id}")
+def get_instrument(instrument_id: str):
+    """
+    Returns details about a specific instrument.
+
+    Args:
+        instrument_id (str): The ID of the instrument to retrieve.
+
+    Returns:
+        Instrument: The instrument with the specified ID.
+
+    Raises:
+        HTTPException: If the instrument is not found.
+    """
+    from src.DB import get_instrument_by_id
+
+    instrument = get_instrument_by_id(instrument_id)
+    if instrument is None:
+        raise HTTPException(
+            status_code=404, detail=f"Instrument with ID {instrument_id} not found"
+        )
+    return instrument
 
 
 # Start the application when run directly

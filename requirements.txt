@@ -10,7 +10,7 @@ opencv-python==4.11.0.86 # cv2
 pillow==11.2.1 # PIL
 pyjwt==2.10.1 # For JWT token validation
 sqlalchemy==2.0.41 # ORM for database operations
-ZooProcess-lib @ git+https://github.com/ecotaxa/ZooProcess-lib.git@v0.1.0
+# ZooProcess-lib @ git+https://github.com/ecotaxa/ZooProcess-lib.git@v0.1.0
 python-dotenv==1.1.0
 
 # CLI dependencies

@@ -1,62 +1,62 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from src.importe import getInstrumentFromSN 
+from src.request import getInstrumentFromSN
+from src.Models import Instrument
 
 
 def test_returns_matching_instrument():
     # Arrange
-    db = "http://localhost:8000/"
-    bearer = "test-bearer"
-    sn = "123ABC"
-    mock_instrument = {"sn": "123ABC", "name": "Test Instrument"}
+    db = Mock()  # Mock DB object
+    sn = "ZS001"  # Use a serial number from the hardcoded list
 
-    with patch('requests.get') as mock_get:
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [mock_instrument]
-        mock_get.return_value = mock_response
+    # Act
+    result = getInstrumentFromSN(db, sn)
 
-        # Act
-        result = getInstrumentFromSN(db, bearer, sn)
-
-        # Assert
-        assert result == mock_instrument
-        mock_get.assert_called_once_with(
-            "http://localhost:8000/instruments",
-            headers={
-                "Authorization": "Bearer test-bearer",
-                "Content-Type": "application/json"
-            }
-        )
+    # Assert
+    assert result is not None
+    assert result["sn"] == sn
+    assert result["name"] == "Zooscan 1"
+    assert result["id"] == "1"
+    assert result["model"] == "Zooscan"
 
 
 # Returns None when no instrument matches the provided serial number
 def test_returns_none_when_no_match():
     # Arrange
-    db = "http://localhost:8000/"
-    bearer = "test-bearer" 
+    db = Mock()  # Mock DB object
     sn = "NONEXISTENT"
-    mock_instruments = [
-        {"sn": "123ABC", "name": "Test Instrument 1"},
-        {"sn": "456DEF", "name": "Test Instrument 2"}
-    ]
 
-    with patch('requests.get') as mock_get:
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = mock_instruments
-        mock_get.return_value = mock_response
+    # Act
+    result = getInstrumentFromSN(db, sn)
 
-        # Act
-        result = getInstrumentFromSN(db, bearer, sn)
+    # Assert
+    assert result is None
 
-        # Assert
-        assert result is None
-        mock_get.assert_called_once_with(
-            "http://localhost:8000/instruments",
-            headers={
-                "Authorization": "Bearer test-bearer",
-                "Content-Type": "application/json"
-            }
-        )
+
+# Test the new endpoint for getting an instrument by ID
+def test_get_instrument_by_id():
+    # Arrange
+    from src.DB import get_instrument_by_id
+
+    # Act
+    result = get_instrument_by_id("1")
+
+    # Assert
+    assert result is not None
+    assert result.id == "1"
+    assert result.name == "Zooscan 1"
+    assert result.sn == "ZS001"
+    assert result.model == "Zooscan"
+
+
+# Test the new endpoint for getting an instrument by ID when the ID doesn't exist
+def test_get_instrument_by_id_not_found():
+    # Arrange
+    from src.DB import get_instrument_by_id
+
+    # Act
+    result = get_instrument_by_id("999")
+
+    # Assert
+    assert result is None

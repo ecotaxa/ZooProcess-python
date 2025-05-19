@@ -9,6 +9,21 @@ class User(BaseModel):
     email: str
 
 
+class SubSample(BaseModel):
+    """SubSample model as defined in the OpenAPI specification"""
+
+    id: str
+    name: Union[str, None] = None
+
+
+class Sample(BaseModel):
+    """Sample model as defined in the OpenAPI specification"""
+
+    id: str
+    name: str
+    subsample: Union[List[SubSample], None] = None
+
+
 class Drive(BaseModel):
     """Drive model as defined in the OpenAPI specification"""
 

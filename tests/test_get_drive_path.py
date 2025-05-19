@@ -36,8 +36,8 @@ def test_get_drive_path_found():
         drive2_name = Path(temp_dir2).name
 
         # Test that get_drive_path returns the correct path for each drive
-        assert get_drive_path(drive1_name) == temp_dir1
-        assert get_drive_path(drive2_name) == temp_dir2
+        assert get_drive_path(drive1_name) == Path(temp_dir1)
+        assert get_drive_path(drive2_name) == Path(temp_dir2)
     finally:
         # Restore the original DRIVES value
         if original_drives is not None:
