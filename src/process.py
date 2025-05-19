@@ -38,7 +38,7 @@ from src.img_tools import saveimage
 #     def separate(self):
 #         pass
         
-import src.TaskStatus as TaskStatus
+from src.TaskStatus import TaskStatus
 from pathlib import Path
 from ZooProcess_lib.Processor import Processor, Lut
 
@@ -56,11 +56,17 @@ class Process:
         self._8bits_scan = None # path to the 8 bit scan file 
         self.processor = None # the engine
 
+        # file = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back/20231010_1509_background_large_manual.tif"
+        # self.background = Path(file)
+        # fscan = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_scan/_raw/apero2023_pp_wp2_001_st01_d_d1_raw_1.tif"
+        # self.scan = Path(fscan)
+
     def run(self):
 
         if self.taskStatus: self.taskStatus.sendRunning("processing")
 
         lut = Lut()
+        lut.resolutionreduct = 2400
 
         class Config:
             def __init__(self, config_dict):
@@ -102,7 +108,7 @@ class Process:
 
 
     def segment(self):
-        if self.taskStatus: self.taskStatus.setStatus("segmenting")
+        if self.taskStatus: self.taskStatus.sendRunning("segmenting")
         pass
 
 
@@ -117,17 +123,17 @@ class Process:
 
         ret = {
             "scan": self.scan.as_posix(),
-            "back": self.back.as_posix(),
+            "back": self.background.as_posix(),
             "mask": mask,
             "out": out,
             "vis": vis,
             "dst": "dst",
         }
 
-        if (self.task):
-            self.task.sendImage(mask,"MASK")
-            self.task.sendImage(out,"OUT")
-            self.task.sendImage(vis,"VIS")
-            self.task.sendDone(json.dumps(ret))
+        if (self.taskStatus):
+            self.taskStatus.sendImage(mask,"MASK")
+            self.taskStatus.sendImage(out,"OUT")
+            self.taskStatus.sendImage(vis,"VIS")
+            self.taskStatus.sendDone(json.dumps(ret))
 
-        
+        return ret

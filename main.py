@@ -468,10 +468,13 @@ def process(folder:BMProcess):
 
     from src.Process import Process
     
-    process = Process(folder.scan, folder.back, taskStatus, db) 
+    try:
+        process = Process(folder.scan, folder.back, taskStatus, db) 
+        process.run()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed: {e}")
 
-    process.run()
-
+    return process.returnData()
 
 
     # ret = {
