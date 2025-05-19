@@ -1,0 +1,40 @@
+2025-05-19 08:46:01,537 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_lov/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...', 'name': 'Zooprocess'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:46:01,538 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_monitoring/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...974_a_1979_LARGE_sn174'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:46:22,343 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_lov/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...', 'name': 'Zooprocess'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:46:22,344 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_monitoring/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...974_a_1979_LARGE_sn174'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:51:06,346 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_lov/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...', 'name': 'Zooprocess'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:51:06,346 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_monitoring/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...974_a_1979_LARGE_sn174'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:51:21,502 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_lov/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...', 'name': 'Zooprocess'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:51:21,502 - zooprocess - ERROR - Error accessing drive /mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_monitoring/: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/mnt/zooscan_po...974_a_1979_LARGE_sn174'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:51:25,701 - zooprocess - ERROR - Error accessing drive /path/to/drive1: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/path/to/drive1...v1', 'name': 'Project1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing
+2025-05-19 08:51:25,818 - zooprocess - ERROR - Error accessing drive /path/to/drive1: 1 validation error for Project
+instrumentSerialNumber
+  Field required [type=missing, input_value={'path': '/path/to/drive1...v1', 'name': 'Project1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/missing

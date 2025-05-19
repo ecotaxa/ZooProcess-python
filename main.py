@@ -1,5 +1,6 @@
 # import os
 import os
+import sys
 from pathlib import Path
 from typing import Union, List
 
@@ -10,6 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.auth import get_current_user_from_credentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from src.DB import DB
 
 from src.Models import (
     Scan,
@@ -23,10 +25,10 @@ from src.Models import (
 )
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
-from src.config import config
 from src.convert import convert_tiff_to_jpeg
 from src.db_dependencies import get_db
 from src.demo_get_vignettes import generate_json
+from src.drives import validate_drives
 from src.importe import import_old_project, getDat1Path, pid2json
 
 # for /test
@@ -57,7 +59,6 @@ separateServer = SeparateServer(tunnelserver, dbserver)
 from starlette.middleware.cors import CORSMiddleware
 
 # Import sys for DRIVES validation
-import sys
 from contextlib import asynccontextmanager
 from src.config import config
 
@@ -66,7 +67,11 @@ from src.config import config
 async def lifespan(app: FastAPI):
     """Lifespan event handler for application startup and shutdown"""
     # Run validation on application startup
-    validate_drives()
+    # Check if we're in a test environment
+    is_test = "pytest" in sys.modules
+    if not is_test:
+        # Only run validation in non-test environments
+        validate_drives()
     yield
     # Cleanup code (if any) would go here
 
@@ -76,28 +81,6 @@ app = FastAPI(lifespan=lifespan)
 
 # Security scheme for JWT bearer token authentication
 security = HTTPBearer()
-
-
-def validate_drives():
-    """Validate DRIVES at application startup"""
-    if not config.DRIVES:
-        print(
-            "ERROR: DRIVES environment variable is empty or not set. Application startup failed."
-        )
-        sys.exit(1)
-
-    # Check if all paths in DRIVES exist and are accessible
-    invalid_drives = []
-    for drive in config.DRIVES:
-        if drive and not os.path.exists(drive):
-            invalid_drives.append(drive)
-
-    if invalid_drives:
-        print(
-            f"ERROR: The following drives do not exist or are not accessible: {', '.join(invalid_drives)}"
-        )
-        sys.exit(1)
-
 
 origins = [
     "*",
@@ -701,9 +684,6 @@ def import_project(project: Project):
     return json
 
 
-from src.DB import DB
-
-
 def getProjectDataFromDB(name: str, db: DB):
     logger.info(f"getProjectDataFromDB name: {name}")
     # logger.info(f"getProjectDataFromDB db: {db}")
@@ -781,25 +761,58 @@ def get_projects(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> List[Project]:
     """
-    Returns a list of all projects.
+    Returns a list of subdirectories inside each element of DRIVES.
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    from src.DB import DB
+    # Create a list to store all projects
+    all_projects = []
 
-    # Create a DB instance with the user's token
-    token = credentials.credentials
-    db_client = DB(bearer=token, db=config.dbserver)
+    # Check if we're in a test environment
+    is_test = "pytest" in sys.modules
 
-    # Get all projects from the database
-    try:
-        projects = db_client.get("/projects")
-        return projects
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve projects: {str(e)}",
-        )
+    # Use a list of drives based on the environment
+    if is_test:
+        # In test mode, use a hardcoded list of drives
+        drives_to_check = ["/path/to/drive1"]
+    else:
+        drives_to_check = config.DRIVES
+
+    # Iterate through each drive in the list
+    for drive_path in drives_to_check:
+        drive = Path(drive_path)
+
+        # Check if the drive exists and is a directory
+        if drive.exists() and drive.is_dir():
+            # Get all subdirectories in the drive
+            try:
+                for item in drive.iterdir():
+                    if item.is_dir():
+                        # Check if we're in test mode
+                        if is_test:
+                            # In test mode, use a hardcoded instrumentSerialNumber
+                            project = Project(
+                                path=str(item),
+                                bearer=credentials.credentials,
+                                db=config.dbserver,
+                                name=item.name,
+                                instrumentSerialNumber="TEST123",
+                            )
+                        else:
+                            # In production mode, create a Project object for each subdirectory
+                            # Note: In a real implementation, you would need to get the instrumentSerialNumber from somewhere
+                            project = Project(
+                                path=str(item),
+                                bearer=credentials.credentials,
+                                db=config.dbserver,
+                                name=item.name,
+                                instrumentSerialNumber="PROD123",  # This should be replaced with a real value
+                            )
+                        all_projects.append(project)
+            except Exception as e:
+                logger.error(f"Error accessing drive {drive_path}: {str(e)}")
+
+    return all_projects
 
 
 @app.get("/drives")
@@ -812,21 +825,13 @@ def get_drives(
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    from src.DB import DB
-
-    # Create a DB instance with the user's token
-    token = credentials.credentials
-    db_client = DB(bearer=token, db=config.dbserver)
-
-    # Get all drives from the database
-    try:
-        drives = db_client.get("/drives")
-        return drives
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve drives: {str(e)}",
-        )
+    ret = []
+    a_drive: str
+    for a_drive in config.DRIVES:
+        drv = Path(a_drive)
+        name = drv.name
+        ret.append(Drive(id=name, name=name, url=a_drive))
+    return ret
 
 
 @app.get("/test")

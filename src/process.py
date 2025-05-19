@@ -1,6 +1,7 @@
 # from .SeparateServer import SeparateServer
 import requests
 from src.DB import DB
+from ZooProcess_lib.img_tools import saveimage
 
 
 # class Separate:

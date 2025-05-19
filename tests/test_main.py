@@ -112,30 +112,35 @@ def test_users_me_endpoint_with_invalid_token(client):
 
 
 @patch("src.auth.get_user_from_db")
-@patch("src.DB.DB.get")
-def test_projects_endpoint_with_valid_token(mock_db_get, mock_get_user_from_db, client):
-    """Test that the /projects endpoint returns project information with a valid token"""
+@patch("pathlib.Path.iterdir")
+@patch("pathlib.Path.exists")
+@patch("pathlib.Path.is_dir")
+def test_projects_endpoint_with_valid_token(
+    mock_is_dir, mock_exists, mock_iterdir, mock_get_user_from_db, client
+):
+    """Test that the /projects endpoint returns subdirectories from DRIVES with a valid token"""
     # Set up the mock to return our mock user
     mock_get_user_from_db.return_value = client["mock_user"]
 
-    # Set up the mock to return a list of projects
-    mock_projects = [
-        {
-            "id": "project1",
-            "name": "Project 1",
-            "path": "/path/to/project1",
-            "instrumentSerialNumber": "SN001",
-            "description": "Test Project 1",
-        },
-        {
-            "id": "project2",
-            "name": "Project 2",
-            "path": "/path/to/project2",
-            "instrumentSerialNumber": "SN002",
-            "description": "Test Project 2",
-        },
-    ]
-    mock_db_get.return_value = mock_projects
+    # Set up the mocks for Path methods
+    mock_exists.return_value = True
+    mock_is_dir.return_value = True
+
+    # Create mock Path objects for subdirectories
+    from pathlib import Path
+
+    mock_dir1 = MagicMock(spec=Path)
+    mock_dir1.is_dir.return_value = True
+    mock_dir1.name = "Project1"
+    mock_dir1.__str__.return_value = "/path/to/drive1/Project1"
+
+    mock_dir2 = MagicMock(spec=Path)
+    mock_dir2.is_dir.return_value = True
+    mock_dir2.name = "Project2"
+    mock_dir2.__str__.return_value = "/path/to/drive1/Project2"
+
+    # Set up the mock to return our mock directories
+    mock_iterdir.return_value = [mock_dir1, mock_dir2]
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
@@ -155,14 +160,13 @@ def test_projects_endpoint_with_valid_token(mock_db_get, mock_get_user_from_db, 
     projects_data = response.json()
     assert projects_data is not None
     assert len(projects_data) == 2
-    assert projects_data[0]["name"] == "Project 1"
-    assert projects_data[1]["name"] == "Project 2"
+    assert projects_data[0]["name"] == "Project1"
+    assert projects_data[1]["name"] == "Project2"
+    assert projects_data[0]["path"] == "/path/to/drive1/Project1"
+    assert projects_data[1]["path"] == "/path/to/drive1/Project2"
 
     # Verify that get_user_from_db was called with the correct arguments
     mock_get_user_from_db.assert_called_with(login_data["email"], client["mock_db"])
-
-    # Verify that DB.get was called with the correct arguments
-    mock_db_get.assert_called_once_with("/projects")
 
 
 def test_projects_endpoint_without_token(client):
