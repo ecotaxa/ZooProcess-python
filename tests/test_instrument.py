@@ -1,8 +1,12 @@
 import pytest
 from unittest.mock import Mock, patch
+from fastapi.testclient import TestClient
 
 from src.request import getInstrumentFromSN
 from src.Models import Instrument
+from main import app
+
+client = TestClient(app)
 
 
 def test_returns_matching_instrument():
@@ -60,3 +64,37 @@ def test_get_instrument_by_id_not_found():
 
     # Assert
     assert result is None
+
+
+# Test the instruments endpoint with full=False (default)
+def test_get_instruments_simplified():
+    # Act
+    response = client.get("/instruments")
+
+    # Assert
+    assert response.status_code == 200
+    instruments = response.json()
+    assert len(instruments) > 0
+    # Check that each instrument only has id and name
+    for instrument in instruments:
+        assert "id" in instrument
+        assert "name" in instrument
+        assert "model" not in instrument
+        assert "sn" not in instrument
+
+
+# Test the instruments endpoint with full=True
+def test_get_instruments_full():
+    # Act
+    response = client.get("/instruments?full=true")
+
+    # Assert
+    assert response.status_code == 200
+    instruments = response.json()
+    assert len(instruments) > 0
+    # Check that each instrument has all fields
+    for instrument in instruments:
+        assert "id" in instrument
+        assert "name" in instrument
+        assert "model" in instrument
+        assert "sn" in instrument
