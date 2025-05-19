@@ -1,5 +1,5 @@
 import os
-from src.config import WORKING_DIR
+from src.config import config
 from src.sqlite_db import db_path
 from src.logger import logger
 
@@ -12,4 +12,4 @@ else:
     logger.error(f"Database file does not exist at: {db_file_path}")
 
 # Print the WORKING_DIR for reference
-logger.info(f"WORKING_DIR: {WORKING_DIR}")
+logger.info(f"WORKING_DIR: {config.WORKING_DIR}")

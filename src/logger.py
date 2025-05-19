@@ -2,9 +2,11 @@ import logging
 import sys
 from pathlib import Path
 
-# Create logs directory if it doesn't exist
-logs_dir = Path("logs")
-logs_dir.mkdir(exist_ok=True)
+from src.config import config
+
+# Create logs directory inside WORKING_DIR if it doesn't exist
+logs_dir = Path(config.WORKING_DIR) / "logs"
+logs_dir.mkdir(exist_ok=True, parents=True)
 
 
 # Configure the root logger

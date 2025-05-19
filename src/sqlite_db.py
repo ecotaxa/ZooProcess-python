@@ -33,7 +33,7 @@ class SQLiteDB:
         """
         if db_name is None:
             db_name = config.DB_NAME
-        self.db_path = os.path.join(WORKING_DIR, db_name)
+        self.db_path = os.path.join(config.WORKING_DIR, db_name)
         self.connection = None
         self.engine = get_engine(db_name)
         self.SessionMaker = get_session_maker(self.engine)

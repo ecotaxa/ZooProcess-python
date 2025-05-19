@@ -56,7 +56,7 @@ def get_engine(db_name=None):
     """
     if db_name is None:
         db_name = config.DB_NAME
-    db_path = os.path.join(WORKING_DIR, db_name)
+    db_path = os.path.join(config.WORKING_DIR, db_name)
     engine = create_engine(f"sqlite:///{db_path}")
     return engine
 
@@ -86,4 +86,4 @@ def init_db():
     """
     engine = get_engine()
     Base.metadata.create_all(engine)
-    return os.path.join(WORKING_DIR, config.DB_NAME)
+    return os.path.join(config.WORKING_DIR, config.DB_NAME)
