@@ -7,19 +7,19 @@ info:
   version: v1
 
 servers:
-- url: http://zooprocess.imev-mer.fr:8081/v1
+  - url: http://zooprocess.imev-mer.fr:8081/v1
 
 tags:
-- description: User related operations
-  name: User
-- description: Manager related operations
-  name: Manager
-- description: authentication
-  name: Authentication
-- description: Admin related operations
-  name: Admin
-- description: Only use by the Separator robot
-  name: Separator
+  - description: User related operations
+    name: User
+  - description: Manager related operations
+    name: Manager
+  - description: authentication
+    name: Authentication
+  - description: Admin related operations
+    name: Admin
+  - description: Only use by the Separator robot
+    name: Separator
 
 paths:
 
@@ -60,7 +60,7 @@ paths:
                 title: Response get the list of projects
                 type: string
       tags:
-        - Authentication  
+        - Authentication
 
 
   /projects:
@@ -86,7 +86,7 @@ paths:
         - BearerAuth: [ ]
 
     post:
-      summary: Add a new project 
+      summary: Add a new project
       description: Add a new project
       operationId: Projects.create
       requestBody:
@@ -102,7 +102,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'          
+                $ref: '#/components/schemas/Project'
         '405':
           description: Invalid input
         '409':
@@ -117,28 +117,28 @@ paths:
 
   /projects/{projectId}:
     parameters:
-    - name: projectId
-      in: path
-      description: The project name or the project id
-      example: "42"
-      explode: false
-      required: true
-      schema:
-        type: string
-      style: simple
+      - name: projectId
+        in: path
+        description: The project name or the project id
+        example: "42"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
 
     get:
       parameters:
-      - name: name
-        in: query
-        description: The projectid in path is the project name instead the project id
-        example: "Zooscan_apero_pp_2023_wp2_sn002"
-        required: false
-        schema:
-          type: string
-          # default: false
-          nullable: true
-        allowEmptyValue: true 
+        - name: name
+          in: query
+          description: The projectid in path is the project name instead the project id
+          example: "Zooscan_apero_pp_2023_wp2_sn002"
+          required: false
+          schema:
+            type: string
+            # default: false
+            nullable: true
+          allowEmptyValue: true
       description: Return information about the project
       operationId: Projects.get
 
@@ -178,18 +178,18 @@ paths:
 
     delete:
       parameters:
-      - name: by
-        in: query
-        description: use field to choose which method to delete (id or name(default))
-        required: false
-        schema:
-          type: string
-          # default: false
-          nullable: true
-        allowEmptyValue: true
+        - name: by
+          in: query
+          description: use field to choose which method to delete (id or name(default))
+          required: false
+          schema:
+            type: string
+            # default: false
+            nullable: true
+          allowEmptyValue: true
       description: Delete the project
       operationId: Projects.delete
-    
+
       responses:
         '200':
           description: Returned is project deleted
@@ -232,15 +232,15 @@ paths:
 
   /projects/{projectId}/backgrounds:
     parameters:
-    - name: projectId
-      in: path
-      description: The project id
-      example: "42"
-      explode: false
-      required: true
-      schema:
-        type: string
-      style: simple
+      - name: projectId
+        in: path
+        description: The project id
+        example: "42"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
     
 
     get:
@@ -292,33 +292,33 @@ paths:
 
   /subsamples/{subSampleId}/scan:
     parameters:
-    - name: subSampleId
-      in: path
-      description: The subSample id
-      example: "42"
-      explode: false
-      required: true
-      schema:
-        type: string
-      style: simple
-    - name: nomove
-      in: query
-      description: don't move the image
-      required: false
-      schema:
-        type: boolean
-        # default: false
-        nullable: true
-      allowEmptyValue: true
-    - name: task
-      in: query
-      description: use taskId instead of subSampleId (subSampleId is taskId)
-      required: false
-      schema:
-        type: boolean
-        # default: false
-        nullable: true
-      allowEmptyValue: true
+      - name: subSampleId
+        in: path
+        description: The subSample id
+        example: "42"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - name: nomove
+        in: query
+        description: don't move the image
+        required: false
+        schema:
+          type: boolean
+          # default: false
+          nullable: true
+        allowEmptyValue: true
+      - name: task
+        in: query
+        description: use taskId instead of subSampleId (subSampleId is taskId)
+        required: false
+        schema:
+          type: boolean
+          # default: false
+          nullable: true
+        allowEmptyValue: true
     post:
       summary: Add a scan to the subsample
       description: Add a scan to the subsample
@@ -337,7 +337,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScanModel'          
+                $ref: '#/components/schemas/ScanModel'
         '405':
           description: Invalid input
         '409':
@@ -345,7 +345,7 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
-          description: SubSample not found     
+          description: SubSample not found
       tags:
         - User
       security:
@@ -354,33 +354,33 @@ paths:
   # /projects/{projectId}/backgrounds/{scanId}:
   /scan/{scanId}:
     parameters:
-    # - name: projectId
-    #   in: path
-    #   description: The project id
-    #   example: "42"
-    #   explode: false
-    #   required: true
-    #   schema:
-    #     type: string
-    #   style: simple
-    - name: scanId
-      in: path
-      description: The project id
-      example: "42"
-      explode: false
-      required: true
-      schema:
-        type: string
-      style: simple
-    - name: show
-      in: query
-      description: get a showable scan in browser (get jpg url instead of tiff)
-      required: false
-      schema:
-        type: boolean
-        # default: false
-        nullable: true
-      allowEmptyValue: true
+      # - name: projectId
+      #   in: path
+      #   description: The project id
+      #   example: "42"
+      #   explode: false
+      #   required: true
+      #   schema:
+      #     type: string
+      #   style: simple
+      - name: scanId
+        in: path
+        description: The project id
+        example: "42"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - name: show
+        in: query
+        description: get a showable scan in browser (get jpg url instead of tiff)
+        required: false
+        schema:
+          type: boolean
+          # default: false
+          nullable: true
+        allowEmptyValue: true
 
 
     get:
@@ -389,7 +389,7 @@ paths:
 
       responses:
         '200':
-          description: Returned (background) scan 
+          description: Returned (background) scan
           content:
             application/json:
               schema:
@@ -403,25 +403,25 @@ paths:
       security:
         - BearerAuth: [ ]
 
-    # put:
-    #   description: Update a (background) scan
-    #   operationId: Background.updateScan
-    #   responses:
-    #     '200':
-    #       description: Returned (background) scan 
-    #       content:
-    #         application/json:
-    #           schema:
-    #             $ref: '#/components/schemas/ImageModel'
-    #     '401':
-    #       $ref: '#/components/responses/UnauthorizedError'
-    #   tags:
-    #     - User
-    #     - Manager
-    #     - Admin
-    #   security:
-    #     - BearerAuth: [ ]
-      
+      # put:
+      #   description: Update a (background) scan
+      #   operationId: Background.updateScan
+      #   responses:
+      #     '200':
+      #       description: Returned (background) scan
+      #       content:
+      #         application/json:
+      #           schema:
+      #             $ref: '#/components/schemas/ImageModel'
+      #     '401':
+      #       $ref: '#/components/responses/UnauthorizedError'
+      #   tags:
+      #     - User
+      #     - Manager
+      #     - Admin
+      #   security:
+      #     - BearerAuth: [ ]
+
   /link: # /scan/{scanId}/to/subSample/{subSampleId}:
     # parameters:
     # - name: scanId
@@ -478,7 +478,7 @@ paths:
                     type: object
         '422':
           # description: Duplicate entry
-          description:  A resource do not exist
+          description: A resource do not exist
           content:
             application/json:
               schema:
@@ -500,15 +500,15 @@ paths:
 
   /projects/{projectId}/scans:
     parameters:
-    - name: projectId
-      in: path
-      description: The project id
-      example: "42"
-      explode: false
-      required: true
-      schema:
-        type: string
-      style: simple
+      - name: projectId
+        in: path
+        description: The project id
+        example: "42"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
     
 
     get:
@@ -567,13 +567,13 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-      - User
+        - User
       security:
         - BearerAuth: [ ]
 
     post:
-      summary: Add a sample 
-      description: Add a new sample 
+      summary: Add a sample
+      description: Add a new sample
       operationId: Samples.create
       requestBody:
         description: Create a new sample
@@ -588,7 +588,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sample'          
+                $ref: '#/components/schemas/Sample'
         '405':
           description: Invalid input
         '409':
@@ -602,24 +602,24 @@ paths:
 
   /projects/{projectId}/samples/{sampleId}:
     parameters:
-    - description: The project id
-      example: 655d3062983b92b6e29b3369
-      explode: false
-      in: path
-      name: projectId
-      required: true
-      schema:
-        type: string
-      style: simple
-    - description: The sample id
-      example: 655db3a95ef7f584269ff27b
-      explode: false
-      in: path
-      name: sampleId
-      required: true
-      schema:
-        type: string
-      style: simple
+      - description: The project id
+        example: 655d3062983b92b6e29b3369
+        explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The sample id
+        example: 655db3a95ef7f584269ff27b
+        explode: false
+        in: path
+        name: sampleId
+        required: true
+        schema:
+          type: string
+        style: simple
 
     get:
       description: Get a sample from project
@@ -635,7 +635,7 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-      - User
+        - User
       security:
         - BearerAuth: [ ]
 
@@ -653,10 +653,10 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-      - User
+        - User
       security:
         - BearerAuth: [ ]
-        
+
     delete:
       summary: Delete a sample
       description: Delete a sample
@@ -679,24 +679,24 @@ paths:
 
   /projects/{projectId}/samples/{sampleId}/subsamples:
     parameters:
-    - description: The project id
-      example: 655d3062983b92b6e29b3369
-      explode: false
-      in: path
-      name: projectId
-      required: true
-      schema:
-        type: string
-      style: simple
-    - description: The sample id
-      example: 655db3a95ef7f584269ff27b
-      explode: false
-      in: path
-      name: sampleId
-      required: true
-      schema:
-        type: string
-      style: simple
+      - description: The project id
+        example: 655d3062983b92b6e29b3369
+        explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The sample id
+        example: 655db3a95ef7f584269ff27b
+        explode: false
+        in: path
+        name: sampleId
+        required: true
+        schema:
+          type: string
+        style: simple
 
     get:
       description: Get the list of subsamples associated to the sample
@@ -715,7 +715,7 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-      - User
+        - User
       security:
         - BearerAuth: [ ]
 
@@ -737,44 +737,44 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-      - User
+        - User
       security:
         - BearerAuth: [ ]
 
   /projects/{projectId}/samples/{sampleId}/subsamples/{subSampleId}:
     parameters:
-    - description: The project id
-      example: 655d3062983b92b6e29b3369
-      explode: false
-      in: path
-      name: projectId
-      required: true
-      schema:
-        type: string
-      style: simple
-    - description: The sample id
-      example: 655db3a95ef7f584269ff27b
-      explode: false
-      in: path
-      name: sampleId
-      required: true
-      schema:
-        type: string
-      style: simple
-    - description: The sub sample id
-      example: 655db3a95ef7f584269ff27b
-      explode: false
-      in: path
-      name: subSampleId
-      required: true
-      schema:
-        type: string
-      style: simple
+      - description: The project id
+        example: 655d3062983b92b6e29b3369
+        explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The sample id
+        example: 655db3a95ef7f584269ff27b
+        explode: false
+        in: path
+        name: sampleId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The sub sample id
+        example: 655db3a95ef7f584269ff27b
+        explode: false
+        in: path
+        name: subSampleId
+        required: true
+        schema:
+          type: string
+        style: simple
 
-#patch:
+    #patch:
     #  description: Update the sampleId only observation is authorized
 
- 
+
     get:
       description: Get the subsample associated to the sample
       operationId: subsamples.get
@@ -813,38 +813,38 @@ paths:
 
   /projects/{projectId}/samples/{sampleId}/subsamples/{subSampleId}/process:
     parameters:
-    - description: The project id
-      example: 655d3062983b92b6e29b3369
-      explode: false
-      in: path
-      name: projectId
-      required: true
-      schema:
-        type: string
-      style: simple
-    - description: The sample id
-      example: 655db3a95ef7f584269ff27b
-      explode: false
-      in: path
-      name: sampleId
-      required: true
-      schema:
-        type: string
-      style: simple
-    - description: The sub sample id
-      example: 655db3a95ef7f584269ff27b
-      explode: false
-      in: path
-      name: subSampleId
-      required: true
-      schema:
-        type: string
-      style: simple
+      - description: The project id
+        example: 655d3062983b92b6e29b3369
+        explode: false
+        in: path
+        name: projectId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The sample id
+        example: 655db3a95ef7f584269ff27b
+        explode: false
+        in: path
+        name: sampleId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The sub sample id
+        example: 655db3a95ef7f584269ff27b
+        explode: false
+        in: path
+        name: subSampleId
+        required: true
+        schema:
+          type: string
+        style: simple
 
-#patch:
+    #patch:
     #  description: Update the sampleId only observation is authorized
 
- 
+
     get:
       description: Get the subsample associated to the sample
       operationId: subsamples.process
@@ -889,7 +889,7 @@ paths:
         - BearerAuth: [ ]
 
     post:
-      summary: Add a new drive 
+      summary: Add a new drive
       description: Add a new drive
       operationId: Drives.create
       requestBody:
@@ -905,7 +905,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Drive'          
+                $ref: '#/components/schemas/Drive'
         '405':
           description: Invalid input
         '409':
@@ -922,7 +922,7 @@ paths:
     get:
       parameters:
         - description: if true get the instrument list with settings
-          name: full 
+          name: full
           in: query
           required: false
           # default: false
@@ -942,7 +942,7 @@ paths:
                 title: Response get an array of instrument
                 type: array
                 items:
-                  $ref: '#/components/schemas/IntrumentModel'
+                  $ref: '#/components/schemas/InstrumentModel'
       tags:
         - User
       security:
@@ -958,7 +958,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntrumentModel'
+                $ref: '#/components/schemas/InstrumentModel'
       tags:
         - User
       security:
@@ -987,7 +987,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntrumentModel'
+                $ref: '#/components/schemas/InstrumentModel'
       tags:
         - User
       security:
@@ -1003,7 +1003,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntrumentModel'
+                $ref: '#/components/schemas/InstrumentModel'
 
       tags:
         - Manager
@@ -1072,7 +1072,7 @@ paths:
         required: true
         schema:
           type: string
-     
+
     post:
       description: add a calibration to the instrument
       summary: add a calibration
@@ -1101,34 +1101,34 @@ paths:
         schema:
           type: string
 
-    # post:
-    #   # parameters:
-    #   #   - description: The project ID
-    #   #     example: 655d3062983b92b6e29b3369
-    #   #     # in: formData
-    #   #     in: formData
-    #   #     name: projectId
-    #   #     required: true
-    #   #     # type: string
-    #   #     schema:
-    #   #       $ref: '#/components/schemas/ProjectId'
-    #   requestBody:
-    #     required: true
-    #     content:
-    #       application/mulipart/form-data:
-    #         schema:
-    #           type: object
-    #           properties:
-    #             projectId:
-    #               type: string
-    #             fileName:
-    #               type: string
-    #               format: binary
-    #           # title: the associated project id
-    #           # description: The project id to associate the background scan
-    #           # type: string
-    #           # example: 655d3062983b92b6e29b3369
-              
+            # post:
+            #   # parameters:
+            #   #   - description: The project ID
+            #   #     example: 655d3062983b92b6e29b3369
+            #   #     # in: formData
+            #   #     in: formData
+            #   #     name: projectId
+            #   #     required: true
+            #   #     # type: string
+            #   #     schema:
+            #   #       $ref: '#/components/schemas/ProjectId'
+            #   requestBody:
+            #     required: true
+            #     content:
+            #       application/mulipart/form-data:
+            #         schema:
+            #           type: object
+            #           properties:
+            #             projectId:
+            #               type: string
+            #             fileName:
+            #               type: string
+            #               format: binary
+            #           # title: the associated project id
+            #           # description: The project id to associate the background scan
+            #           # type: string
+            #           # example: 655d3062983b92b6e29b3369
+
     #   summary: Add a background scan.
     #   description: Add a background scan. 
     #                 to send the image to the server, 
@@ -1148,8 +1148,8 @@ paths:
 
     get:
       summary: Get the list of background
-      description: Get the list of background associate to the instrument, 
-                    sort by date (earlier on top) or filtered by date range
+      description: Get the list of background associate to the instrument,
+        sort by date (earlier on top) or filtered by date range
       operationId: Background.list
       responses:
         '200':
@@ -1180,15 +1180,15 @@ paths:
         example: 655d3062983b92b6e29b3369
         in: query
         required: true
-        name: projectId 
+        name: projectId
         schema:
           type:
             string
 
     post:
       summary: Add a background scan
-      description: Add a background scan to use with share folder, 
-                    don't upload image to the server 
+      description: Add a background scan to use with share folder,
+        don't upload image to the server
       operationId: Background.addurl
       responses:
         '200':
@@ -1224,8 +1224,8 @@ paths:
 
     post:
       summary: Add a scan
-      description: Add a scan to use with share folder, 
-                    don't upload image to the server 
+      description: Add a scan to use with share folder,
+        don't upload image to the server
       operationId: Background.addurl2
 
       requestBody:
@@ -1243,7 +1243,7 @@ paths:
                 #   description: The ID of the sub-sample to associate the scan with
 
               required:
-                - url 
+                - url
                 # - subSampleId
 
             example:
@@ -1278,9 +1278,9 @@ paths:
 
     put:
       summary: Import a scan in DB
-      description: Import a scan in the DB to use with share folder, 
-                    The image stay at its postion on the disk
-                    Use it when importing project. 
+      description: Import a scan in the DB to use with share folder,
+        The image stay at its position on the disk
+        Use it when importing project.
       operationId: Background.importurl
       requestBody:
         required: true
@@ -1293,7 +1293,7 @@ paths:
                   type: string
                   description: The URL of the image to be scanned
               required:
-                - url 
+                - url
             example:
               url: "/project/scan/_raw/scan.tif"
       responses:
@@ -1302,7 +1302,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageModel'      
+                $ref: '#/components/schemas/ImageModel'
       tags:
         - User
       security:
@@ -1355,7 +1355,7 @@ paths:
 
     get:
       summary: Get the qc
-      description: Get the qc 
+      description: Get the qc
       operationId: qc.get
       responses:
         '200':
@@ -1364,7 +1364,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QCModel'
-        
+
       tags:
         - User
       security:
@@ -1393,7 +1393,7 @@ paths:
           description: Return
           content:
             application/json:
-              schema:  
+              schema:
                 type: string
       tags:
         - User
@@ -1417,7 +1417,7 @@ paths:
           description: Returned the task id
           content:
             application/json:
-              schema:  
+              schema:
                 # type: string
                 $ref: '#/components/schemas/TaskModel'
       tags:
@@ -1472,7 +1472,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/TaskModel'
+                $ref: '#/components/schemas/TaskModel'
       tags:
         - User
       security:
@@ -1502,7 +1502,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/TaskModel'
+                $ref: '#/components/schemas/TaskModel'
       tags:
         - User
       security:
@@ -1534,8 +1534,8 @@ paths:
           content:
             application/json:
               schema:
-          #       type: object
-          #       properties:
+                #       type: object
+                #       properties:
                 $ref: '#/components/schemas/ErrorModel'
         '416':
           description: Data not valid
@@ -1571,7 +1571,7 @@ paths:
           description: Return
           content:
             application/json:
-              schema:  
+              schema:
                 type: string
       tags:
         - Manager
@@ -1588,7 +1588,7 @@ paths:
           description: Return the task id
           content:
             application/json:
-              schema:  
+              schema:
                 # type: string
                 $ref: '#/components/schemas/SeparatorModel'
 
@@ -1596,7 +1596,7 @@ paths:
         - Separator
       security:
         - BearerAuth: [ ]
-              
+
   /separator/{taskId}:
     parameters:
       - description: The task ID
@@ -1641,7 +1641,7 @@ paths:
                 # type: boolean
                 $ref: '#/components/schemas/VignetteModel'
       tags:
-        - Separator  
+        - Separator
         - User
       security:
         - BearerAuth: [ ]
@@ -1699,7 +1699,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Response get the list of metadata models 
+                title: Response get the list of metadata models
                 type: array
                 items:
                   $ref: '#/components/schemas/MetadataModel'
@@ -1709,7 +1709,7 @@ paths:
         - BearerAuth: [ ]
 
     post:
-      summary: Add a metadata model 
+      summary: Add a metadata model
       description: Add a new metadata model
       operationId: MetadataModel.create
       requestBody:
@@ -1725,7 +1725,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MetadataModel'          
+                $ref: '#/components/schemas/MetadataModel'
         '405':
           description: Invalid input
         '409':
@@ -1763,14 +1763,14 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-        - User  
+        - User
       security:
         - BearerAuth: [ ]
-        
+
     delete:
       summary: Delete a metadata model
-      description: Delete a metadata model, 
-                    only if no sammple or subsample associated to it
+      description: Delete a metadata model,
+        only if no sammple or subsample associated to it
       operationId: MetadataModel.delete
 
       responses:
@@ -1785,10 +1785,10 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-        - Manager 
+        - Manager
       security:
         - BearerAuth: [ ]
-        
+
   /users:
     post:
       description: Add a new User
@@ -1801,12 +1801,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         '405':
-          description: Invalid input  
-        # '409':
+          description: Invalid input
+          # '409':
           # description: Duplicate entry
       tags:
         - User
-        - Manager 
+        - Manager
 
 
     get:
@@ -1819,14 +1819,14 @@ paths:
           content:
             application/json:
               schema:
-                title: Response get the list of users 
+                title: Response get the list of users
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       tags:
-        - Manager 
+        - Manager
         # - User 
       security:
         - BearerAuth: [ ]
@@ -1887,8 +1887,8 @@ paths:
   /users/me:
     get:
       summary: Show Current User
-      description: Returns **currently authenticated user's** (i.e. you) information, 
-                    permissions and last used projects.
+      description: Returns **currently authenticated user's** (i.e. you) information,
+        permissions and last used projects.
       operationId: Users.me
       responses:
         '200':
@@ -1911,10 +1911,10 @@ paths:
 components:
 
   securitySchemes:
-    BearerAuth:            # arbitrary name for the security scheme
+    BearerAuth: # arbitrary name for the security scheme
       type: http
       scheme: bearer
-      bearerFormat: JWT 
+      bearerFormat: JWT
 
   schemas:
 
@@ -1935,7 +1935,7 @@ components:
           type: string
         url:
           type: string
-  
+
     Project:
       required:
         - id
@@ -1960,7 +1960,7 @@ components:
           type: string # ['null', string]
         subsample:
           type: array
-          items: 
+          items:
             $ref: '#/components/schemas/SubSample'
         # count:
         #   type: integer
@@ -1968,10 +1968,10 @@ components:
 
     Process:
       type: object
-      # required:
-      # properties:
+        # required:
+        # properties:
         # id:
-          # readOnly: string
+      # readOnly: string
 
     SubSample:
       type: object
@@ -1999,8 +1999,8 @@ components:
           type: string
         email:
           type: string
-      
-    IntrumentModel:
+
+    InstrumentModel:
       type: object
       required:
         - id
@@ -2023,12 +2023,12 @@ components:
     CalibrationtModel:
       type: object
       required:
-      - id
-      - frame
-      - xOffset
-      - yOffset
-      - xSize
-      - ySize
+        - id
+        - frame
+        - xOffset
+        - yOffset
+        - xSize
+        - ySize
       properties:
         id:
           readOnly: true
@@ -2070,7 +2070,7 @@ components:
           type: string
         type:
           type: string
-          enum: 
+          enum:
             - SCAN
             - BACKGROUND
             - MASK
@@ -2080,8 +2080,8 @@ components:
     LinkModel:
       type: object
       required:
-      - scanId
-      - subSampleId
+        - scanId
+        - subSampleId
       properties:
         id:
           type: string
@@ -2099,16 +2099,16 @@ components:
       properties:
         id:
           type: string
-        url: 
+        url:
           type: string
         type:
           type: string
-          enum: 
+          enum:
             - raw
             - mask
             - merge
-          
-              
+
+
 
     # ImageResponseModel:
     #   type: object
@@ -2143,12 +2143,12 @@ components:
           type: string
 
     ErrorModel:
-          # description:  An error
-          properties:
-            message:
-              type: string
-            data:
-              type: object
+      # description:  An error
+      properties:
+        message:
+          type: string
+        data:
+          type: object
 
     TaskModel:
       type: object
@@ -2181,12 +2181,12 @@ components:
         vignette:
           type: array
           items:
-            $ref: '#/components/schemas/VignetteModel' 
+            $ref: '#/components/schemas/VignetteModel'
         # multiple:
         #   type: string
       example:
         id: 42a42
-        origin: 
+        origin:
         url: /public/img/vignette_42.png
         multiple: yes
 
@@ -2210,22 +2210,22 @@ components:
 
 
     LoginReq:
-        type: object
-        title: Login request Model
-        required:
-          - password
-          - email
-        properties:
-          password:
-            title: User's password
-            type: string
-            description: User password.
-            example: test!
-          email:
-            title: User's email
-            type: string
-            description: User email used during registration.
-            example: ecotaxa.api.user@gmail.com
+      type: object
+      title: Login request Model
+      required:
+        - password
+        - email
+      properties:
+        password:
+          title: User's password
+          type: string
+          description: User password.
+          example: test!
+        email:
+          title: User's email
+          type: string
+          description: User email used during registration.
+          example: ecotaxa.api.user@gmail.com
 
   responses:
     UnauthorizedError:

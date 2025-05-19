@@ -2,7 +2,7 @@ from .ProjectClass import ProjectClass
 from pathlib import Path
 
 from .importe import getInstrumentFromSN
-from src.Project import Project
+from .Models import Project
 
 
 class LegacyProject(ProjectClass):

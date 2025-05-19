@@ -1,7 +1,7 @@
 # import os
 import os
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 import requests
 from ZooProcess_lib.Processor import Processor, Lut
@@ -11,8 +11,16 @@ from src.auth import get_current_user_from_credentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from src.Models import Scan, Folder, BMProcess, Background, User, LoginReq
-from src.Project import Project
+from src.Models import (
+    Scan,
+    Folder,
+    BMProcess,
+    Background,
+    User,
+    LoginReq,
+    Project,
+    Drive,
+)
 from src.SeparateServer import SeparateServer
 from src.TaskStatus import TaskStatus
 from src.config import config
@@ -48,14 +56,26 @@ separateServer = SeparateServer(tunnelserver, dbserver)
 # from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+# Import sys for DRIVES validation
+import sys
+from contextlib import asynccontextmanager
+from src.config import config
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for application startup and shutdown"""
+    # Run validation on application startup
+    validate_drives()
+    yield
+    # Cleanup code (if any) would go here
+
+
+# Initialize FastAPI with lifespan event handler
+app = FastAPI(lifespan=lifespan)
 
 # Security scheme for JWT bearer token authentication
 security = HTTPBearer()
-
-# Import sys for DRIVES validation
-import sys
-from src.config import config
 
 
 def validate_drives():
@@ -759,7 +779,7 @@ def get_current_user(
 def get_projects(
     user=Depends(get_current_user_from_credentials),
     credentials: HTTPAuthorizationCredentials = Depends(security),
-):
+) -> List[Project]:
     """
     Returns a list of all projects.
 
@@ -779,6 +799,33 @@ def get_projects(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve projects: {str(e)}",
+        )
+
+
+@app.get("/drives")
+def get_drives(
+    user=Depends(get_current_user_from_credentials),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> List[Drive]:
+    """
+    Returns a list of all drives.
+
+    This endpoint requires authentication using a JWT token obtained from the /login endpoint.
+    """
+    from src.DB import DB
+
+    # Create a DB instance with the user's token
+    token = credentials.credentials
+    db_client = DB(bearer=token, db=config.dbserver)
+
+    # Get all drives from the database
+    try:
+        drives = db_client.get("/drives")
+        return drives
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve drives: {str(e)}",
         )
 
 
@@ -952,6 +999,8 @@ def test(project: Project):
     return "test OK"
 
 
-# Call validate_drives when the application starts up
+# Start the application when run directly
 if __name__ == "__main__":
-    validate_drives()
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

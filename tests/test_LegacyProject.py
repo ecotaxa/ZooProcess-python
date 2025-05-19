@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from src.Project import Project
+from src.Models import Project
 from src.LegacyProject import LegacyProject
 
 
@@ -12,7 +12,7 @@ def test_init_with_valid_project_path():
         path=str(test_path),
         bearer="test_bearer",
         db="test_db",
-        instrumentSerialNumber="test_serial"
+        instrumentSerialNumber="test_serial",
     )
 
     # Act
@@ -33,7 +33,7 @@ def test_init_with_nonexistent_project_path():
         path=str(test_path),
         bearer="test_bearer",
         db="test_db",
-        instrumentSerialNumber="test_serial"
+        instrumentSerialNumber="test_serial",
     )
 
     # Act & Assert
