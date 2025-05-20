@@ -115,25 +115,24 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
             # jpeg_image = tiff_image.point(lambda i:i*(1./256))
             #     jpeg_image = jpeg_image.convert('L')
         else:
-            print(f"8 bit image")
+            # print(f"8 bit image")
             # jpeg_image = tiff_image.convert("L")
             jpeg_image = tiff_image
             # print(f"jpeg_image {jpeg_image.dtype}")
             
 
         # Save the JPEG image
-        print("saving")
+        # print("saving")
         jpeg_image.save(path_out)
 
 
-        print("image saved >", path_out, "<")    
+        # print("image saved >", path_out, "<")    
         return path_out 
 
 
     except:
         print(f"Error: can not open image file: {path}")
         raise Exception("Can not open image file: {path}")
-        return None
     
 
    
