@@ -20,6 +20,7 @@ import json
 from pathlib import Path
 # import csv
 from typing import List, Dict, Any
+import traceback
 
 from src.Models import Scan, Folder, BMProcess, Background
 
@@ -607,11 +608,11 @@ def background(background:Background):
     backgroundclass = Background([back1,back2], taskStatus, db)
     try:
         medianBackground = backgroundclass.run()
-
         backgroundclass.sendMediumBackground(background.instrumentId, background.projectId)
 
     except Exception as e:
         print("/background Exception:", e)
+        traceback.print_exc()
         if e is HTTPException: raise e
         raise HTTPException(status_code=500, detail=f"Failed: {e}")
 

@@ -29,6 +29,8 @@ class Background:
         lut.resolutionreduct = 2400
         processor = Processor(None,lut)
 
+        self.definePath()
+
         processor.converter.do_file_to_file(Path(self.back[0]), Path(self._8bits_back1url))
         processor.converter.do_file_to_file(Path(self.back[1]), Path(self._8bits_back2url))
 
