@@ -430,12 +430,11 @@ def process(folder:BMProcess):
 
     dst = folder.dst if folder.dst != "" else folder.src
 
-
-    db = DB(folder.bearer,folder.db)
-    taskStatus = TaskStatus(folder.taskId, db)
+    db = DB(folder.bearer,folder.db) if folder.bearer and folder.db else None
+    taskStatus = TaskStatus(folder.taskId, db) if folder.taskId and db else None
 
     #markTaskWithRunningStatus( folder.taskId, folder.db, folder.bearer, "running")
-    taskStatus.sendRunning()
+    if taskStatus: taskStatus.sendRunning("processing")
 
     # if ( folder.taskId != None ): 
     #     ret = {
@@ -450,12 +449,12 @@ def process(folder:BMProcess):
     if ( folder.scan == "" ) :
         print("scan is not defined")
         # markTaskWithErrorStatus(folder.taskId, folder.db, folder.bearer, "no scan found")
-        taskStatus.sendError( "no scan found")
+        if taskStatus: taskStatus.sendError( "no scan found")
         raise HTTPException(status_code=404, detail="Scan not found")
     if ( folder.back == "" ):
         print("back is not defined")
         # markTaskWithErrorStatus(folder.taskId, folder.db, folder.bearer, "no background found")
-        taskStatus.sendError( "no background found")
+        if taskStatus: taskStatus.sendError( "no background found")
         raise HTTPException(status_code=404, detail="Background not found")
 
     # out = "/uploads/01-10-2024/20230228_1219_back_large_raw_2-1727764546231-800724713.jpg"
@@ -472,6 +471,8 @@ def process(folder:BMProcess):
         process = Process(folder.scan, folder.back, taskStatus, db) 
         process.run()
     except Exception as e:
+        print("/process Error:", e)
+        if e is HTTPException: raise e
         raise HTTPException(status_code=500, detail=f"Failed: {e}")
 
     return process.returnData()
@@ -513,85 +514,86 @@ def getScanFromDB(scanId):
     else:
         raise HTTPException(status_code=404, detail="Scan not found")
 
-def mediumBackground(back1url, back2url):
-    """
-    Process the background scans
-    """
-    import numpy as np
+# def mediumBackground(back1url, back2url):
+#     """
+#     Process the background scans
+#     """
+#     import numpy as np
 
-    print("mediumBackground", back1url, back2url)
-    from ZooProcess_lib.Processor import Processor, Lut
-    # @see ZooProcess_lib repo for examples, some config is needed here.
-    lut = Lut()
-    processor = Processor(None,lut)
-
-
-    # back : np.ndarray
-
-    from pathlib import Path
-
-    path_obj1 = Path(back1url)
-    path_obj2 = Path(back2url)
-
-    # Obtenir le chemin sans le filename
-    path = str(path_obj1.parent)
-
-    # Obtenir juste le filename
-    filename = path_obj1.name
-    extraname = "_medium_" + filename
-    print("mediumBackground path: ", path)
-    print("mediumBackground filename: ", filename)
-    print("mediumBackground extraname: ", extraname)
-    print("mediumBackground back1url: ", back1url)
-    print("mediumBackground back2url: ", back2url)  
-    print("mediumBackground path_obj: ", path_obj1)
-    print("mediumBackground path_obj.parent: ", path_obj1.parent)
-    print("mediumBackground path_obj.name: ", path_obj1.name)
-    print("mediumBackground path_obj.stem: ", path_obj1.stem)
-    print("mediumBackground path_obj.suffix: ", path_obj1.suffix)
+#     print("mediumBackground", back1url, back2url)
+#     from ZooProcess_lib.Processor import Processor, Lut
+#     # @see ZooProcess_lib repo for examples, some config is needed here.
+#     lut = Lut()
+#     processor = Processor(None,lut)
 
 
-    _8bits_back1url = Path(path , f"{path_obj1.stem}_8bits{path_obj1.suffix}")
-    print("_8bits_back1url: ", _8bits_back1url)
-    _8bits_back2url = Path(path , f"{path_obj2.stem}_8bits{path_obj2.suffix}")
-    print("_8bits_back2url: ", _8bits_back2url)
-    # _8bits_back1url = Path(path_obj1.parent, path_obj1.stem, "_8bits" , ".tif" )
-    # print("_8bits_back1url: ", _8bits_back1url)
-    # _8bits_back2url = Path(path_obj2.parent, path_obj2.stem, "_8bits" , ".tif" )
-    # print("_8bits_back2url: ", _8bits_back2url)
+#     # back : np.ndarray
 
-    processor.converter.do_file_to_file(Path(back1url), Path(_8bits_back1url))
-    processor.converter.do_file_to_file(Path(back2url), Path(_8bits_back2url))
+#     from pathlib import Path
 
-    print("8 bit convert OK")
+#     path_obj1 = Path(back1url)
+#     path_obj2 = Path(back2url)
 
-    # img = loadimage(back1url)
-    # backurl = saveimage(img,filename=extraname,path=path)   
-    # print("mediumBackground backurl: ", backurl)
+#     # Obtenir le chemin sans le filename
+#     path = str(path_obj1.parent)
 
-    source_files = [ _8bits_back1url , _8bits_back2url ]
-    backurl = Path(path_obj1.parent, f"{path_obj1.stem}_background_large_manual.tif" )
-    output_path = backurl
-
-    # print("backurl:", backurl.as_uri() )
-    print("backurl:", backurl.as_posix() )
-
-    print("Processing bg_combiner")
-    processor.bg_combiner.do_files(source_files, output_path)
-    print("Processing bg_combiner done")
-
-    return  backurl.as_posix()
+#     # Obtenir juste le filename
+#     filename = path_obj1.name
+#     extraname = "_medium_" + filename
+#     print("mediumBackground path: ", path)
+#     print("mediumBackground filename: ", filename)
+#     print("mediumBackground extraname: ", extraname)
+#     print("mediumBackground back1url: ", back1url)
+#     print("mediumBackground back2url: ", back2url)  
+#     print("mediumBackground path_obj: ", path_obj1)
+#     print("mediumBackground path_obj.parent: ", path_obj1.parent)
+#     print("mediumBackground path_obj.name: ", path_obj1.name)
+#     print("mediumBackground path_obj.stem: ", path_obj1.stem)
+#     print("mediumBackground path_obj.suffix: ", path_obj1.suffix)
 
 
+#     _8bits_back1url = Path(path , f"{path_obj1.stem}_8bits{path_obj1.suffix}")
+#     print("_8bits_back1url: ", _8bits_back1url)
+#     _8bits_back2url = Path(path , f"{path_obj2.stem}_8bits{path_obj2.suffix}")
+#     print("_8bits_back2url: ", _8bits_back2url)
+#     # _8bits_back1url = Path(path_obj1.parent, path_obj1.stem, "_8bits" , ".tif" )
+#     # print("_8bits_back1url: ", _8bits_back1url)
+#     # _8bits_back2url = Path(path_obj2.parent, path_obj2.stem, "_8bits" , ".tif" )
+#     # print("_8bits_back2url: ", _8bits_back2url)
+
+#     processor.converter.do_file_to_file(Path(back1url), Path(_8bits_back1url))
+#     processor.converter.do_file_to_file(Path(back2url), Path(_8bits_back2url))
+
+#     print("8 bit convert OK")
+
+#     # img = loadimage(back1url)
+#     # backurl = saveimage(img,filename=extraname,path=path)   
+#     # print("mediumBackground backurl: ", backurl)
+
+#     source_files = [ _8bits_back1url , _8bits_back2url ]
+#     backurl = Path(path_obj1.parent, f"{path_obj1.stem}_background_large_manual.tif" )
+#     output_path = backurl
+
+#     # print("backurl:", backurl.as_uri() )
+#     print("backurl:", backurl.as_posix() )
+
+#     print("Processing bg_combiner")
+#     processor.bg_combiner.do_files(source_files, output_path)
+#     print("Processing bg_combiner done")
+
+#     return  backurl.as_posix()
 
 @app.post("/background/")
 def background(background:Background):
     """
     Process the background scans
     """
-    import requests
+    from src.Background import Background
 
     print("POST /background/", background)
+    
+    db = DB(background.bearer,background.db) if background.bearer and background.db else None
+    taskStatus = TaskStatus(background.taskId, db) if background.taskId and db else None
 
     try:
         # back1 = getScanFromDB(background.backgroundId[0])
@@ -599,62 +601,93 @@ def background(background:Background):
         back1 = background.background[0]
         back2 = background.background[1]
     except:
-        markTaskWithErrorStatus( background.taskId, background.db, background.bearer, "Background scan(s) not found")
+        if taskStatus: taskStatus.sendError( "Background scan(s) not found")
         raise HTTPException(status_code=404, detail="Backgroud scan(s) not found")
+
+    backgroundclass = Background([back1,back2], taskStatus, db)
+    try:
+        medianBackground = backgroundclass.run()
+
+        backgroundclass.sendMediumBackground(background.instrumentId, background.projectId)
+
+    except Exception as e:
+        print("/background Exception:", e)
+        if e is HTTPException: raise e
+        raise HTTPException(status_code=500, detail=f"Failed: {e}")
+
+    return backgroundclass.returnData()
+
+# @app.post("/background/")
+# def background_old(background:Background):
+#     """
+#     Process the background scans
+#     """
+#     import requests
+
+#     print("POST /background/", background)
+
+#     try:
+#         # back1 = getScanFromDB(background.backgroundId[0])
+#         # back2 = getScanFromDB(background.backgroundId[1])
+#         back1 = background.background[0]
+#         back2 = background.background[1]
+#     except:
+#         markTaskWithErrorStatus( background.taskId, background.db, background.bearer, "Background scan(s) not found")
+#         raise HTTPException(status_code=404, detail="Backgroud scan(s) not found")
     
-    # if back1.instrumentId == back2.instrumentId:
-    #     markTaskWithErrorStatus(background.taskId,background.db,background.bearer,"Background scans must be from the same instrument")
-    #     raise HTTPException(status_code=404, detail="Background scans must be from the same instrument")
+#     # if back1.instrumentId == back2.instrumentId:
+#     #     markTaskWithErrorStatus(background.taskId,background.db,background.bearer,"Background scans must be from the same instrument")
+#     #     raise HTTPException(status_code=404, detail="Background scans must be from the same instrument")
 
-    markTaskWithRunningStatus( background.taskId, background.db, background.bearer, "running")
+#     markTaskWithRunningStatus( background.taskId, background.db, background.bearer, "running")
 
-    back = mediumBackground(back1, back2)
+#     back = mediumBackground(back1, back2)
 
-    print("back :",back)
+#     print("back :",back)
 
-    instrumentId = background.instrumentId
-    projectId = background.projectId
+#     instrumentId = background.instrumentId
+#     projectId = background.projectId
 
-    data = {
-        # "url": f"http://localhost:8000/background/{back}",
-        "url": back,
-        # "instrumentId": instrumentId,
-        # "projectId": projectId
-        "taskId": background.taskId,
-        "type":"MEDIUM_BACKGROUND"
-    }
+#     data = {
+#         # "url": f"http://localhost:8000/background/{back}",
+#         "url": back,
+#         # "instrumentId": instrumentId,
+#         # "projectId": projectId
+#         "taskId": background.taskId,
+#         "type":"MEDIUM_BACKGROUND"
+#     }
 
-    print("background() :",data)
+#     print("background() :",data)
 
-    # save_image(back, "/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif")
+#     # save_image(back, "/Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif")
 
-    #TODO Mettre dans une fonction car optionnel
-    # response = requests.put(url=f"${dbserver.getUrl()}background/{instrumentId}/url?projectId=${projectId}", data=data, headers={"Authorization": f"Bearer {background.bearer}"})
-    url = f"{dbserver.getUrl()}/background/{instrumentId}/url?projectId={projectId}"
-    print("url:",url)
-    response = requests.post(url=url, data=data, headers={"Authorization": f"Bearer {background.bearer}"})
-    if response.ok:
-        markTaskWithDoneStatus( background.taskId, background.db, background.bearer, response.json().get("id"))
-        print(response.json())
-        # return response.json().get("id")
-        markTaskWithDoneStatus( background.taskId, background.db, background.bearer, "Finished")
-        return response.json()
-    else:
-        print("response.status_code:",response.status_code)
-        # if ( response.status_code == 405):
-        markTaskWithErrorStatus( background.taskId, background.db, background.bearer, "Cannot add medium scan in the DB")
-        detail = {
-            "status": "partial_success",
-            "file_url": back,
-            "message": "Data generated successfully, but failed to add to the DB",
-            "db_error": response.status_code,
-            "taskId": background.taskId
-        }
-        # raise HTTPException(status_code=206, detail="Cannot add medium scan in the DB")
-        raise HTTPException(status_code=206, detail=detail)
-        # else:
-        #     markTaskWithErrorStatus(background.taskId, background.db, background.bearer, "Cannot generate medium scan")
-        #     raise HTTPException(status_code=response.status_code, detail="Cannot generate medium scan")
+#     #TODO Mettre dans une fonction car optionnel
+#     # response = requests.put(url=f"${dbserver.getUrl()}background/{instrumentId}/url?projectId=${projectId}", data=data, headers={"Authorization": f"Bearer {background.bearer}"})
+#     url = f"{dbserver.getUrl()}/background/{instrumentId}/url?projectId={projectId}"
+#     print("url:",url)
+#     response = requests.post(url=url, data=data, headers={"Authorization": f"Bearer {background.bearer}"})
+#     if response.ok:
+#         markTaskWithDoneStatus( background.taskId, background.db, background.bearer, response.json().get("id"))
+#         print(response.json())
+#         # return response.json().get("id")
+#         markTaskWithDoneStatus( background.taskId, background.db, background.bearer, "Finished")
+#         return response.json()
+#     else:
+#         print("response.status_code:",response.status_code)
+#         # if ( response.status_code == 405):
+#         markTaskWithErrorStatus( background.taskId, background.db, background.bearer, "Cannot add medium scan in the DB")
+#         detail = {
+#             "status": "partial_success",
+#             "file_url": back,
+#             "message": "Data generated successfully, but failed to add to the DB",
+#             "db_error": response.status_code,
+#             "taskId": background.taskId
+#         }
+#         # raise HTTPException(status_code=206, detail="Cannot add medium scan in the DB")
+#         raise HTTPException(status_code=206, detail=detail)
+#         # else:
+#         #     markTaskWithErrorStatus(background.taskId, background.db, background.bearer, "Cannot generate medium scan")
+#         #     raise HTTPException(status_code=response.status_code, detail="Cannot generate medium scan")
 
 
 # from importe import importe

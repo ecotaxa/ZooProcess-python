@@ -3,9 +3,13 @@ import requests
 
 class TaskStatus:
     def __init__(self, taskId:str, db:DB ):
-        self.taskId = taskId
+        self._id = taskId
         self.db = db
-        self.url = self.db.makeUrl(f"task/{self.taskId}")
+        self.url = self.db.makeUrl(f"task/{self._id}")
+
+    @property
+    def id(self):
+        return self._id
 
     def sendRunning(self, message:str="running") -> requests.Response:
         # print("sendRunning Status")
@@ -49,7 +53,7 @@ class TaskStatus:
 
     def sendImage(self, path:str, type:str) -> requests.Response:        
         # print("sendImageProcessed")
-        url = self.db.makeUrl(f"scan/{self.taskId}?nomove&taskid")
+        url = self.db.makeUrl(f"scan/{self._id}?nomove&taskid")
         print("url: ", url)
         body = {
             "type": type,

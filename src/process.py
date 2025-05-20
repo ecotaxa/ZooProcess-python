@@ -1,7 +1,7 @@
 
 
 #from .SeparateServer import SeparateServer
-import requests
+# import requests
 from src.DB import DB
 from src.img_tools import saveimage
 
@@ -47,7 +47,7 @@ class Process:
     A class to process a scan.
     """
 
-    def __init__(self, scan:str, back:str, task:TaskStatus=None, db:DB=None) -> None:
+    def __init__(self, scan:str, back:str, task:TaskStatus|None=None, db:DB|None=None) -> None:
         self.scan = Path(scan)
         self.background = Path(back)
         self.taskStatus = task
@@ -128,6 +128,7 @@ class Process:
             "out": out,
             "vis": vis,
             "dst": "dst",
+            "nb":1000
         }
 
         if (self.taskStatus):
