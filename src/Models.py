@@ -46,6 +46,7 @@ class Sample(BaseModel):
     id: str
     name: str
     subsample: Union[List["SubSample"], None] = None
+    metadata: Union[List["MetadataModel"], None] = None
 
 
 class SubSample(BaseModel):
@@ -124,3 +125,12 @@ class Instrument(BaseModel):
     name: str
     sn: str
     ZooscanCalibration: Optional[List[Calibration]] = None
+
+
+class MetadataModel(BaseModel):
+    """Metadata model as defined in the OpenAPI specification"""
+
+    id: str
+    name: str
+    value: str
+    description: Optional[str] = None

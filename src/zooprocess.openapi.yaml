@@ -241,7 +241,7 @@ paths:
         schema:
           type: string
         style: simple
-    
+
 
     get:
       description: Return background scans associated to the project
@@ -509,7 +509,7 @@ paths:
         schema:
           type: string
         style: simple
-    
+
 
     get:
       description: Return sample scans associated to the project
@@ -662,7 +662,7 @@ paths:
       description: Delete a sample
 
       operationId: Samples.delete
-      
+
       responses:
         '200':
           description: Successful operation
@@ -796,7 +796,7 @@ paths:
       description: Delete a subsample
 
       operationId: subsamples.delete
-      
+
       responses:
         '200':
           description: Successful operation
@@ -1270,7 +1270,7 @@ paths:
         #           error:
         #             type: string
         #             description: The error message from api/background:addurl2
-      
+
       tags:
         - User
       security:
@@ -1341,7 +1341,7 @@ paths:
         - User
       security:
         - BearerAuth: [ ]
-  
+
   /qc/{qcId}:
     parameters:
       - description: The qc ID
@@ -1962,6 +1962,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubSample'
+        metadata:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetadataModel'
         # count:
         #   type: integer
         #   readOnly: true
@@ -1984,7 +1988,7 @@ components:
         name:
           type: string
 
-    
+
     User:
       type: object
       required:
