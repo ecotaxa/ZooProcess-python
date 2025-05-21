@@ -102,7 +102,7 @@ def convert_tiff_to_jpeg(path, path_out, force=None) -> str:
             # jpeg_image = tiff_image.convert("L")
 
             # image 16bit
-            print("uint16")
+            # print("uint16")
 
             # tiff_image.mode = 'I' # a fonctionne mais plus ????
             jpeg_image = tiff_image.point(lambda i:i*(1./256)).convert('L') # .save('my.jpeg')
