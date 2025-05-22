@@ -1,7 +1,7 @@
 import os
 
-from src.config import config
-from src.local_db.sqlite_db import SQLiteDB, init_db
+from config import config
+from local_DB.sqlite_db import SQLiteDB, init_db
 
 
 def test_db_creation():

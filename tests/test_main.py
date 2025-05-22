@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app, get_db
-from src.auth import decode_jwt_token
-from src.local_db.models import User as DBUser
+from auth import decode_jwt_token
+from local_DB.models import User as DBUser
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def client():
     app.dependency_overrides.clear()
 
 
-@patch("src.auth.get_user_from_db")
+@patch("auth.get_user_from_db")
 def test_login_endpoint(mock_get_user_from_db, client):
     """Test that the /login endpoint returns a valid JWT token"""
     # Set up the mock to return our mock user
@@ -62,7 +62,7 @@ def test_login_endpoint(mock_get_user_from_db, client):
     )
 
 
-@patch("src.auth.get_user_from_db")
+@patch("auth.get_user_from_db")
 def test_users_me_endpoint_with_valid_token(mock_get_user_from_db, client):
     """Test that the /users/me endpoint returns user information with a valid token"""
     # Set up the mock to return our mock user
@@ -70,7 +70,7 @@ def test_users_me_endpoint_with_valid_token(mock_get_user_from_db, client):
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    with patch("src.auth.get_user_from_db", return_value=client["mock_user"]):
+    with patch("auth.get_user_from_db", return_value=client["mock_user"]):
         login_response = client["client"].post("/login", json=login_data)
         token = login_response.json()
 
@@ -111,7 +111,7 @@ def test_users_me_endpoint_with_invalid_token(client):
     assert response.status_code == 401
 
 
-@patch("src.auth.get_user_from_db")
+@patch("auth.get_user_from_db")
 @patch("pathlib.Path.iterdir")
 @patch("pathlib.Path.exists")
 @patch("pathlib.Path.is_dir")
@@ -134,7 +134,7 @@ def test_projects_endpoint_with_valid_token(
 
     # Create mock Path objects for subdirectories
     from pathlib import Path
-    from src.Models import Project, Drive
+    from Models import Project, Drive
 
     mock_dir1 = MagicMock(spec=Path)
     mock_dir1.is_dir.return_value = True
@@ -170,7 +170,7 @@ def test_projects_endpoint_with_valid_token(
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    with patch("src.auth.get_user_from_db", return_value=client["mock_user"]):
+    with patch("auth.get_user_from_db", return_value=client["mock_user"]):
         login_response = client["client"].post("/login", json=login_data)
         token = login_response.json()
 

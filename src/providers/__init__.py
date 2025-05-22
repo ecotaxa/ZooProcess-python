@@ -1,1 +1,1 @@
-# External servers we depend on
+# External servers the project depends on

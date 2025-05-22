@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from src.remote_db.DB import DB
-from src.Models import (
+from remote.DB import DB
+from Models import (
     Scan,
     Folder,
     BMProcess,
@@ -27,26 +27,26 @@ from src.Models import (
     Sample,
     SubSample,
 )
-from src.providers.SeparateServer import SeparateServer
-from src.remote.TaskStatus import TaskStatus
-from src.auth import get_current_user_from_credentials
-from src.convert import convert_tiff_to_jpeg
-from src.local_db.db_dependencies import get_db
-from src.demo_get_vignettes import generate_json
-from src.legacy.drives import validate_drives, get_drive_path
-from src.legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
+from providers.SeparateServer import SeparateServer
+from remote.TaskStatus import TaskStatus
+from auth import get_current_user_from_credentials
+from img_proc.convert import convert_tiff_to_jpeg
+from local_DB.db_dependencies import get_db
+from demo_get_vignettes import generate_json
+from legacy.drives import validate_drives, get_drive_path
+from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 
 # for /test
-from src.legacy_to_remote.importe import listWorkFolders
-from src.logger import logger
-from src.process import Process
-from src.separate import Separate
-from src.separate_fn import separate_images
-from src.providers.server import Server
+from legacy_to_remote.importe import listWorkFolders
+from logger import logger
+from img_proc.process import Process
+from separate import Separate
+from separate_fn import separate_images
+from providers.server import Server
 
 # import csv
 # import requests
-# from src.separate import separate_multiple
+# from separate import separate_multiple
 
 params = {"server": "http://localhost:8081", "dbserver": "http://localhost:8000"}
 
@@ -65,7 +65,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 # Import sys for DRIVES validation
 from contextlib import asynccontextmanager
-from src.config import config
+from config import config
 
 
 @asynccontextmanager
@@ -151,7 +151,7 @@ def read_root():
 
 
 @app.post("/separator/scan")
-def separate(scan: Scan):
+def separate(scan: Scan) -> None:
     # import os
 
     logger.info(f"POST /separator/scan: {scan}")
@@ -720,7 +720,7 @@ def login(login_req: LoginReq, db: Session = Depends(get_db)):
 
     If successful, returns a JWT token which will have to be used in bearer authentication scheme for subsequent calls.
     """
-    from src.auth import create_jwt_token, get_user_from_db
+    from auth import create_jwt_token, get_user_from_db
 
     # Validate the credentials against the database
     user = get_user_from_db(login_req.email, db)
@@ -893,7 +893,7 @@ def test(project: Project):
     #     logger.info(f"folder_path: {folder_path}")
     #     addVignettesFromSample(folder_path, folder, "Bearer", "db", "projectId")
 
-    # from src.ProjectClass import ProjectClass
+    # from ProjectClass import ProjectClass
 
     # projectClass = ProjectClass(project.name,"")
 
@@ -1045,7 +1045,7 @@ def get_instruments(full: bool = False):
     Args:
         full (bool, optional): If True, returns the full instrument details. Defaults to False.
     """
-    from src.remote_db.DB import get_instruments as get_all_instruments
+    from remote.DB import get_instruments as get_all_instruments
 
     instruments = get_all_instruments()
 
@@ -1072,7 +1072,7 @@ def get_instrument(instrument_id: str):
     Raises:
         HTTPException: If the instrument is not found.
     """
-    from src.remote_db.DB import get_instrument_by_id
+    from remote.DB import get_instrument_by_id
 
     instrument = get_instrument_by_id(instrument_id)
     if instrument is None:
@@ -1104,8 +1104,8 @@ def update_calibration(
     Raises:
         HTTPException: If the calibration is not found or the user is not authorized.
     """
-    from src.remote_db.DB import DB
-    import src.modern.calibration as calibration_module
+    from remote.DB import DB
+    import modern.calibration as calibration_module
 
     # Check if the user is authorized to update this calibration
     if user.id != userId:
@@ -1141,8 +1141,8 @@ def create_calibration(
         HTTPException: If the instrument is not found or the user is not authorized.
     """
     # Check if the instrument exists
-    from src.remote_db.DB import get_instrument_by_id, DB
-    import src.modern.calibration as calibration_module
+    from remote.DB import get_instrument_by_id, DB
+    import modern.calibration as calibration_module
 
     instrument = get_instrument_by_id(instrumentId)
     if instrument is None:

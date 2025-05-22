@@ -1,4 +1,4 @@
-from src.remote_db.DB import DB
+from remote.DB import DB
 import requests
 
 

@@ -1,5 +1,5 @@
-from src.local_db.models import get_session_maker
-from src.local_db.sqlite_db import SQLAlchemyDB
+from .models import get_session_maker
+from .sqlite_db import SQLAlchemyDB
 
 # Create a session maker
 SessionMaker = get_session_maker()

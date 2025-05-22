@@ -7,7 +7,7 @@ from pathlib import Path
 def test_working_dir_default():
     """Test that WORKING_DIR is set to the current directory by default"""
     # Import the config module
-    from src.config import WORKING_DIR, config
+    from config import WORKING_DIR, config
 
     # Check that WORKING_DIR is set to the current directory by default
     assert WORKING_DIR == os.getcwd()
@@ -28,12 +28,12 @@ def test_working_dir_from_env():
 
         # Reload the config module to pick up the new environment variable
         import importlib
-        import src.config
+        import config
 
-        importlib.reload(src.config)
+        importlib.reload(config)
 
         # Import the config module again
-        from src.config import WORKING_DIR, config
+        from config import WORKING_DIR, config
 
         # Check that WORKING_DIR is set to the test directory
         assert WORKING_DIR == test_dir
@@ -52,6 +52,6 @@ def test_working_dir_from_env():
 
         # Reload the config module to restore the original state
         import importlib
-        import src.config
+        import config
 
-        importlib.reload(src.config)
+        importlib.reload(config)

@@ -2,8 +2,8 @@ import requests
 from fastapi import HTTPException
 from typing import List
 
-from src.config import config
-from src.Models import Instrument
+from config import config
+from Models import Instrument
 
 
 # Hardcoded list of instruments

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from src.legacy_to_remote.importe import list_background
+from legacy_to_remote.importe import list_background
 
 import unittest
 

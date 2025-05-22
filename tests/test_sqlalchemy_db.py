@@ -1,8 +1,8 @@
 import os
 
 from src.config import config
-from src.local_db.sqlite_db import SQLAlchemyDB, init_db
-from src.local_db.models import Example, User
+from src.local_DB.sqlite_db import SQLAlchemyDB, init_db
+from src.local_DB.models import Example, User
 
 
 class TestSQLAlchemyDB:
@@ -47,26 +47,33 @@ class TestSQLAlchemyDB:
 
     def test_user_orm_query(self):
         """Test that we can use SQLAlchemy ORM to query the User table."""
+        import time
+
+        # Use a timestamp to ensure unique email for each test run
+        timestamp = int(time.time())
+        unique_email = f"test{timestamp}@example.com"
+        unique_id = f"test{timestamp}"
+
         db = SQLAlchemyDB()
         with db:
             # Insert a test user using ORM
             user = User(
-                id="test123",
+                id=unique_id,
                 name="Test User",
-                email="test@example.com",
+                email=unique_email,
                 password="encrypted_password_hash",  # Add encrypted password
             )
             db.session.add(user)
             db.session.commit()
 
             # Query the test user using ORM
-            result = db.session.query(User).filter_by(id="test123").first()
+            result = db.session.query(User).filter_by(id=unique_id).first()
 
             # Check that the user was inserted correctly
             assert result is not None
-            assert result.id == "test123"
+            assert result.id == unique_id
             assert result.name == "Test User"
-            assert result.email == "test@example.com"
+            assert result.email == unique_email
             assert result.password == "encrypted_password_hash"
 
             # Clean up

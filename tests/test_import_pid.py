@@ -1,5 +1,5 @@
 import json
-from src.legacy_to_remote.importe import pid2json
+from legacy_to_remote.importe import pid2json
 
 
 import unittest

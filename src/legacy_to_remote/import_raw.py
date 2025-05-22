@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 import requests
 
-from src.legacy_to_remote.importe import convertsamplekey
-from src.connection import testBearer
+from legacy_to_remote.importe import convertsamplekey
+from remote.connection import testBearer
 
 
 def parse_meta_file(filepath):

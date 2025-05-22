@@ -4,7 +4,7 @@ import datetime
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
 
-from src.auth import (
+from auth import (
     create_jwt_token,
     decode_jwt_token,
     get_user_from_token,

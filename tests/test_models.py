@@ -1,5 +1,5 @@
 import pytest
-from src.Models import Instrument
+from Models import Instrument
 
 
 def test_instrument_model_creation():

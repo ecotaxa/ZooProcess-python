@@ -2,8 +2,8 @@ from typing import Dict, List
 
 from fastapi import HTTPException
 
-from src.remote_db.DB import DB
-from src.Models import Calibration
+from remote.DB import DB
+from Models import Calibration
 
 
 def create(instrumentId: str, calibration: Dict, db: DB) -> Calibration:

@@ -19,7 +19,7 @@ def get_drive_path(drive_name) -> Optional[Path]:
     Returns:
         Path: The full path of the drive if found, None otherwise
     """
-    from src.config import config
+    from config import config
 
     for drive_path in config.DRIVES:
         drive = Path(drive_path)
@@ -32,16 +32,16 @@ def get_drive_path(drive_name) -> Optional[Path]:
 def validate_drives():
     """Validate DRIVES at application startup"""
     # Import the config module to ensure we have the latest values
-    import src.config
+    import config
 
     # Try to reload the module, but handle the case where it's not in sys.modules
     try:
-        importlib.reload(src.config)
+        importlib.reload(config)
     except ImportError:
         # If the module is not in sys.modules, we can continue with the imported module
         pass
 
-    from src.config import config
+    from config import config
 
     if not config.DRIVES:
         print("ERROR: DRIVES environment variable is empty or not set.")

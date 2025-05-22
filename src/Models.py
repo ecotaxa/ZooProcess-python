@@ -1,3 +1,4 @@
+# Models for communicating via FastAPI
 from typing import List, Union, Literal, Optional
 
 from pydantic import BaseModel, Field

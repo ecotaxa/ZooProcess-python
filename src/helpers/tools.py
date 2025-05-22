@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from src.logger import logger
+from logger import logger
 
 
 def nameit(func):

@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from sqlalchemy.exc import IntegrityError
 
 from commands.user_cli import app
-from src.local_db.models import User
+from src.local_DB.models import User
 
 runner = CliRunner()
 
@@ -35,11 +35,12 @@ def test_add_user_success(mock_sqlalchemy_db):
     mock_session = mock_sqlalchemy_db.session
 
     # Act
-    result = runner.invoke(
-        app,
-        ["add", "--name", "Test User", "--email", "test@example.com"],
-        input="password\npassword\n",
-    )
+    with patch("click.exit") as mock_exit:
+        result = runner.invoke(
+            app,
+            ["add", "--name", "Test User", "--email", "test@example.com"],
+            input="password\npassword\n",
+        )
 
     # Assert
     assert result.exit_code == 0

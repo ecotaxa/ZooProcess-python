@@ -1,5 +1,5 @@
 import json
-from src.legacy_to_remote.importe import parse_tsv
+from legacy_to_remote.importe import parse_tsv
 
 import pytest
 

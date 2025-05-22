@@ -10,11 +10,11 @@ import json
 from fastapi import HTTPException
 from pathlib import Path
 
-from src.Models import Project
-from src.connection import testBearer
-from src.remote.request import getInstrumentFromSN, getDriveId
+from Models import Project
+from remote.connection import testBearer
+from remote.request import getInstrumentFromSN, getDriveId
 
-from src.remote_db.DB import DB
+from remote.DB import DB
 
 
 def convertsamplekey(samplejson):

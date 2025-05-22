@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
-from src.Models import Project
-from src.legacy_to_remote.LegacyProject import LegacyProject
+from Models import Project
+from legacy_to_remote.LegacyProject import LegacyProject
 
 
 # Initialize LegacyProject with a valid Project object containing an existing path

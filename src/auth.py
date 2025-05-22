@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Optional
 from starlette.requests import Request
 
-from src.local_db.db_dependencies import get_db
+from local_DB.db_dependencies import get_db
 
 
 class CustomHTTPBearer(HTTPBearer):
@@ -141,7 +141,7 @@ def get_user_from_db(email: str, db):
     Returns:
         The user if found, None otherwise
     """
-    from src.local_db.models import User
+    from local_db.models import User
 
     return db.query(User).filter(User.email == email).first()
 

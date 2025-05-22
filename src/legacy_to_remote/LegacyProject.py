@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.Models import Project
-from src.legacy_to_remote.importe import getInstrumentFromSN
+from Models import Project
+from legacy_to_remote.importe import getInstrumentFromSN
 
 
 class LegacyProject(object):

@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 from fastapi.testclient import TestClient
 
-from src.remote.request import getInstrumentFromSN
+from remote.request import getInstrumentFromSN
 from main import app
 
 client = TestClient(app)
@@ -39,7 +39,7 @@ def test_returns_none_when_no_match():
 # Test the new endpoint for getting an instrument by ID
 def test_get_instrument_by_id():
     # Arrange
-    from src.remote_db.DB import get_instrument_by_id
+    from remote.DB import get_instrument_by_id
 
     # Act
     result = get_instrument_by_id("1")
@@ -55,7 +55,7 @@ def test_get_instrument_by_id():
 # Test the new endpoint for getting an instrument by ID when the ID doesn't exist
 def test_get_instrument_by_id_not_found():
     # Arrange
-    from src.remote_db.DB import get_instrument_by_id
+    from remote.DB import get_instrument_by_id
 
     # Act
     result = get_instrument_by_id("999")

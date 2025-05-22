@@ -3,8 +3,8 @@ import numpy as np
 import requests
 from typing import List, Optional
 
-from src.providers.server import Server
-from .logger import logger
+from providers.server import Server
+from logger import logger
 from ZooProcess_lib.img_tools import loadimage, saveimage
 
 # server = "http://niko.obs-vlfr.fr:5000"

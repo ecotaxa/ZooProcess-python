@@ -21,7 +21,7 @@ sys.path.append("{PROJECT_ROOT}")
 if "DRIVES" in os.environ:
     del os.environ["DRIVES"]
 # Import config.py first to set up config.DRIVES
-from src.config import config
+from config import config
 # Import main.py, which should fail
 try:
     import main
@@ -63,7 +63,7 @@ sys.path.append("{PROJECT_ROOT}")
 # Set DRIVES environment variable with invalid paths
 os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 # Import config.py first to set up config.DRIVES
-from src.config import config
+from config import config
 # Import main.py, which should fail
 try:
     import main
@@ -109,7 +109,7 @@ sys.path.append("{PROJECT_ROOT}")
 # Set DRIVES environment variable with valid paths
 os.environ["DRIVES"] = "{temp_dir1},{temp_dir2}"
 # Import config.py first to set up config.DRIVES
-from src.config import config
+from config import config
 print(f"DEBUG: config.DRIVES = {{config.DRIVES}}")
 # Import main.py, which should succeed
 import main

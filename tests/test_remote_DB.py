@@ -1,4 +1,4 @@
-from src.remote_db.DB import DB
+from remote.DB import DB
 
 import pytest
 from unittest.mock import patch, MagicMock
@@ -12,10 +12,10 @@ def setup_db():
     return {"maxDiff": None, "capturedOutput": sys.stdout}
 
 
-@patch("src.DB.requests")
+@patch("DB.requests")
 def test_init_with_valid_bearer_and_default_db(mock_requests):
     # # Arrange
-    # # with mock.patch('src.DB.requests') as mock_requests:
+    # # with mock.patch('DB.requests') as mock_requests:
 
     # #     mock_config = mocker.patch('config.db', 'http://example.com/')
     # bearer_token = "valid_token"
@@ -87,7 +87,7 @@ def test_get_handles_empty_url_parameter(mock_get):
 
 def test_get_db_from_config():
     # Arrange
-    from src.config import config
+    from config import config
 
     # Act
     db = DB("test_token")

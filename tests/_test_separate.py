@@ -1,8 +1,6 @@
-import pytest
-
-from src.debug_tools import dump_structure
-from src.img_tools import mkdir
-from src.separate_fn import separate_images
+from helpers.debug_tools import dump_structure
+from img_tools import mkdir
+from separate_fn import separate_images
 
 userhome = "/Users/sebastiengalvagno/"
 piqv = "piqv/plankton/zooscan_monitoring/"
