@@ -1,7 +1,7 @@
 class SeparateServer:
     def __init__(self, server, dbserver):
 
-        print(f"Separate({server}, {dbserver})")
+        # print(f"Separate({server}, {dbserver})")
         self.server = server
         self.dbserver = dbserver
 
