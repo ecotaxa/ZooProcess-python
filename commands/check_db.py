@@ -1,5 +1,5 @@
 import os
-from src.config import config
+from src.config_rdr import config
 from src.local_db.sqlite_db import db_path
 from src.logger import logger
 

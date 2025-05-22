@@ -2,7 +2,7 @@ import logging
 import sys
 from pathlib import Path
 
-from config import config
+from config_rdr import config
 
 # Create logs directory inside WORKING_DIR if it doesn't exist
 logs_dir = Path(config.WORKING_DIR) / "logs"

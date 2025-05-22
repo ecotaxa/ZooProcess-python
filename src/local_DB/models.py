@@ -1,9 +1,10 @@
+import os
+
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from src.config import WORKING_DIR, config
-import os
+from config_rdr import config
 
 # Create a base class for SQLAlchemy models
 Base = declarative_base()

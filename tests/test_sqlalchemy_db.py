@@ -1,8 +1,8 @@
 import os
 
-from src.config import config
-from src.local_DB.sqlite_db import SQLAlchemyDB, init_db
-from src.local_DB.models import Example, User
+from config_rdr import config
+from local_DB.sqlite_db import SQLAlchemyDB, init_db
+from local_DB.models import Example, User
 
 
 class TestSQLAlchemyDB:

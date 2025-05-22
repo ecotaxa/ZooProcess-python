@@ -11,7 +11,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Test script to verify that main.py validation works correctly
 def test_empty_drives():
     """Test that importing main.py fails when DRIVES is empty."""
-    # Create a temporary script that imports config.py and then main.py
+    # Create a temporary script that imports config_rdr.py and then main.py
     script = f"""
 import os
 import sys
@@ -21,7 +21,7 @@ sys.path.append("{PROJECT_ROOT}")
 if "DRIVES" in os.environ:
     del os.environ["DRIVES"]
 # Import config.py first to set up config.DRIVES
-from config import config
+from config_rdr import config
 # Import main.py, which should fail
 try:
     import main
@@ -54,7 +54,7 @@ except SystemExit:
 
 def test_invalid_drives():
     """Test that importing main.py fails when DRIVES contains invalid paths."""
-    # Create a temporary script that imports config.py and then main.py
+    # Create a temporary script that imports config_rdr.py and then main.py
     script = f"""
 import os
 import sys
@@ -63,7 +63,7 @@ sys.path.append("{PROJECT_ROOT}")
 # Set DRIVES environment variable with invalid paths
 os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 # Import config.py first to set up config.DRIVES
-from config import config
+from config_rdr import config
 # Import main.py, which should fail
 try:
     import main
@@ -100,7 +100,7 @@ def test_valid_drives():
     temp_dir1 = tempfile.mkdtemp()
     temp_dir2 = tempfile.mkdtemp()
 
-    # Create a temporary script that imports config.py and then main.py
+    # Create a temporary script that imports config_rdr.py and then main.py
     script = f"""
 import os
 import sys
@@ -109,7 +109,7 @@ sys.path.append("{PROJECT_ROOT}")
 # Set DRIVES environment variable with valid paths
 os.environ["DRIVES"] = "{temp_dir1},{temp_dir2}"
 # Import config.py first to set up config.DRIVES
-from config import config
+from config_rdr import config
 print(f"DEBUG: config.DRIVES = {{config.DRIVES}}")
 # Import main.py, which should succeed
 import main

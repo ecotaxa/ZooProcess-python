@@ -1,7 +1,7 @@
 import unittest
 
 from providers.server import Server
-from config import config
+from config_rdr import config
 
 
 class Test_server(unittest.TestCase):

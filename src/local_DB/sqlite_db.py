@@ -1,7 +1,7 @@
 import os
 import sqlite3
-from src.config import config
-from src.local_DB.models import (
+from config_rdr import config
+from .models import (
     get_engine,
     get_session_maker,
     init_db as sqlalchemy_init_db,

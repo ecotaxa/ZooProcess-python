@@ -2,7 +2,7 @@ import requests
 from fastapi import HTTPException
 from typing import List
 
-from config import config
+from config_rdr import config
 from Models import Instrument
 
 

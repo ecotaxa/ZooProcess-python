@@ -24,10 +24,10 @@ def test_get_drive_path_found():
         os.environ["DRIVES"] = f"{temp_dir1},{temp_dir2}"
 
         # Import the config module to set up config.DRIVES
-        import config
+        import config_rdr
         import importlib
 
-        importlib.reload(config)
+        importlib.reload(config_rdr)
 
         # Get the drive name (last component of the path)
         drive1_name = Path(temp_dir1).name
@@ -62,10 +62,11 @@ def test_get_drive_path_not_found():
         os.environ["DRIVES"] = temp_dir
 
         # Import the config module to set up config.DRIVES
-        import config
+        import config_rdr
+        from config_rdr import config
         import importlib
 
-        importlib.reload(config)
+        importlib.reload(config_rdr)
 
         # Test that get_drive_path returns None for a non-existent drive name
         assert get_drive_path("nonexistent_drive") is None
@@ -92,10 +93,10 @@ def test_get_drive_path_empty_drives():
             del os.environ["DRIVES"]
 
         # Import the config module to set up config.DRIVES
-        import config
+        import config_rdr
         import importlib
 
-        importlib.reload(config)
+        importlib.reload(config_rdr)
 
         # Test that get_drive_path returns None when DRIVES is empty
         assert get_drive_path("any_drive") is None

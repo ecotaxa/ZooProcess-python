@@ -87,7 +87,7 @@ def test_get_handles_empty_url_parameter(mock_get):
 
 def test_get_db_from_config():
     # Arrange
-    from config import config
+    from config_rdr import config
 
     # Act
     db = DB("test_token")

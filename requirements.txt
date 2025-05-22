@@ -20,4 +20,5 @@ rich==14.0.0 # Rich text and formatting for CLI
 # Testing dependencies
 pytest==8.3.5
 pytest-cov==6.1.1
+pytest-mock==3.14.0
 httpx==0.28.1 # Required for FastAPI TestClient

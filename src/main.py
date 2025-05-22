@@ -65,7 +65,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 # Import sys for DRIVES validation
 from contextlib import asynccontextmanager
-from config import config
+from config_rdr import config
 
 
 @asynccontextmanager

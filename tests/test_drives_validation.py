@@ -10,7 +10,7 @@ import legacy.drives
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-# Function to simulate the validation logic in config.py
+# Function to simulate the validation logic in config_rdr.py
 def validate_drives_helper(drives):
     """
     Validate that drives is not empty, all paths exist, all paths are directories, and all paths are unique.
@@ -147,10 +147,11 @@ def test_config_validation_empty():
                 del os.environ["DRIVES"]
 
             # Import the config module first to set up config.DRIVES
-            import config
+            import config_rdr
+            from config_rdr import config
             import importlib
 
-            importlib.reload(config)
+            importlib.reload(config_rdr)
 
             # Now import main and call validate_drives() explicitly
             import main
@@ -183,10 +184,11 @@ def test_config_validation_invalid_paths():
             os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 
             # Import the config module first to set up config.DRIVES
-            import config
+            import config_rdr
+            from config_rdr import config
             import importlib
 
-            importlib.reload(config)
+            importlib.reload(config_rdr)
 
             # Now import main and call validate_drives() explicitly
             import main
@@ -221,11 +223,12 @@ def test_config_validation_valid_paths():
         os.environ["DRIVES"] = f"{temp_dir1},{temp_dir2}"
 
         # Import the config module first to set up config.DRIVES
-        import config
+        import config_rdr
+        from config_rdr import config
         import importlib
 
-        importlib.reload(config)
-        from config import config
+        importlib.reload(config_rdr)
+        from config_rdr import config
 
         # Now import main which will validate config.DRIVES
         import main
@@ -264,10 +267,11 @@ def test_config_validation_not_directories():
             os.environ["DRIVES"] = f"{temp_dir},{temp_file.name}"
 
             # Import the config module first to set up config.DRIVES
-            import config
+            import config_rdr
+            from config_rdr import config
             import importlib
 
-            importlib.reload(config)
+            importlib.reload(config_rdr)
 
             # Now import main and call validate_drives() explicitly
             import main
@@ -307,10 +311,11 @@ def test_config_validation_duplicates():
             os.environ["DRIVES"] = f"{temp_dir},{temp_dir}"
 
             # Import the config module first to set up config.DRIVES
-            import config
+            import config_rdr
+            from config_rdr import config
             import importlib
 
-            importlib.reload(config)
+            importlib.reload(config_rdr)
 
             # Now import main and call validate_drives() explicitly
             import main

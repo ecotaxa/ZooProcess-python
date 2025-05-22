@@ -1,7 +1,7 @@
-import pytest
-import jwt
 import datetime
-from unittest.mock import patch, MagicMock
+
+import jwt
+import pytest
 from fastapi import HTTPException
 
 from auth import (

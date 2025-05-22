@@ -1,6 +1,6 @@
 import os
 
-from config import config
+from config_rdr import config
 from local_DB.sqlite_db import SQLiteDB, init_db
 
 
