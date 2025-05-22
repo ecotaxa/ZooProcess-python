@@ -3,12 +3,12 @@ import os
 import sys
 
 import pytest
+from pytest_mock import MockerFixture
 
 import legacy.drives as legacy_drives
 
 
-@pytest.mark.skip(reason="PyCharm issue with pluggy")
-def test_drives_empty_fails(mocker):
+def test_drives_empty_fails(mocker: MockerFixture):
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
@@ -27,11 +27,6 @@ def test_drives_empty_fails(mocker):
 
         # Now import main and call validate_drives() explicitly
         import main as main
-
-        importlib.reload(main)
-
-        # Temporarily patch the is_test check to force validation behavior
-        mocker.patch("legacy.drives.sys.modules", {"pytest": None})
 
         # Call validate_drives() which should exit with code 1
         legacy_drives.validate_drives()
@@ -57,51 +52,50 @@ def test_drives_empty_fails(mocker):
 
 
 @pytest.mark.skip(reason="PyCharm issue?")
-def test_drives_with_invalid_paths_fails():
+def test_drives_with_invalid_paths_fails(mocker):
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
     # Mock sys.exit to prevent the test from actually exiting
-    with patch("sys.exit") as mock_exit, patch("builtins.print") as mock_print:
-        try:
-            # Set the DRIVES environment variable with non-existent paths
-            os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
+    mock_exit = mocker.patch("sys.exit")
+    mock_print = mocker.patch("builtins.print")
 
-            # Import the config module first to set up config.DRIVES
-            import src.config_rdr as config_rdr
-            from src.config_rdr import config
+    try:
+        # Set the DRIVES environment variable with non-existent paths
+        os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 
-            # Now import main and call validate_drives() explicitly
-            import src.main as main
+        # Import the config module first to set up config.DRIVES
+        import src.config_rdr as config_rdr
+        from src.config_rdr import config
 
-            importlib.reload(main)
+        # Now import main and call validate_drives() explicitly
+        import src.main as main
 
-            # Temporarily patch the is_test check to force validation behavior
-            with patch("legacy.drives.sys.modules", {"pytest": None}):
-                # Call validate_drives() which should exit with code 1
-                legacy_drives.validate_drives()
+        importlib.reload(main)
 
-            # Check that sys.exit was called with exit code 1
-            mock_exit.assert_called_once_with(1)
+        # Call validate_drives() which should exit with code 1
+        legacy_drives.validate_drives()
 
-            # Instead of checking the exact print call, we'll check that the function
-            # was called at least once, since we can see from the captured stdout
-            # that the correct message is being printed
-            assert mock_print.called
-        finally:
-            # Restore the original DRIVES value
-            if original_drives is not None:
-                os.environ["DRIVES"] = original_drives
-            else:
-                del os.environ["DRIVES"]
+        # Check that sys.exit was called with exit code 1
+        mock_exit.assert_called_once_with(1)
 
-            # Reload the config module again to restore the original state
-            if "src.config_rdr" in sys.modules:
-                importlib.reload(sys.modules["src.config_rdr"])
+        # Instead of checking the exact print call, we'll check that the function
+        # was called at least once, since we can see from the captured stdout
+        # that the correct message is being printed
+        assert mock_print.called
+    finally:
+        # Restore the original DRIVES value
+        if original_drives is not None:
+            os.environ["DRIVES"] = original_drives
+        else:
+            del os.environ["DRIVES"]
+
+        # Reload the config module again to restore the original state
+        if "src.config_rdr" in sys.modules:
+            importlib.reload(sys.modules["src.config_rdr"])
 
 
-@pytest.mark.skip(reason="This test is not working yet")
-def test_drives_with_valid_paths():
+def test_drives_with_valid_paths(mocker):
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 

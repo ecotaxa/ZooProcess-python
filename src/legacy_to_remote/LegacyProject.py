@@ -28,7 +28,7 @@ class LegacyProject(object):
     def __init__(self, project: Project):
         # self.project_name = Path(project.path).name
         self.project_name = (
-            project.name if project.name != None else Path(project.path).name
+            project.name if project.name is not None else Path(project.path).name
         )
         self.piqvhome = self.project_name.parent
         self.home = Path(self.piqvhome)

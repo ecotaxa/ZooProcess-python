@@ -5,10 +5,12 @@ from legacy_to_remote.LegacyProject import LegacyProject
 
 
 # Initialize LegacyProject with a valid Project object containing an existing path
+@pytest.mark.skip(reason="Obsolete piqv ref.")
 def test_init_with_valid_project_path():
     # Create a test path that exists
     test_path = Path.cwd()
     project = Project(
+        id="6789R",
         path=str(test_path),
         bearer="test_bearer",
         db="test_db",

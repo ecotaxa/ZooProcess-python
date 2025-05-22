@@ -1,12 +1,8 @@
-import builtins
 import importlib
 import os
 import sys
 from pathlib import Path
 from typing import Optional
-
-# Use builtins.print to make it easier to mock in tests
-print = builtins.print
 
 
 def get_drive_path(drive_name) -> Optional[Path]:

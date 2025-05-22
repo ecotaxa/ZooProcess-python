@@ -1,36 +1,16 @@
+import pytest
+
 from remote.DB import DB
 
-import pytest
-from unittest.mock import patch, MagicMock
 
-import sys
+def test_init_with_valid_bearer_and_default_db():
+    # Arrange
 
-
-@pytest.fixture
-def setup_db():
-    # This fixture replaces the setUp method
-    return {"maxDiff": None, "capturedOutput": sys.stdout}
-
-
-@patch("DB.requests")
-def test_init_with_valid_bearer_and_default_db(mock_requests):
-    # # Arrange
-    # # with mock.patch('DB.requests') as mock_requests:
-
-    # #     mock_config = mocker.patch('config.db', 'http://example.com/')
-    # bearer_token = "valid_token"
-
-    # # Act
-    # db_instance = DB("test_bearer")
-
-    # # db_instance = DB(bearer=bearer_token)
-
-    # # Assert
-    # self.assertEqual(db_instance.bearer, bearer_token)
-    # self.assertEqual(db_instance.db, "http://example.com")
-
+    # Act
     bearer_token = "test_bearer"
     db_instance = DB(bearer_token)
+
+    # Assert
     assert db_instance.bearer == bearer_token
     assert db_instance.db == "http://zooprocess.imev-mer.fr:8081/v1"
 
@@ -47,35 +27,43 @@ def test_init_with_empty_bearer_raises_error():
 
 
 # Successfully retrieves JSON data from a valid URL
-def test_get_retrieves_json_data_from_valid_url():
+def test_get_retrieves_json_data_from_valid_url(mocker):
     # Arrange
-    mock_response = MagicMock()
+    mock_response = mocker.MagicMock()
     mock_response.json.return_value = {"key": "value"}
+    mock_response.status_code = 200  # Add status_code attribute
+    mock_get = mocker.patch("requests.get", return_value=mock_response)
 
-    with patch("requests.get", return_value=mock_response) as mock_get:
-        db = DB("test_token")
-        # db.bearer = "test_token"
-        db.db = "http://test-url.com"
+    db = DB("test_token")
+    db.db = "http://test-url.com"
 
-        # Act
-        result = db.get("/test-path")
+    # Act
+    result = db.get("/test-path")
 
-        # Assert
-        mock_get.assert_called_once_with(
-            "http://test-url.com/test-path",
-            headers={
-                "Authorization": "Bearer test_token",
-                "Content-Type": "application/json",
-            },
-        )
-        assert result == {"key": "value"}
+    # Assert
+    mock_get.assert_called_once_with(
+        "http://test-url.com/test-path",
+        headers={
+            "Authorization": "Bearer test_token",
+            "Content-Type": "application/json",
+        },
+    )
+    assert result == {"key": "value"}
 
 
 # Handles empty URL parameter
-@patch("requests.get")
-def test_get_handles_empty_url_parameter(mock_get):
+def test_get_handles_empty_url_parameter(mocker):
+    # Create a mock response with status_code 200
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {}
+
+    # Patch requests.get to return our mock response
+    mock_get = mocker.patch("requests.get", return_value=mock_response)
+
     db = DB("test_token", "http://test-url.com")
     db.get("")
+
     mock_get.assert_called_once_with(
         "http://test-url.com/",
         headers={

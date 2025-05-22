@@ -6,6 +6,7 @@ This module contains tests for the user management CLI commands.
 
 import pytest
 from click.testing import CliRunner
+from pytest_mock import MockFixture
 from sqlalchemy.exc import IntegrityError
 
 from commands.user_cli import app
@@ -15,7 +16,7 @@ runner = CliRunner()
 
 
 @pytest.fixture
-def mock_sqlalchemy_db(mocker):
+def mock_sqlalchemy_db(mocker: MockFixture):
     """
     Mock the SQLAlchemyDB context manager.
     """
@@ -36,7 +37,7 @@ def mock_sqlalchemy_db(mocker):
     yield mock_db
 
 
-def test_add_user_success(mock_sqlalchemy_db, mocker):
+def test_add_user_success(mock_sqlalchemy_db, mocker: MockFixture):
     """
     Test adding a user successfully.
     """

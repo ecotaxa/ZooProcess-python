@@ -38,7 +38,3 @@ class Test_server(unittest.TestCase):
         # print(config.dbserver)
         server = Server(config.dbserver)
         self.assertTrue(server.test_server())
-
-
-if __name__ == "__main__":
-    unittest.main()

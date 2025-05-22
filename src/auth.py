@@ -141,7 +141,7 @@ def get_user_from_db(email: str, db):
     Returns:
         The user if found, None otherwise
     """
-    from local_db.models import User
+    from local_DB.models import User
 
     return db.query(User).filter(User.email == email).first()
 

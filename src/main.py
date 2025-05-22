@@ -29,7 +29,7 @@ from Models import (
 )
 from providers.SeparateServer import SeparateServer
 from remote.TaskStatus import TaskStatus
-from auth import get_current_user_from_credentials
+from auth import get_current_user_from_credentials, security
 from img_proc.convert import convert_tiff_to_jpeg
 from local_DB.db_dependencies import get_db
 from demo_get_vignettes import generate_json
@@ -72,11 +72,7 @@ from config_rdr import config
 async def lifespan(app: FastAPI):
     """Lifespan event handler for application startup and shutdown"""
     # Run validation on application startup
-    # Check if we're in a test environment
-    is_test = "pytest" in sys.modules
-    if not is_test:
-        # Only run validation in non-test environments
-        validate_drives()
+    validate_drives()
     yield
     # Cleanup code (if any) would go here
 
@@ -84,8 +80,7 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI with lifespan event handler
 app = FastAPI(lifespan=lifespan)
 
-# Security scheme for JWT bearer token authentication
-security = HTTPBearer()
+# Security scheme for JWT bearer token authentication is imported from auth.py
 
 origins = [
     "*",

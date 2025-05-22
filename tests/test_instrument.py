@@ -1,4 +1,3 @@
-from unittest.mock import Mock
 from fastapi.testclient import TestClient
 
 from remote.request import getInstrumentFromSN
@@ -7,9 +6,9 @@ from main import app
 client = TestClient(app)
 
 
-def test_returns_matching_instrument():
+def test_returns_matching_instrument(mocker):
     # Arrange
-    db = Mock()  # Mock DB object
+    db = mocker.Mock()  # Mock DB object
     sn = "ZS001"  # Use a serial number from the hardcoded list
 
     # Act
@@ -24,9 +23,9 @@ def test_returns_matching_instrument():
 
 
 # Returns None when no instrument matches the provided serial number
-def test_returns_none_when_no_match():
+def test_returns_none_when_no_match(mocker):
     # Arrange
-    db = Mock()  # Mock DB object
+    db = mocker.Mock()  # Mock DB object
     sn = "NONEXISTENT"
 
     # Act

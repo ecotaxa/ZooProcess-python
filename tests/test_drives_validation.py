@@ -2,7 +2,6 @@ import os
 import sys
 import tempfile
 import shutil
-from unittest.mock import patch
 
 import legacy.drives
 
@@ -134,83 +133,77 @@ def test_validate_drives_duplicates():
         shutil.rmtree(temp_dir)
 
 
-def test_config_validation_empty():
-    """Test that main.py validation fails when DRIVES is empty."""
+def test_config_validation_empty(mocker):
+    """Test that validation fails when DRIVES is empty."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
-    # Mock sys.exit to prevent the test from actually exiting
-    with patch("sys.exit") as mock_exit, patch("builtins.print") as mock_print:
-        try:
-            # Unset the DRIVES environment variable
+    try:
+        # Unset the DRIVES environment variable
+        if "DRIVES" in os.environ:
+            del os.environ["DRIVES"]
+
+        # Import the config module first to set up config.DRIVES
+        import config_rdr
+        from config_rdr import config
+        import importlib
+
+        importlib.reload(config_rdr)
+
+        # Mock sys.exit to prevent the test from actually exiting
+        mock_exit = mocker.patch("legacy.drives.sys.exit")
+        mock_print = mocker.patch("builtins.print")
+
+        # Call validate_drives() which should exit with code 1
+        legacy.drives.validate_drives()
+
+        # Check that sys.exit was called with exit code 1
+        mock_exit.assert_called_once_with(1)
+    finally:
+        # Restore the original DRIVES value
+        if original_drives is not None:
+            os.environ["DRIVES"] = original_drives
+        else:
             if "DRIVES" in os.environ:
                 del os.environ["DRIVES"]
 
-            # Import the config module first to set up config.DRIVES
-            import config_rdr
-            from config_rdr import config
-            import importlib
 
-            importlib.reload(config_rdr)
-
-            # Now import main and call validate_drives() explicitly
-            import main
-
-            importlib.reload(main)
-
-            # Call validate_drives() which should exit with code 1
-            legacy.drives.validate_drives()
-
-            # Check that sys.exit was called with exit code 1
-            mock_exit.assert_called_once_with(1)
-        finally:
-            # Restore the original DRIVES value
-            if original_drives is not None:
-                os.environ["DRIVES"] = original_drives
-            else:
-                if "DRIVES" in os.environ:
-                    del os.environ["DRIVES"]
-
-
-def test_config_validation_invalid_paths():
-    """Test that main.py validation fails when DRIVES contains invalid paths."""
+def test_config_validation_invalid_paths(mocker):
+    """Test that validation fails when DRIVES contains invalid paths."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
-    # Mock sys.exit to prevent the test from actually exiting
-    with patch("sys.exit") as mock_exit, patch("builtins.print") as mock_print:
-        try:
-            # Set the DRIVES environment variable with non-existent paths
-            os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
+    try:
+        # Set the DRIVES environment variable with non-existent paths
+        os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 
-            # Import the config module first to set up config.DRIVES
-            import config_rdr
-            from config_rdr import config
-            import importlib
+        # Import the config module first to set up config.DRIVES
+        import config_rdr
+        from config_rdr import config
+        import importlib
 
-            importlib.reload(config_rdr)
+        importlib.reload(config_rdr)
 
-            # Now import main and call validate_drives() explicitly
-            import main
+        # Mock sys.exit to prevent the test from actually exiting
+        mock_exit = mocker.patch("legacy.drives.sys.exit")
+        mock_print = mocker.patch("builtins.print")
 
-            importlib.reload(main)
+        # Call validate_drives() which should exit with code 1
+        legacy.drives.validate_drives()
 
-            # Call validate_drives() which should exit with code 1
-            legacy.drives.validate_drives()
-
-            # Check that sys.exit was called with exit code 1
-            mock_exit.assert_called_once_with(1)
-        finally:
-            # Restore the original DRIVES value
-            if original_drives is not None:
-                os.environ["DRIVES"] = original_drives
-            else:
-                if "DRIVES" in os.environ:
-                    del os.environ["DRIVES"]
+        # Check that sys.exit was called with exit code 1
+        mock_exit.assert_called_once_with(1)
+    finally:
+        # Restore the original DRIVES value
+        if original_drives is not None:
+            os.environ["DRIVES"] = original_drives
+        else:
+            if "DRIVES" in os.environ:
+                del os.environ["DRIVES"]
 
 
 def test_config_validation_valid_paths():
-    """Test that main.py validation passes when DRIVES contains valid paths."""
+    """Test that validation passes when DRIVES contains valid paths."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
@@ -230,11 +223,6 @@ def test_config_validation_valid_paths():
         importlib.reload(config_rdr)
         from config_rdr import config
 
-        # Now import main which will validate config.DRIVES
-        import main
-
-        importlib.reload(main)
-
         # Check that DRIVES is correctly loaded
         assert config.DRIVES == [temp_dir1, temp_dir2]
     finally:
@@ -250,8 +238,8 @@ def test_config_validation_valid_paths():
         shutil.rmtree(temp_dir2)
 
 
-def test_config_validation_not_directories():
-    """Test that main.py validation fails when DRIVES contains paths that are not directories."""
+def test_config_validation_not_directories(mocker):
+    """Test that validation fails when DRIVES contains paths that are not directories."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
@@ -260,80 +248,74 @@ def test_config_validation_not_directories():
     temp_file = tempfile.NamedTemporaryFile(delete=False)
     temp_file.close()
 
-    # Mock sys.exit to prevent the test from actually exiting
-    with patch("sys.exit") as mock_exit, patch("builtins.print") as mock_print:
-        try:
-            # Set the DRIVES environment variable with the temporary directory and file
-            os.environ["DRIVES"] = f"{temp_dir},{temp_file.name}"
+    try:
+        # Set the DRIVES environment variable with the temporary directory and file
+        os.environ["DRIVES"] = f"{temp_dir},{temp_file.name}"
 
-            # Import the config module first to set up config.DRIVES
-            import config_rdr
-            from config_rdr import config
-            import importlib
+        # Import the config module first to set up config.DRIVES
+        import config_rdr
+        from config_rdr import config
+        import importlib
 
-            importlib.reload(config_rdr)
+        importlib.reload(config_rdr)
 
-            # Now import main and call validate_drives() explicitly
-            import main
+        # Mock sys.exit to prevent the test from actually exiting
+        mock_exit = mocker.patch("legacy.drives.sys.exit")
+        mock_print = mocker.patch("builtins.print")
 
-            importlib.reload(main)
+        # Call validate_drives() which should exit with code 1
+        legacy.drives.validate_drives()
 
-            # Call validate_drives() which should exit with code 1
-            legacy.drives.validate_drives()
+        # Check that sys.exit was called with exit code 1
+        mock_exit.assert_called_once_with(1)
+    finally:
+        # Restore the original DRIVES value
+        if original_drives is not None:
+            os.environ["DRIVES"] = original_drives
+        else:
+            if "DRIVES" in os.environ:
+                del os.environ["DRIVES"]
 
-            # Check that sys.exit was called with exit code 1
-            mock_exit.assert_called_once_with(1)
-        finally:
-            # Restore the original DRIVES value
-            if original_drives is not None:
-                os.environ["DRIVES"] = original_drives
-            else:
-                if "DRIVES" in os.environ:
-                    del os.environ["DRIVES"]
-
-            # Clean up the temporary directory and file
-            shutil.rmtree(temp_dir)
-            os.unlink(temp_file.name)
+        # Clean up the temporary directory and file
+        shutil.rmtree(temp_dir)
+        os.unlink(temp_file.name)
 
 
-def test_config_validation_duplicates():
-    """Test that main.py validation fails when DRIVES contains duplicate paths."""
+def test_config_validation_duplicates(mocker):
+    """Test that validation fails when DRIVES contains duplicate paths."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
     # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
 
-    # Mock sys.exit to prevent the test from actually exiting
-    with patch("sys.exit") as mock_exit, patch("builtins.print") as mock_print:
-        try:
-            # Set the DRIVES environment variable with duplicate paths
-            os.environ["DRIVES"] = f"{temp_dir},{temp_dir}"
+    try:
+        # Set the DRIVES environment variable with duplicate paths
+        os.environ["DRIVES"] = f"{temp_dir},{temp_dir}"
 
-            # Import the config module first to set up config.DRIVES
-            import config_rdr
-            from config_rdr import config
-            import importlib
+        # Import the config module first to set up config.DRIVES
+        import config_rdr
+        from config_rdr import config
+        import importlib
 
-            importlib.reload(config_rdr)
+        importlib.reload(config_rdr)
 
-            # Now import main and call validate_drives() explicitly
-            import main
+        # Mock sys.exit to prevent the test from actually exiting
+        mock_exit = mocker.patch("legacy.drives.sys.exit")
+        mock_print = mocker.patch("builtins.print")
 
-            importlib.reload(main)
+        # Call validate_drives() which should exit with code 1
+        legacy.drives.validate_drives()
 
-            # Call validate_drives() which should exit with code 1
-            legacy.drives.validate_drives()
+        # Check that sys.exit was called with exit code 1
+        mock_exit.assert_called_once_with(1)
+    finally:
+        # Restore the original DRIVES value
+        if original_drives is not None:
+            os.environ["DRIVES"] = original_drives
+        else:
+            if "DRIVES" in os.environ:
+                del os.environ["DRIVES"]
 
-            # Check that sys.exit was called with exit code 1
-            mock_exit.assert_called_once_with(1)
-        finally:
-            # Restore the original DRIVES value
-            if original_drives is not None:
-                os.environ["DRIVES"] = original_drives
-            else:
-                if "DRIVES" in os.environ:
-                    del os.environ["DRIVES"]
-
-            # Clean up the temporary directory
-            shutil.rmtree(temp_dir)
+        # Clean up the temporary directory
+        shutil.rmtree(temp_dir)
