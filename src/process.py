@@ -1,6 +1,5 @@
 # from .SeparateServer import SeparateServer
-import requests
-from src.DB import DB
+from src.remote_db.DB import DB
 from ZooProcess_lib.img_tools import saveimage
 
 
@@ -33,7 +32,7 @@ from ZooProcess_lib.img_tools import saveimage
 #     def separate(self):
 #         pass
 
-import src.TaskStatus as TaskStatus
+import src.remote.TaskStatus as TaskStatus
 from pathlib import Path
 from ZooProcess_lib.Processor import Processor, Lut
 

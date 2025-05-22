@@ -1,11 +1,10 @@
 import os
 import sys
-import pytest
 import tempfile
 import shutil
 from unittest.mock import patch
 
-import src.drives
+import src.legacy.drives
 
 # Add the parent directory to the path so we can import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -159,7 +158,7 @@ def test_config_validation_empty():
             importlib.reload(main)
 
             # Call validate_drives() which should exit with code 1
-            src.drives.validate_drives()
+            src.legacy.drives.validate_drives()
 
             # Check that sys.exit was called with exit code 1
             mock_exit.assert_called_once_with(1)
@@ -195,7 +194,7 @@ def test_config_validation_invalid_paths():
             importlib.reload(main)
 
             # Call validate_drives() which should exit with code 1
-            src.drives.validate_drives()
+            src.legacy.drives.validate_drives()
 
             # Check that sys.exit was called with exit code 1
             mock_exit.assert_called_once_with(1)
@@ -276,7 +275,7 @@ def test_config_validation_not_directories():
             importlib.reload(main)
 
             # Call validate_drives() which should exit with code 1
-            src.drives.validate_drives()
+            src.legacy.drives.validate_drives()
 
             # Check that sys.exit was called with exit code 1
             mock_exit.assert_called_once_with(1)
@@ -319,7 +318,7 @@ def test_config_validation_duplicates():
             importlib.reload(main)
 
             # Call validate_drives() which should exit with code 1
-            src.drives.validate_drives()
+            src.legacy.drives.validate_drives()
 
             # Check that sys.exit was called with exit code 1
             mock_exit.assert_called_once_with(1)

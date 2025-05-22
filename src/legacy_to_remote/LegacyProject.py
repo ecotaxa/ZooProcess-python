@@ -1,11 +1,10 @@
-from .ProjectClass import ProjectClass
 from pathlib import Path
 
-from .importe import getInstrumentFromSN
-from .Models import Project
+from src.Models import Project
+from src.legacy_to_remote.importe import getInstrumentFromSN
 
 
-class LegacyProject(ProjectClass):
+class LegacyProject(object):
     """
     Properties:
         project_name: the name of the project
@@ -13,8 +12,8 @@ class LegacyProject(ProjectClass):
         folder: the project path
     """
 
-    def __init__(self, project_name, piqvFolder, outputFolder=None) -> None:
-        super().__init__(project_name, piqvFolder, outputFolder)
+    # def __init__(self, project_name, piqvFolder, outputFolder=None) -> None:
+    #     super().__init__(project_name, piqvFolder, outputFolder)
 
     # def __init__(self,path:str):
     #     self.project_name=Path(path).name

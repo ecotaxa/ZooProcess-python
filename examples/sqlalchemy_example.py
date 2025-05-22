@@ -7,8 +7,8 @@ This script shows how to:
 3. Perform queries using SQLAlchemy's query API
 """
 
-from src.sqlite_db import SQLAlchemyDB
-from src.db_models import Example
+from src.local_db.sqlite_db import SQLAlchemyDB
+from src.local_db.models import Example
 
 
 def main():

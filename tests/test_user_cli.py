@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from sqlalchemy.exc import IntegrityError
 
 from commands.user_cli import app
-from src.db_models import User
+from src.local_db.models import User
 
 runner = CliRunner()
 

@@ -26,6 +26,7 @@ class Project(BaseModel):
     instrumentSerialNumber: the serial number of the instrument need to be in the DB else raise an exception
     ecotaxaProjectID: [optional] the id of the ecotaxa project
     drive: [optional] the drive name, if empty the parent project folder name will be used. The drive name will be searched in the DB if not found, an exception will raise
+    samples: [optional] a list of samples inside the project
     """
 
     path: str
@@ -38,6 +39,7 @@ class Project(BaseModel):
     description: Union[str, None] = None
     ecotaxaProjectID: Union[str, None] = None
     drive: Union["Drive", None] = None
+    samples: Union[List["Sample"], None] = None
 
 
 class Sample(BaseModel):

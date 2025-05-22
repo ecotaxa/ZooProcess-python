@@ -1,8 +1,5 @@
-from sqlalchemy.orm import Session
-from fastapi import Depends
-
-from src.db_models import get_session_maker
-from src.sqlite_db import SQLAlchemyDB
+from src.local_db.models import get_session_maker
+from src.local_db.sqlite_db import SQLAlchemyDB
 
 # Create a session maker
 SessionMaker = get_session_maker()

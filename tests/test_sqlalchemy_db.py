@@ -1,10 +1,8 @@
 import os
-import pytest
-from pathlib import Path
 
-from src.config import WORKING_DIR, config
-from src.sqlite_db import SQLAlchemyDB, init_db
-from src.db_models import Example, User
+from src.config import config
+from src.local_db.sqlite_db import SQLAlchemyDB, init_db
+from src.local_db.models import Example, User
 
 
 class TestSQLAlchemyDB:

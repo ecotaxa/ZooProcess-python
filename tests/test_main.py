@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from main import app, get_db
 from src.auth import decode_jwt_token
-from src.db_models import User as DBUser
+from src.local_db.models import User as DBUser
 
 
 @pytest.fixture
@@ -115,8 +115,14 @@ def test_users_me_endpoint_with_invalid_token(client):
 @patch("pathlib.Path.iterdir")
 @patch("pathlib.Path.exists")
 @patch("pathlib.Path.is_dir")
+@patch("main.list_all_projects")
 def test_projects_endpoint_with_valid_token(
-    mock_is_dir, mock_exists, mock_iterdir, mock_get_user_from_db, client
+    mock_list_all_projects,
+    mock_is_dir,
+    mock_exists,
+    mock_iterdir,
+    mock_get_user_from_db,
+    client,
 ):
     """Test that the /projects endpoint returns subdirectories from DRIVES with a valid token"""
     # Set up the mock to return our mock user
@@ -128,6 +134,7 @@ def test_projects_endpoint_with_valid_token(
 
     # Create mock Path objects for subdirectories
     from pathlib import Path
+    from src.Models import Project, Drive
 
     mock_dir1 = MagicMock(spec=Path)
     mock_dir1.is_dir.return_value = True
@@ -141,6 +148,25 @@ def test_projects_endpoint_with_valid_token(
 
     # Set up the mock to return our mock directories
     mock_iterdir.return_value = [mock_dir1, mock_dir2]
+
+    # Set up mock for list_all_projects to return test projects
+    drive_model = Drive(id="drive1", name="drive1", url="/path/to/drive1")
+    mock_list_all_projects.return_value = [
+        Project(
+            path="/path/to/drive1/Project1",
+            id="drive1|Project1",
+            name="Project1",
+            instrumentSerialNumber="TEST123",
+            drive=drive_model,
+        ),
+        Project(
+            path="/path/to/drive1/Project2",
+            id="drive1|Project2",
+            name="Project2",
+            instrumentSerialNumber="TEST123",
+            drive=drive_model,
+        ),
+    ]
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}

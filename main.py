@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from src.DB import DB
+from src.remote_db.DB import DB
 from src.Models import (
     Scan,
     Folder,
@@ -27,22 +27,22 @@ from src.Models import (
     Sample,
     SubSample,
 )
-from src.SeparateServer import SeparateServer
-from src.TaskStatus import TaskStatus
+from src.providers.SeparateServer import SeparateServer
+from src.remote.TaskStatus import TaskStatus
 from src.auth import get_current_user_from_credentials
 from src.convert import convert_tiff_to_jpeg
-from src.db_dependencies import get_db
+from src.local_db.db_dependencies import get_db
 from src.demo_get_vignettes import generate_json
-from src.drives import validate_drives, get_drive_path
-from src.importe import import_old_project, getDat1Path, pid2json
+from src.legacy.drives import validate_drives, get_drive_path
+from src.legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 
 # for /test
-from src.importe import listWorkFolders
+from src.legacy_to_remote.importe import listWorkFolders
 from src.logger import logger
 from src.process import Process
 from src.separate import Separate
 from src.separate_fn import separate_images
-from src.server import Server
+from src.providers.server import Server
 
 # import csv
 # import requests
@@ -809,16 +809,21 @@ def extract_drive_and_project(project_id: str) -> Tuple[Path, str, Path]:
     return drive_path, project_name, project_path
 
 
-def list_all_projects():
+def list_all_projects(drives_to_check=None, serial_number="PROD123"):
+    """
+    List all projects from the specified drives.
+
+    Args:
+        drives_to_check: Optional list of drive paths to check. If None, uses config.DRIVES.
+        serial_number: Optional serial number to use for projects. Default is "PROD123".
+
+    Returns:
+        List of Project objects.
+    """
     # Create a list to store all projects
     all_projects = []
-    # Check if we're in a test environment
-    is_test = "pytest" in sys.modules
-    # Use a list of drives based on the environment
-    if is_test:
-        # In test mode, use a hardcoded list of drives
-        drives_to_check = ["/path/to/drive1"]
-    else:
+    # Use provided drives or default to config.DRIVES
+    if drives_to_check is None:
         drives_to_check = config.DRIVES
     # Iterate through each drive in the list
     for drive_path in drives_to_check:
@@ -827,14 +832,13 @@ def list_all_projects():
         drive_zoo = ZooscanDrive(drive_path)
 
         for a_prj_path in drive_zoo.list():
-            sn = "TEST123" if is_test else "PROD123"
             unq_id = f"{drive.name}|{a_prj_path.name}"
             try:
                 project = Project(
                     path=str(a_prj_path),
                     id=unq_id,
                     name=a_prj_path.name,
-                    instrumentSerialNumber=sn,
+                    instrumentSerialNumber=serial_number,
                     drive=drive_model,
                 )
                 all_projects.append(project)
@@ -1041,7 +1045,7 @@ def get_instruments(full: bool = False):
     Args:
         full (bool, optional): If True, returns the full instrument details. Defaults to False.
     """
-    from src.DB import get_instruments as get_all_instruments
+    from src.remote_db.DB import get_instruments as get_all_instruments
 
     instruments = get_all_instruments()
 
@@ -1068,7 +1072,7 @@ def get_instrument(instrument_id: str):
     Raises:
         HTTPException: If the instrument is not found.
     """
-    from src.DB import get_instrument_by_id
+    from src.remote_db.DB import get_instrument_by_id
 
     instrument = get_instrument_by_id(instrument_id)
     if instrument is None:
@@ -1100,8 +1104,8 @@ def update_calibration(
     Raises:
         HTTPException: If the calibration is not found or the user is not authorized.
     """
-    from src.DB import DB
-    import src.calibration as calibration_module
+    from src.remote_db.DB import DB
+    import src.modern.calibration as calibration_module
 
     # Check if the user is authorized to update this calibration
     if user.id != userId:
@@ -1137,8 +1141,8 @@ def create_calibration(
         HTTPException: If the instrument is not found or the user is not authorized.
     """
     # Check if the instrument exists
-    from src.DB import get_instrument_by_id, DB
-    import src.calibration as calibration_module
+    from src.remote_db.DB import get_instrument_by_id, DB
+    import src.modern.calibration as calibration_module
 
     instrument = get_instrument_by_id(instrumentId)
     if instrument is None:

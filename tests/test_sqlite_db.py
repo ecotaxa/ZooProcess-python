@@ -1,9 +1,7 @@
 import os
-import pytest
-from pathlib import Path
 
-from src.config import WORKING_DIR, config
-from src.sqlite_db import SQLiteDB, init_db
+from src.config import config
+from src.local_db.sqlite_db import SQLiteDB, init_db
 
 
 def test_db_creation():

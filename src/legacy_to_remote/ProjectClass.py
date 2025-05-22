@@ -1,7 +1,7 @@
-from .tools import create_folder
+from src.helpers.tools import create_folder
 
 from pathlib import Path
-from src.DB import DB
+from src.remote_db.DB import DB
 
 
 # class Scan(BaseModel):

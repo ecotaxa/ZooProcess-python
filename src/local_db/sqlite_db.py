@@ -1,13 +1,10 @@
 import os
 import sqlite3
-from pathlib import Path
-from sqlalchemy.orm import Session
-from src.config import WORKING_DIR, config
-from src.db_models import (
+from src.config import config
+from src.local_db.models import (
     get_engine,
     get_session_maker,
     init_db as sqlalchemy_init_db,
-    Example,
 )
 
 
@@ -116,7 +113,7 @@ class SQLiteDB:
         Create the database tables if they don't exist.
         """
         # Using SQLAlchemy to create tables
-        from src.db_models import Base
+        from src.local_db.models import Base
 
         Base.metadata.create_all(self.engine)
 

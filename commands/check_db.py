@@ -1,6 +1,6 @@
 import os
 from src.config import config
-from src.sqlite_db import db_path
+from src.local_db.sqlite_db import db_path
 from src.logger import logger
 
 # Check if the database file exists

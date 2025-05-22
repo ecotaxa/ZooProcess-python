@@ -1,7 +1,6 @@
 import sqlite3
 import os
 import tempfile
-import pytest
 import shutil
 import sys
 from pathlib import Path
@@ -15,7 +14,7 @@ def test_user_table_exists():
     Test if the User table exists in the database and has the correct structure.
     """
     # Import the modules after setting up the environment
-    from src.sqlite_db import db_path, init_db
+    from src.local_db.sqlite_db import db_path, init_db
 
     # Initialize the database
     db_file = init_db()

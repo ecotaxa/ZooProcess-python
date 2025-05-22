@@ -220,30 +220,32 @@ class Example(Base):
 There are two ways to interact with the database:
 
 1. Using the backward-compatible `SQLiteDB` class (recommended for existing code):
+
 ```python
-from src.sqlite_db import SQLiteDB
+from src.local_db.sqlite_db import SQLiteDB
 
 # Using the context manager
 with SQLiteDB() as db:
-    # Execute raw SQL queries
-    cursor = db.execute("SELECT * FROM example")
-    results = cursor.fetchall()
+  # Execute raw SQL queries
+  cursor = db.execute("SELECT * FROM example")
+  results = cursor.fetchall()
 ```
 
 2. Using the new `SQLAlchemyDB` class (recommended for new code):
+
 ```python
-from src.sqlite_db import SQLAlchemyDB
-from src.db_models import Example
+from src.local_db.sqlite_db import SQLAlchemyDB
+from src.local_db.models import Example
 
 # Using the context manager
 with SQLAlchemyDB() as db:
-    # Create a new record
-    example = Example(name="test", value="value")
-    db.session.add(example)
-    db.session.commit()
+  # Create a new record
+  example = Example(name="test", value="value")
+  db.session.add(example)
+  db.session.commit()
 
-    # Query records
-    results = db.session.query(Example).filter_by(name="test").all()
+  # Query records
+  results = db.session.query(Example).filter_by(name="test").all()
 ```
 
 See the example script in `examples/sqlalchemy_example.py` for a complete example of using SQLAlchemy in the project.

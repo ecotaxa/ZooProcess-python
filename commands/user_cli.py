@@ -15,13 +15,12 @@ Usage:
 
 import click
 import uuid
-from typing import Optional
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy.exc import IntegrityError
 
-from src.db_models import User
-from src.sqlite_db import SQLAlchemyDB
+from src.local_db.models import User
+from src.local_db.sqlite_db import SQLAlchemyDB
 
 console = Console()
 

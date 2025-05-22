@@ -1,7 +1,6 @@
 # import old zooscan project
 
 import os
-from pydantic import BaseModel
 import requests
 import csv
 from typing import List, Dict, Any
@@ -13,9 +12,9 @@ from pathlib import Path
 
 from src.Models import Project
 from src.connection import testBearer
-from src.request import getInstrumentFromSN, getDriveId
+from src.remote.request import getInstrumentFromSN, getDriveId
 
-from src.DB import DB
+from src.remote_db.DB import DB
 
 
 def convertsamplekey(samplejson):

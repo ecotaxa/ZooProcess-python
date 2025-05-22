@@ -1,4 +1,4 @@
-from src.DB import DB
+from src.remote_db.DB import DB
 
 import pytest
 from unittest.mock import patch, MagicMock
@@ -56,10 +56,10 @@ def test_get_retrieves_json_data_from_valid_url():
         db = DB("test_token")
         # db.bearer = "test_token"
         db.db = "http://test-url.com"
-    
+
         # Act
         result = db.get("/test-path")
-    
+
         # Assert
         mock_get.assert_called_once_with(
             "http://test-url.com/test-path",
@@ -105,8 +105,8 @@ def test_get_db_from_config():
 def test_db_init_with_swapped_parameters():
     db_url = "http://test-url.com"
     bearer_token = "test_bearer"
-    
+
     with pytest.raises(ValueError) as excinfo:
         db_instance = DB(db=bearer_token, bearer=db_url)
-    
+
     assert str(excinfo.value) == "Invalid DB URL format"

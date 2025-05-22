@@ -1,8 +1,5 @@
-
-from .server import Server
-
 class SeparateServer:
-    def __init__(self, server, dbserver ):
+    def __init__(self, server, dbserver):
 
         print(f"Separate({server}, {dbserver})")
         self.server = server
@@ -10,7 +7,6 @@ class SeparateServer:
 
         # line bellow to comment when offline
         # self.isServersRunning()
-
 
     def isServersRunning(self):
         self.server.test_server()

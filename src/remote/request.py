@@ -1,4 +1,4 @@
-from src.DB import DB
+from src.remote_db.DB import DB
 
 
 # def getInstrumentFromSN(db,bearer,instrumentSN):
@@ -25,7 +25,7 @@ from src.DB import DB
 
 
 def getInstrumentFromSN(db, instrumentSN):
-    from src.DB import get_instruments
+    from src.remote_db.DB import get_instruments
 
     instruments = get_instruments()
     for instrument in instruments:

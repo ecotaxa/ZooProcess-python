@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from fastapi import HTTPException
 
-from src.DB import DB
+from src.remote_db.DB import DB
 from src.Models import Calibration
 
 

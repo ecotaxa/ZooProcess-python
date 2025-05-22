@@ -1,10 +1,9 @@
 import os
 import sys
-import pytest
 import importlib
 from unittest.mock import patch
 
-import src.drives
+import src.legacy.drives
 
 # Add the parent directory to the path so we can import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -32,9 +31,9 @@ def test_drives_empty_fails():
             importlib.reload(main)
 
             # Temporarily patch the is_test check to force validation behavior
-            with patch("src.drives.sys.modules", {"pytest": None}):
+            with patch("src.legacy.drives.sys.modules", {"pytest": None}):
                 # Call validate_drives() which should exit with code 1
-                src.drives.validate_drives()
+                src.legacy.drives.validate_drives()
 
             # Check that sys.exit was called with exit code 1
             mock_exit.assert_called_once_with(1)
@@ -77,9 +76,9 @@ def test_drives_with_invalid_paths_fails():
             importlib.reload(main)
 
             # Temporarily patch the is_test check to force validation behavior
-            with patch("src.drives.sys.modules", {"pytest": None}):
+            with patch("src.legacy.drives.sys.modules", {"pytest": None}):
                 # Call validate_drives() which should exit with code 1
-                src.drives.validate_drives()
+                src.legacy.drives.validate_drives()
 
             # Check that sys.exit was called with exit code 1
             mock_exit.assert_called_once_with(1)

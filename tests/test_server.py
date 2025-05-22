@@ -1,6 +1,6 @@
 import unittest
 
-from src.server import Server
+from src.providers.server import Server
 from src.config import config
 
 
