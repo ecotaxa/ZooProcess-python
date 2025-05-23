@@ -4,7 +4,7 @@ from legacy_to_remote.importe import parse_tsv
 import pytest
 
 
-@pytest.mark.skip("")
+@pytest.mark.skip("Is a main() not a test")
 def test_meta_sample():
     """
     Test the parse_tsv function to transform meta about sample into json.
@@ -23,7 +23,7 @@ def test_meta_sample():
         json.dump(json_data, f, indent=4)
 
 
-@pytest.mark.skip("")
+@pytest.mark.skip("Is a main() not a test")
 def test_meta_scan():
     """
     Test the parse_tsv function to transform meta about scan into json.

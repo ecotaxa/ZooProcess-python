@@ -3,12 +3,12 @@ import os
 import sys
 
 import pytest
-from pytest_mock import MockerFixture
+from pytest_mock import MockFixture
 
 import legacy.drives as legacy_drives
 
 
-def test_drives_empty_fails(mocker: MockerFixture):
+def test_drives_empty_fails(mocker: MockFixture):
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
@@ -23,10 +23,10 @@ def test_drives_empty_fails(mocker: MockerFixture):
 
         # Import the config module first to set up config.DRIVES
         import config_rdr
-        from config_rdr import config
 
-        # Now import main and call validate_drives() explicitly
-        import main as main
+        # Reload the module to pick up the new environment variable
+        importlib.reload(config_rdr)
+        from config_rdr import config
 
         # Call validate_drives() which should exit with code 1
         legacy_drives.validate_drives()
@@ -51,8 +51,7 @@ def test_drives_empty_fails(mocker: MockerFixture):
             importlib.reload(sys.modules["src.config_rdr"])
 
 
-@pytest.mark.skip(reason="PyCharm issue?")
-def test_drives_with_invalid_paths_fails(mocker):
+def test_drives_with_invalid_paths_fails(mocker: MockFixture):
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
@@ -65,13 +64,11 @@ def test_drives_with_invalid_paths_fails(mocker):
         os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 
         # Import the config module first to set up config.DRIVES
-        import src.config_rdr as config_rdr
-        from src.config_rdr import config
+        import config_rdr
 
-        # Now import main and call validate_drives() explicitly
-        import src.main as main
-
-        importlib.reload(main)
+        # Reload the module to pick up the new environment variable
+        importlib.reload(config_rdr)
+        from config_rdr import config
 
         # Call validate_drives() which should exit with code 1
         legacy_drives.validate_drives()
@@ -91,11 +88,11 @@ def test_drives_with_invalid_paths_fails(mocker):
             del os.environ["DRIVES"]
 
         # Reload the config module again to restore the original state
-        if "src.config_rdr" in sys.modules:
-            importlib.reload(sys.modules["src.config_rdr"])
+        if "config_rdr" in sys.modules:
+            importlib.reload(sys.modules["config_rdr"])
 
 
-def test_drives_with_valid_paths(mocker):
+def test_drives_with_valid_paths(mocker: MockFixture):
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
 
@@ -110,13 +107,11 @@ def test_drives_with_valid_paths(mocker):
         os.environ["DRIVES"] = f"{temp_dir1},{temp_dir2}"
 
         # Import the config module first to set up config.DRIVES
-        import src.config_rdr as config_rdr
-        from src.config_rdr import config
+        import config_rdr
 
-        # Now import main which will validate config.DRIVES
-        import src.main as main
-
-        importlib.reload(main)
+        # Reload the module to pick up the new environment variable
+        importlib.reload(config_rdr)
+        from config_rdr import config
 
         # Check that DRIVES is correctly loaded
         assert config.DRIVES == [temp_dir1, temp_dir2]
@@ -134,5 +129,5 @@ def test_drives_with_valid_paths(mocker):
         shutil.rmtree(temp_dir2)
 
         # Reload the config module again to restore the original state
-        if "src.config_rdr" in sys.modules:
-            importlib.reload(sys.modules["src.config_rdr"])
+        if "config_rdr" in sys.modules:
+            importlib.reload(sys.modules["config_rdr"])

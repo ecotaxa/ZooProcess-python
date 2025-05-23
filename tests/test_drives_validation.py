@@ -4,6 +4,7 @@ import tempfile
 import shutil
 
 import legacy.drives
+from pytest_mock import MockFixture
 
 # Add the parent directory to the path so we can import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -133,7 +134,7 @@ def test_validate_drives_duplicates():
         shutil.rmtree(temp_dir)
 
 
-def test_config_validation_empty(mocker):
+def test_config_validation_empty(mocker: MockFixture):
     """Test that validation fails when DRIVES is empty."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
@@ -168,7 +169,7 @@ def test_config_validation_empty(mocker):
                 del os.environ["DRIVES"]
 
 
-def test_config_validation_invalid_paths(mocker):
+def test_config_validation_invalid_paths(mocker: MockFixture):
     """Test that validation fails when DRIVES contains invalid paths."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
@@ -238,7 +239,7 @@ def test_config_validation_valid_paths():
         shutil.rmtree(temp_dir2)
 
 
-def test_config_validation_not_directories(mocker):
+def test_config_validation_not_directories(mocker: MockFixture):
     """Test that validation fails when DRIVES contains paths that are not directories."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")
@@ -281,7 +282,7 @@ def test_config_validation_not_directories(mocker):
         os.unlink(temp_file.name)
 
 
-def test_config_validation_duplicates(mocker):
+def test_config_validation_duplicates(mocker: MockFixture):
     """Test that validation fails when DRIVES contains duplicate paths."""
     # Save the original DRIVES value
     original_drives = os.environ.get("DRIVES")

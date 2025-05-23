@@ -20,4 +20,9 @@ def get_db():
         yield db.session
     finally:
         if db.session:
-            db.session.close()
+            try:
+                db.session.close()
+            except Exception as e:
+                # Ignore errors when closing the session
+                # This prevents issues during teardown
+                pass

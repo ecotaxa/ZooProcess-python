@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from pytest_mock import MockFixture
 
 from main import app, get_db
 from auth import decode_jwt_token
@@ -7,35 +8,21 @@ from local_DB.models import User as DBUser
 
 
 @pytest.fixture
-def client(mocker):
-    # Create a mock database session
-    mock_db = mocker.MagicMock()
-
-    # Create a mock user for testing
-    mock_user = mocker.MagicMock(spec=DBUser)
-    mock_user.id = "123456789"
-    mock_user.name = "John Doe"
-    mock_user.email = "test@example.com"
-    mock_user.password = "test_password"
-
-    # Override the get_db dependency to return our mock session
-    app.dependency_overrides[get_db] = lambda: mock_db
-
+def client():
     # Create the test client
     client = TestClient(app)
 
-    # Return both the client and the mocks for use in tests
-    yield {"client": client, "mock_db": mock_db, "mock_user": mock_user}
+    # Return the client for use in tests
+    yield {"client": client}
 
     # Cleanup (equivalent to tearDown)
     app.dependency_overrides.clear()
 
 
-def test_login_endpoint(mocker, client):
+def test_login_endpoint(client, local_db):
     """Test that the /login endpoint returns a valid JWT token"""
-    mock_get_user_from_db = mocker.patch("auth.get_user_from_db")
-    # Set up the mock to return our mock user
-    mock_get_user_from_db.return_value = client["mock_user"]
+    # Override the get_db dependency to return our local_db
+    app.dependency_overrides[get_db] = lambda: local_db
 
     # Test data
     login_data = {"email": "test@example.com", "password": "test_password"}
@@ -54,32 +41,16 @@ def test_login_endpoint(mocker, client):
     decoded = decode_jwt_token(token)
     assert decoded["email"] == login_data["email"]
 
-    # Verify that get_user_from_db was called with the correct arguments
-    mock_get_user_from_db.assert_called_once_with(
-        login_data["email"], client["mock_db"]
-    )
 
-
-def test_users_me_endpoint_with_valid_token(mocker, client):
+def test_users_me_endpoint_with_valid_token(client, local_db):
     """Test that the /users/me endpoint returns user information with a valid token"""
+    # Override the get_db dependency to return our local_db
+    app.dependency_overrides[get_db] = lambda: local_db
+
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_mock = mocker.patch("auth.get_user_from_db", return_value=client["mock_user"])
     login_response = client["client"].post("/login", json=login_data)
     token = login_response.json()
-    login_mock.reset_mock()
-
-    # Mock get_user_from_token to return user data with the correct email
-    mock_get_user_from_token = mocker.patch("auth.get_user_from_token")
-    mock_get_user_from_token.return_value = {
-        "id": client["mock_user"].id,
-        "name": client["mock_user"].name,
-        "email": login_data["email"],
-    }
-
-    # Mock get_user_from_db to return our mock user
-    mock_get_user_from_db = mocker.patch("auth.get_user_from_db")
-    mock_get_user_from_db.return_value = client["mock_user"]
 
     # Make request to the /users/me endpoint with the token
     response = client["client"].get(
@@ -93,11 +64,6 @@ def test_users_me_endpoint_with_valid_token(mocker, client):
     user_data = response.json()
     assert user_data is not None
     assert user_data["email"] == login_data["email"]
-
-    # Verify that get_user_from_db was called with the correct arguments
-    mock_get_user_from_db.assert_called_once_with(
-        login_data["email"], client["mock_db"]
-    )
 
 
 def test_users_me_endpoint_without_token(client):
@@ -120,15 +86,16 @@ def test_users_me_endpoint_with_invalid_token(client):
     assert response.status_code == 401
 
 
-def test_projects_endpoint_with_valid_token(mocker, client):
+def test_projects_endpoint_with_valid_token(mocker: MockFixture, client, local_db):
     """Test that the /projects endpoint returns subdirectories from DRIVES with a valid token"""
-    mock_get_user_from_db = mocker.patch("auth.get_user_from_db")
+    # Override the get_db dependency to return our local_db
+    app.dependency_overrides[get_db] = lambda: local_db
+
+    # Still mock the file system operations and list_all_projects
     mock_iterdir = mocker.patch("pathlib.Path.iterdir")
     mock_exists = mocker.patch("pathlib.Path.exists")
     mock_is_dir = mocker.patch("pathlib.Path.is_dir")
     mock_list_all_projects = mocker.patch("main.list_all_projects")
-    # Set up the mock to return our mock user
-    mock_get_user_from_db.return_value = client["mock_user"]
 
     # Set up the mocks for Path methods
     mock_exists.return_value = True
@@ -172,12 +139,8 @@ def test_projects_endpoint_with_valid_token(mocker, client):
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_mock = mocker.patch("auth.get_user_from_db", return_value=client["mock_user"])
     login_response = client["client"].post("/login", json=login_data)
-    token = (
-        login_response.text
-    )  # The login endpoint returns the token directly as text, not as JSON
-    login_mock.reset_mock()
+    token = login_response.json()  # The login endpoint returns the token as JSON
 
     # Make request to the /projects endpoint with the token
     response = client["client"].get(
@@ -196,8 +159,8 @@ def test_projects_endpoint_with_valid_token(mocker, client):
     assert projects_data[0]["path"] == "/path/to/drive1/Project1"
     assert projects_data[1]["path"] == "/path/to/drive1/Project2"
 
-    # Verify that get_user_from_db was called with the correct arguments
-    mock_get_user_from_db.assert_called_with(login_data["email"], client["mock_db"])
+    # Clean up the dependency override
+    app.dependency_overrides.clear()
 
 
 def test_projects_endpoint_without_token(client):

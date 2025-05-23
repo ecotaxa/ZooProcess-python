@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockFixture
 
 from remote.DB import DB
 
@@ -27,7 +28,7 @@ def test_init_with_empty_bearer_raises_error():
 
 
 # Successfully retrieves JSON data from a valid URL
-def test_get_retrieves_json_data_from_valid_url(mocker):
+def test_get_retrieves_json_data_from_valid_url(mocker: MockFixture):
     # Arrange
     mock_response = mocker.MagicMock()
     mock_response.json.return_value = {"key": "value"}
@@ -52,7 +53,7 @@ def test_get_retrieves_json_data_from_valid_url(mocker):
 
 
 # Handles empty URL parameter
-def test_get_handles_empty_url_parameter(mocker):
+def test_get_handles_empty_url_parameter(mocker: MockFixture):
     # Create a mock response with status_code 200
     mock_response = mocker.MagicMock()
     mock_response.status_code = 200

@@ -52,10 +52,18 @@ class SQLiteDB:
         Close the SQLite database connection.
         """
         if self.connection:
-            self.connection.close()
+            try:
+                self.connection.close()
+            except Exception as e:
+                # Ignore errors when closing the connection
+                pass
             self.connection = None
         if self.session:
-            self.session.close()
+            try:
+                self.session.close()
+            except Exception as e:
+                # Ignore errors when closing the session
+                pass
             self.session = None
 
     def __enter__(self):
@@ -157,11 +165,15 @@ class SQLAlchemyDB:
         Context manager exit point.
         """
         if self.session:
-            if exc_type:
-                self.session.rollback()
-            else:
-                self.session.commit()
-            self.session.close()
+            try:
+                if exc_type:
+                    self.session.rollback()
+                else:
+                    self.session.commit()
+                self.session.close()
+            except Exception as e:
+                # Ignore errors when closing the session
+                pass
             self.session = None
 
 

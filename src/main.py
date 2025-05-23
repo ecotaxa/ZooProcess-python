@@ -739,7 +739,10 @@ def login(login_req: LoginReq, db: Session = Depends(get_db)):
     # Create a JWT token with 30-day expiration
     token = create_jwt_token(user_data, expires_delta=30 * 24 * 60 * 60)
 
-    return token
+    # Return the token as a JSON response
+    from fastapi.responses import JSONResponse
+
+    return JSONResponse(content=token)
 
 
 @app.get("/users/me")

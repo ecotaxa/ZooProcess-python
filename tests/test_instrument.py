@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from pytest_mock import MockFixture
 
 from remote.request import getInstrumentFromSN
 from main import app
@@ -6,7 +7,7 @@ from main import app
 client = TestClient(app)
 
 
-def test_returns_matching_instrument(mocker):
+def test_returns_matching_instrument(mocker: MockFixture):
     # Arrange
     db = mocker.Mock()  # Mock DB object
     sn = "ZS001"  # Use a serial number from the hardcoded list
@@ -23,7 +24,7 @@ def test_returns_matching_instrument(mocker):
 
 
 # Returns None when no instrument matches the provided serial number
-def test_returns_none_when_no_match(mocker):
+def test_returns_none_when_no_match(mocker: MockFixture):
     # Arrange
     db = mocker.Mock()  # Mock DB object
     sn = "NONEXISTENT"
