@@ -28,11 +28,7 @@ def parse_sample_name(sample_name: str) -> dict:
         A dictionary containing the parsed components of the sample name
     """
     components = sample_name.split("_")
-    parsed = {
-        "full_name": sample_name,
-        "components": components,
-        "num_components": len(components),
-    }
+    parsed = {}
 
     # Initialize component index
     idx = 0
@@ -97,8 +93,7 @@ def test_parse_sample_name_full():
     sample_name = "apero2023_tha_bioness_sup2000_017_st66_d_n1_d3_1_sur_4_1"
     parsed = parse_sample_name(sample_name)
 
-    assert parsed["full_name"] == sample_name
-    assert parsed["num_components"] == 13
+    assert len(parsed) == 13
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
     assert parsed["nettype"] == "bioness"
@@ -119,8 +114,7 @@ def test_parse_sample_name_without_mesh_size():
     sample_name = "apero2023_tha_bioness_017_st66_d_n1_d3_1_sur_4_1"
     parsed = parse_sample_name(sample_name)
 
-    assert parsed["full_name"] == sample_name
-    assert parsed["num_components"] == 12
+    assert len(parsed) == 12
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
     assert parsed["nettype"] == "bioness"
@@ -141,8 +135,7 @@ def test_parse_sample_name_partial():
     sample_name = "apero2023_tha_bioness"
     parsed = parse_sample_name(sample_name)
 
-    assert parsed["full_name"] == sample_name
-    assert parsed["num_components"] == 3
+    assert len(parsed) == 3
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
     assert parsed["nettype"] == "bioness"
@@ -163,8 +156,7 @@ def test_parse_sample_name_single():
     sample_name = "apero2023"
     parsed = parse_sample_name(sample_name)
 
-    assert parsed["full_name"] == sample_name
-    assert parsed["num_components"] == 1
+    assert len(parsed) == 1
     assert parsed["program"] == "apero2023"
     assert "ship" not in parsed
     assert "nettype" not in parsed
@@ -185,6 +177,4 @@ def test_parse_sample_name_empty():
     sample_name = ""
     parsed = parse_sample_name(sample_name)
 
-    assert parsed["full_name"] == sample_name
-    assert parsed["num_components"] == 1  # Split on empty string gives ['']
-    assert parsed["components"] == [""]
+    assert len(parsed) == 1

@@ -83,11 +83,7 @@ def parse_sample_name(sample_name: str) -> dict:
         A dictionary containing the parsed components of the sample name
     """
     components = sample_name.split("_")
-    parsed = {
-        "full_name": sample_name,
-        "components": components,
-        "num_components": len(components),
-    }
+    parsed = {}
 
     # Initialize component index
     idx = 0
