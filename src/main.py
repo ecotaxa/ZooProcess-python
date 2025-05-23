@@ -36,7 +36,7 @@ from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 from legacy_to_remote.importe import listWorkFolders
 from local_DB.db_dependencies import get_db
 from logger import logger
-from modern.from_legacy import project_from_legacy
+from modern.from_legacy import project_from_legacy, samples_from_legacy_project
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.DB import DB
@@ -807,7 +807,7 @@ def extract_drive_and_project(project_id: str) -> Tuple[Path, str, Path]:
     return drive_path, project_name, project_path
 
 
-def list_all_projects(drives_to_check=None, serial_number="PROD123"):
+def list_all_projects(drives_to_check=None):
     """
     List all projects from the specified drives.
 
@@ -831,7 +831,7 @@ def list_all_projects(drives_to_check=None, serial_number="PROD123"):
 
         for a_prj_path in drive_zoo.list():
             try:
-                project = project_from_legacy(drive_model, a_prj_path, serial_number)
+                project = project_from_legacy(drive_model, a_prj_path)
                 all_projects.append(project)
             except Exception as e:
                 logger.error(f"Error in GET /projects, drive {drive_path}: {str(e)}")
@@ -1148,9 +1148,9 @@ def create_calibration(
     return calibration_module.create(instrumentId, calibration.dict(), db_instance)
 
 
-@app.get("/projects/{project_id}/samples")
+@app.get("/projects/{project_hash}/samples")
 def get_samples(
-    project_id: str,
+    project_hash: str,
     user=Depends(get_current_user_from_credentials),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> List[Sample]:
@@ -1158,7 +1158,7 @@ def get_samples(
     Get the list of samples associated with a project.
 
     Args:
-        project_id (str): The ID of the project to get samples for.
+        project_hash (str): The hash of the project to get samples for.
 
     Returns:
         List[Sample]: A list of samples associated with the project.
@@ -1166,25 +1166,19 @@ def get_samples(
     Raises:
         HTTPException: If the project is not found or the user is not authorized.
     """
-    logger.info(f"Getting samples for project {project_id}")
+    logger.info(f"Getting samples for project {project_hash}")
 
-    drive, project_name, _ = extract_drive_and_project(project_id)
+    drive, project_name, _ = extract_drive_and_project(project_hash)
 
     drive = ZooscanDrive(drive)
     project = drive.get_project_folder(project_name)
 
-    # In a real implementation, you would fetch the samples from a database
-    # For now, we'll return a mock list of samples
-    samples = []
-
-    for sample_name in project.zooscan_scan.list_samples_with_state():
-        samples.append(Sample(id=sample_name, name=sample_name))
-    return samples
+    return samples_from_legacy_project(project)
 
 
 @app.post("/projects/{project_id}/samples")
 def create_sample(
-    project_id: str,
+    project_hash: str,
     sample: Sample,
     user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
@@ -1193,7 +1187,7 @@ def create_sample(
     Add a new sample to a project.
 
     Args:
-        project_id (str): The ID of the project to add the sample to.
+        project_hash (str): The ID of the project to add the sample to.
         sample (Sample): The sample data.
 
     Returns:
@@ -1202,10 +1196,10 @@ def create_sample(
     Raises:
         HTTPException: If the project is not found or the user is not authorized.
     """
-    logger.info(f"Creating sample for project {project_id}")
+    logger.info(f"Creating sample for project {project_hash}")
 
     # Check if the project exists
-    drive_path, project_name, project_path = extract_drive_and_project(project_id)
+    drive_path, project_name, project_path = extract_drive_and_project(project_hash)
 
     # Create a DB instance
     db_instance = DB(bearer=user.id)
@@ -1213,16 +1207,16 @@ def create_sample(
     # In a real implementation, you would save the sample to a database
     # For now, we'll just return the sample with a generated ID
     if not sample.id:
-        sample.id = f"sample_{len(get_samples(project_id, user)) + 1}"
+        sample.id = f"sample_{len(get_samples(project_hash, user)) + 1}"
 
     # Try to create the sample in the database
     try:
         # This is a placeholder - in a real implementation, you would save the sample to a database
-        # For example: created_sample = db_instance.post(f"/projects/{project_id}/samples", sample.dict())
+        # For example: created_sample = db_instance.post(f"/projects/{project_hash}/samples", sample.dict())
         # For now, we'll just return the sample
         created_sample = sample
     except Exception as e:
-        logger.error(f"Error creating sample for project {project_id}: {str(e)}")
+        logger.error(f"Error creating sample for project {project_hash}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error creating sample: {str(e)}",
@@ -1231,9 +1225,9 @@ def create_sample(
     return created_sample
 
 
-@app.get("/projects/{project_id}/samples/{sample_id}")
+@app.get("/projects/{project_hash}/samples/{sample_id}")
 def get_sample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -1242,7 +1236,7 @@ def get_sample(
     Get a specific sample from a project.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to get.
 
     Returns:
@@ -1251,9 +1245,9 @@ def get_sample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Getting sample {sample_id} for project {project_id}")
+    logger.info(f"Getting sample {sample_id} for project {project_hash}")
 
-    drive, project_name, _ = extract_drive_and_project(project_id)
+    drive, project_name, _ = extract_drive_and_project(project_hash)
 
     drive = ZooscanDrive(drive)
     project = drive.get_project_folder(project_name)
@@ -1266,7 +1260,7 @@ def get_sample(
             break
 
     if not sample_exists:
-        logger.error(f"Sample with ID {sample_id} not found in project {project_id}")
+        logger.error(f"Sample with ID {sample_id} not found in project {project_hash}")
         raise HTTPException(
             status_code=404,
             detail=f"Sample with ID {sample_id} not found",
@@ -1276,9 +1270,9 @@ def get_sample(
     return Sample(id=sample_id, name=sample_id)
 
 
-@app.put("/projects/{project_id}/samples/{sample_id}")
+@app.put("/projects/{project_hash}/samples/{sample_id}")
 def update_sample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     sample: Sample,
     user=Depends(get_current_user_from_credentials),
@@ -1288,7 +1282,7 @@ def update_sample(
     Update a specific sample in a project.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to update.
         sample (Sample): The updated sample data.
 
@@ -1298,17 +1292,17 @@ def update_sample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Updating sample {sample_id} for project {project_id}")
+    logger.info(f"Updating sample {sample_id} for project {project_hash}")
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user)
+        project = get_projects(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        existing_sample = get_sample(project_id, sample_id, user)
+        existing_sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
@@ -1325,12 +1319,12 @@ def update_sample(
     # Try to update the sample in the database
     try:
         # This is a placeholder - in a real implementation, you would update the sample in a database
-        # For example: updated_sample = db_instance.put(f"/projects/{project_id}/samples/{sample_id}", sample.dict())
+        # For example: updated_sample = db_instance.put(f"/projects/{project_hash}/samples/{sample_id}", sample.dict())
         # For now, we'll just return the sample
         updated_sample = sample
     except Exception as e:
         logger.error(
-            f"Error updating sample {sample_id} for project {project_id}: {str(e)}"
+            f"Error updating sample {sample_id} for project {project_hash}: {str(e)}"
         )
         raise HTTPException(
             status_code=500,
@@ -1340,9 +1334,9 @@ def update_sample(
     return updated_sample
 
 
-@app.delete("/projects/{project_id}/samples/{sample_id}")
+@app.delete("/projects/{project_hash}/samples/{sample_id}")
 def delete_sample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -1351,7 +1345,7 @@ def delete_sample(
     Delete a specific sample from a project.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to delete.
 
     Returns:
@@ -1360,17 +1354,17 @@ def delete_sample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Deleting sample {sample_id} for project {project_id}")
+    logger.info(f"Deleting sample {sample_id} for project {project_hash}")
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user, credentials)
+        project = get_projects(project_hash, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        existing_sample = get_sample(project_id, sample_id, user, credentials)
+        existing_sample = get_sample(project_hash, sample_id, user, credentials)
     except HTTPException as e:
         raise e
 
@@ -1380,12 +1374,12 @@ def delete_sample(
     # Try to delete the sample from the database
     try:
         # This is a placeholder - in a real implementation, you would delete the sample from a database
-        # For example: db_instance.delete(f"/projects/{project_id}/samples/{sample_id}")
+        # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}")
         # For now, we'll just return a success message
         pass
     except Exception as e:
         logger.error(
-            f"Error deleting sample {sample_id} for project {project_id}: {str(e)}"
+            f"Error deleting sample {sample_id} for project {project_hash}: {str(e)}"
         )
         raise HTTPException(
             status_code=500,
@@ -1395,9 +1389,9 @@ def delete_sample(
     return {"message": f"Sample {sample_id} deleted successfully"}
 
 
-@app.get("/projects/{project_id}/samples/{sample_id}/subsamples")
+@app.get("/projects/{project_hash}/samples/{sample_id}/subsamples")
 def get_subsamples(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -1406,7 +1400,7 @@ def get_subsamples(
     Get the list of subsamples associated with a sample.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to get subsamples for.
 
     Returns:
@@ -1415,17 +1409,17 @@ def get_subsamples(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Getting subsamples for sample {sample_id} in project {project_id}")
+    logger.info(f"Getting subsamples for sample {sample_id} in project {project_hash}")
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user, credentials)
+        project = get_projects(project_hash, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_id, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user, credentials)
     except HTTPException as e:
         raise e
 
@@ -1435,14 +1429,14 @@ def get_subsamples(
     # Try to get subsamples from the database
     try:
         # This is a placeholder - in a real implementation, you would fetch the subsamples from a database
-        # For example: subsamples = db_instance.get(f"/projects/{project_id}/samples/{sample_id}/subsamples")
+        # For example: subsamples = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples")
         # For now, we'll return a mock list of subsamples
         subsample1 = SubSample(id="subsample1", name="Subsample 1")
         subsample2 = SubSample(id="subsample2", name="Subsample 2")
         subsamples = [subsample1, subsample2]
     except Exception as e:
         logger.error(
-            f"Error getting subsamples for sample {sample_id} in project {project_id}: {str(e)}"
+            f"Error getting subsamples for sample {sample_id} in project {project_hash}: {str(e)}"
         )
         # Return an empty list if there's an error
         subsamples = []
@@ -1450,9 +1444,9 @@ def get_subsamples(
     return subsamples
 
 
-@app.post("/projects/{project_id}/samples/{sample_id}/subsamples")
+@app.post("/projects/{project_hash}/samples/{sample_id}/subsamples")
 def create_subsample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     subsample: SubSample,
     user=Depends(get_current_user_from_credentials),
@@ -1462,7 +1456,7 @@ def create_subsample(
     Add a new subsample to a sample.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to add the subsample to.
         subsample (SubSample): The subsample data.
 
@@ -1472,17 +1466,17 @@ def create_subsample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Creating subsample for sample {sample_id} in project {project_id}")
+    logger.info(f"Creating subsample for sample {sample_id} in project {project_hash}")
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user)
+        project = get_projects(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_id, sample_id, user)
+        sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
@@ -1493,18 +1487,18 @@ def create_subsample(
     # For now, we'll just return the subsample with a generated ID
     if not subsample.id:
         subsample.id = (
-            f"subsample_{len(get_subsamples(project_id, sample_id, user)) + 1}"
+            f"subsample_{len(get_subsamples(project_hash, sample_id, user)) + 1}"
         )
 
     # Try to create the subsample in the database
     try:
         # This is a placeholder - in a real implementation, you would save the subsample to a database
-        # For example: created_subsample = db_instance.post(f"/projects/{project_id}/samples/{sample_id}/subsamples", subsample.dict())
+        # For example: created_subsample = db_instance.post(f"/projects/{project_hash}/samples/{sample_id}/subsamples", subsample.dict())
         # For now, we'll just return the subsample
         created_subsample = subsample
     except Exception as e:
         logger.error(
-            f"Error creating subsample for sample {sample_id} in project {project_id}: {str(e)}"
+            f"Error creating subsample for sample {sample_id} in project {project_hash}: {str(e)}"
         )
         raise HTTPException(
             status_code=500,
@@ -1514,9 +1508,9 @@ def create_subsample(
     return created_subsample
 
 
-@app.get("/projects/{project_id}/samples/{sample_id}/subsamples/{subsample_id}")
+@app.get("/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
 def get_subsample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     subsample_id: str,
     user=Depends(get_current_user_from_credentials),
@@ -1526,7 +1520,7 @@ def get_subsample(
     Get a specific subsample from a sample.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample.
         subsample_id (str): The ID of the subsample to get.
 
@@ -1537,18 +1531,18 @@ def get_subsample(
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
     logger.info(
-        f"Getting subsample {subsample_id} for sample {sample_id} in project {project_id}"
+        f"Getting subsample {subsample_id} for sample {sample_id} in project {project_hash}"
     )
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user, credentials)
+        project = get_projects(project_hash, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_id, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user, credentials)
     except HTTPException as e:
         raise e
 
@@ -1558,12 +1552,12 @@ def get_subsample(
     # Try to get the subsample from the database
     try:
         # This is a placeholder - in a real implementation, you would fetch the subsample from a database
-        # For example: subsample = db_instance.get(f"/projects/{project_id}/samples/{sample_id}/subsamples/{subsample_id}")
+        # For example: subsample = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
         # For now, we'll return a mock subsample
         subsample = SubSample(id=subsample_id, name=f"Subsample {subsample_id}")
     except Exception as e:
         logger.error(
-            f"Error getting subsample {subsample_id} for sample {sample_id} in project {project_id}: {str(e)}"
+            f"Error getting subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
         )
         raise HTTPException(
             status_code=404,
@@ -1573,9 +1567,9 @@ def get_subsample(
     return subsample
 
 
-@app.delete("/projects/{project_id}/samples/{sample_id}/subsamples/{subsample_id}")
+@app.delete("/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
 def delete_subsample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     subsample_id: str,
     user=Depends(get_current_user_from_credentials),
@@ -1585,7 +1579,7 @@ def delete_subsample(
     Delete a specific subsample from a sample.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample.
         subsample_id (str): The ID of the subsample to delete.
 
@@ -1596,25 +1590,25 @@ def delete_subsample(
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
     logger.info(
-        f"Deleting subsample {subsample_id} for sample {sample_id} in project {project_id}"
+        f"Deleting subsample {subsample_id} for sample {sample_id} in project {project_hash}"
     )
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user, credentials)
+        project = get_projects(project_hash, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_id, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the subsample exists
     try:
         subsample = get_subsample(
-            project_id, sample_id, subsample_id, user, credentials
+            project_hash, sample_id, subsample_id, user, credentials
         )
     except HTTPException as e:
         raise e
@@ -1625,12 +1619,12 @@ def delete_subsample(
     # Try to delete the subsample from the database
     try:
         # This is a placeholder - in a real implementation, you would delete the subsample from a database
-        # For example: db_instance.delete(f"/projects/{project_id}/samples/{sample_id}/subsamples/{subsample_id}")
+        # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
         # For now, we'll just return a success message
         pass
     except Exception as e:
         logger.error(
-            f"Error deleting subsample {subsample_id} for sample {sample_id} in project {project_id}: {str(e)}"
+            f"Error deleting subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
         )
         raise HTTPException(
             status_code=500,
@@ -1640,9 +1634,11 @@ def delete_subsample(
     return {"message": f"Subsample {subsample_id} deleted successfully"}
 
 
-@app.get("/projects/{project_id}/samples/{sample_id}/subsamples/{subsample_id}/process")
+@app.get(
+    "/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}/process"
+)
 def process_subsample(
-    project_id: str,
+    project_hash: str,
     sample_id: str,
     subsample_id: str,
     user=Depends(get_current_user_from_credentials),
@@ -1652,7 +1648,7 @@ def process_subsample(
     Process a specific subsample.
 
     Args:
-        project_id (str): The ID of the project.
+        project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample.
         subsample_id (str): The ID of the subsample to process.
 
@@ -1663,25 +1659,25 @@ def process_subsample(
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
     logger.info(
-        f"Processing subsample {subsample_id} for sample {sample_id} in project {project_id}"
+        f"Processing subsample {subsample_id} for sample {sample_id} in project {project_hash}"
     )
 
     # Check if the project exists
     try:
-        project = get_projects(project_id, user, credentials)
+        project = get_projects(project_hash, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_id, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user, credentials)
     except HTTPException as e:
         raise e
 
     # Check if the subsample exists
     try:
         subsample = get_subsample(
-            project_id, sample_id, subsample_id, user, credentials
+            project_hash, sample_id, subsample_id, user, credentials
         )
     except HTTPException as e:
         raise e
@@ -1692,7 +1688,7 @@ def process_subsample(
     # Try to process the subsample
     try:
         # This is a placeholder - in a real implementation, you would process the subsample
-        # For example: result = db_instance.get(f"/projects/{project_id}/samples/{sample_id}/subsamples/{subsample_id}/process")
+        # For example: result = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}/process")
         # For now, we'll just return a success message
         result = {
             "status": "success",
@@ -1700,7 +1696,7 @@ def process_subsample(
         }
     except Exception as e:
         logger.error(
-            f"Error processing subsample {subsample_id} for sample {sample_id} in project {project_id}: {str(e)}"
+            f"Error processing subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
         )
         raise HTTPException(
             status_code=500,
