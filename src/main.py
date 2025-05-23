@@ -1,18 +1,14 @@
 # import os
 import os
-import sys
 from pathlib import Path
 from typing import Union, List, Tuple
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ZooProcess_lib.Processor import Processor, Lut
-from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from remote.DB import DB
 from Models import (
     Scan,
     Folder,
@@ -27,22 +23,26 @@ from Models import (
     Sample,
     SubSample,
 )
-from providers.SeparateServer import SeparateServer
-from remote.TaskStatus import TaskStatus
+from ZooProcess_lib.Processor import Processor, Lut
+from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials, security
-from img_proc.convert import convert_tiff_to_jpeg
-from local_DB.db_dependencies import get_db
 from demo_get_vignettes import generate_json
+from img_proc.convert import convert_tiff_to_jpeg
+from img_proc.process import Process
 from legacy.drives import validate_drives, get_drive_path
 from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 
 # for /test
 from legacy_to_remote.importe import listWorkFolders
+from local_DB.db_dependencies import get_db
 from logger import logger
-from img_proc.process import Process
+from modern.from_legacy import project_from_legacy
+from providers.SeparateServer import SeparateServer
+from providers.server import Server
+from remote.DB import DB
+from remote.TaskStatus import TaskStatus
 from separate import Separate
 from separate_fn import separate_images
-from providers.server import Server
 
 # import csv
 # import requests
@@ -775,25 +775,25 @@ def get_projects(
     """
     if project_id is None:
         return list_all_projects()
-
     else:
         # If project_id is provided, return the specific project
         drive_path, project_name, project_path = extract_drive_and_project(project_id)
         drive_model = Drive(
             id=drive_path.name, name=drive_path.name, url=str(drive_path)
         )
-        project = Project(
-            path=project_path.as_posix(),
-            id=project_id,
-            name=project_name,
-            instrumentSerialNumber="TEST123",
-            drive=drive_model,
-        )
+        project = project_from_legacy(drive_model, project_path, "TEST123")
         return project
 
 
 def extract_drive_and_project(project_id: str) -> Tuple[Path, str, Path]:
-    drive_name, project_name = project_id.split("|")
+    try:
+        drive_name, project_name = project_id.split("|")
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Invalid project ID format: {project_id}. Expected format: drive|project",
+        )
+
     drive_path = get_drive_path(drive_name)
     if drive_path is None:
         raise HTTPException(
@@ -830,15 +830,8 @@ def list_all_projects(drives_to_check=None, serial_number="PROD123"):
         drive_zoo = ZooscanDrive(drive_path)
 
         for a_prj_path in drive_zoo.list():
-            unq_id = f"{drive.name}|{a_prj_path.name}"
             try:
-                project = Project(
-                    path=str(a_prj_path),
-                    id=unq_id,
-                    name=a_prj_path.name,
-                    instrumentSerialNumber=serial_number,
-                    drive=drive_model,
-                )
+                project = project_from_legacy(drive_model, a_prj_path, serial_number)
                 all_projects.append(project)
             except Exception as e:
                 logger.error(f"Error in GET /projects, drive {drive_path}: {str(e)}")
