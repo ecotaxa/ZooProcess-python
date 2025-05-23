@@ -1040,7 +1040,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalibrationtModel'
+                $ref: '#/components/schemas/CalibrationModel'
       tags:
         - User
       security:
@@ -1056,7 +1056,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalibrationtModel'
+                $ref: '#/components/schemas/CalibrationModel'
       tags:
         - User
       security:
@@ -1083,7 +1083,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalibrationtModel'
+                $ref: '#/components/schemas/CalibrationModel'
       tags:
         - User
       security:
@@ -1940,12 +1940,40 @@ components:
       required:
         - id
         - name
+        - path
+        - instrumentSerialNumber
       properties:
         id:
           readOnly: true
           type: string
         name:
           type: string
+        path:
+          type: string
+        bearer:
+          type: string
+        db:
+          type: string
+        instrumentSerialNumber:
+          type: string
+        acronym:
+          type: string
+        description:
+          type: string
+        ecotaxaProjectID:
+          type: string
+        drive:
+          $ref: '#/components/schemas/Drive'
+        samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sample'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Sample:
       type: object
@@ -1966,6 +1994,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MetadataModel'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
         # count:
         #   type: integer
         #   readOnly: true
@@ -2023,8 +2057,12 @@ components:
           type: string
         sn:
           type: string
+        ZooscanCalibration:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalibrationModel'
 
-    CalibrationtModel:
+    CalibrationModel:
       type: object
       required:
         - id

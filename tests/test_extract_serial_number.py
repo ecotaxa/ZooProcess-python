@@ -5,7 +5,7 @@ import pytest
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.modern.from_legacy import extract_serial_number
+from modern.utils import extract_serial_number
 
 
 def test_extract_serial_number_end():

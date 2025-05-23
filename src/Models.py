@@ -1,5 +1,6 @@
 # Models for communicating via FastAPI
 from typing import List, Union, Literal, Optional
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -28,6 +29,8 @@ class Project(BaseModel):
     ecotaxaProjectID: [optional] the id of the ecotaxa project
     drive: [optional] the drive name, if empty the parent project folder name will be used. The drive name will be searched in the DB if not found, an exception will raise
     samples: [optional] a list of samples inside the project
+    createdAt: [optional] the creation date of the project
+    updatedAt: [optional] the last update date of the project
     """
 
     path: str
@@ -41,15 +44,24 @@ class Project(BaseModel):
     ecotaxaProjectID: Union[str, None] = None
     drive: Union["Drive", None] = None
     samples: Union[List["Sample"], None] = None
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
 
 
 class Sample(BaseModel):
-    """Sample model as defined in the OpenAPI specification"""
+    """
+    Sample model as defined in the OpenAPI specification
+
+    createdAt: [optional] the creation date of the sample
+    updatedAt: [optional] the last update date of the sample
+    """
 
     id: str
     name: str
     subsample: Union[List["SubSample"], None] = None
     metadata: Union[List["MetadataModel"], None] = None
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
 
 
 class SubSample(BaseModel):

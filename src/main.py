@@ -62,6 +62,8 @@ separateServer = SeparateServer(tunnelserver, dbserver)
 
 # from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+import time
 
 # Import sys for DRIVES validation
 from contextlib import asynccontextmanager
@@ -102,6 +104,16 @@ origins = [
 #     allow_headers=["*"],
 # )
 
+
+class TimingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        logger.info(f"Request to {request.url.path} took {process_time:.4f} seconds")
+        return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins
@@ -109,6 +121,9 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+# Add timing middleware to log execution time of all endpoints
+app.add_middleware(TimingMiddleware)
 
 
 @app.get("/")
