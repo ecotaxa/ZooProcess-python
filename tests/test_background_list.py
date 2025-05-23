@@ -1,29 +1,24 @@
 import json
 from pathlib import Path
+import pytest
 from legacy_to_remote.importe import list_background
 
-import unittest
 
+@pytest.mark.skip(reason="Not really a test, but permits to see the result")
+def test_Background_list():
+    """
+    Test the Background_list function.
+    Not really a test, but permit to see the result
+    """
 
-class Test_Background_list(unittest.TestCase):
+    background_path = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back"
 
-    @unittest.skip("")
-    def test_Background_list(self):
-        """
-        Test the Background_list function.
-        Not really a test, but permit to see the result
-        """
+    json_data = list_background(background_path)
 
-        background_path = "/Volumes/sgalvagno/plankton/zooscan_zooprocess_test/Zooscan_apero_pp_2023_wp2_sn002/Zooscan_back"
+    print("json: ", json_data)
 
-        json_data = list_background(background_path)
+    json_filepath = Path(background_path).joinpath("background_list.json").absolute()
 
-        print("json: ", json_data)
-
-        json_filepath = (
-            Path(background_path).joinpath("background_list.json").absolute()
-        )
-
-        # Save to JSON file
-        with open(json_filepath, "w") as f:
-            json.dump(json_data, f, indent=4)
+    # Save to JSON file
+    with open(json_filepath, "w") as f:
+        json.dump(json_data, f, indent=4)

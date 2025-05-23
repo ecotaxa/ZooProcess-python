@@ -171,6 +171,9 @@ openapigenerator generate -i http://localhost:5000/openapi.json -g python -o ./s
 
 # run unit test
 
+## Test Generation Control
+
+The generation of tests can be controlled using the `test_config.json` file in the project root directory. See [TEST_GENERATION.md](tests/TEST_GENERATION.md) for more information.
 
 ```bash
 python3 -m venv test_venv
@@ -178,18 +181,18 @@ source test_venv/bin/activate
 pip install --upgrade pip 
 pip install -r requirements.txt
 
-python3 -m unittest discover tests
+pytest
 ```
 
-or one test
+or one test file
 ```bash
-python -m unittest tests/*.py 
+pytest tests/test_file.py
 ```
-add -v for verbose mode, and ahave list of test functions
+add -v for verbose mode to see a list of test functions
 
-Run only on test function
+Run only one test function
 ```bash
-python -m unittest tests.test_server.Test_server.test_dbserver_withconfig
+pytest tests/test_file.py::test_function_name
 ```
 
 # Database with SQLAlchemy
