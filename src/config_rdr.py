@@ -1,7 +1,7 @@
 import os
 import importlib
 from pathlib import Path
-from collections import namedtuple
+from typing import List
 from dotenv import load_dotenv
 
 # Get the environment (dev, prod, or None for testing)
@@ -22,8 +22,28 @@ DRIVES = os.environ.get("DRIVES", "").split(",") if os.environ.get("DRIVES") els
 # Get the database server URL from the environment variable or use a default
 DBSERVER = os.environ.get("DBSERVER", "http://zooprocess.imev-mer.fr:8081/v1")
 
-# Create a named tuple for configuration
-Config = namedtuple("Config", ["WORKING_DIR", "DB_NAME", "DRIVES", "dbserver"])
+
+# Create a proper class for configuration with typed members
+class Config:
+    """Configuration class with typed members."""
+
+    def __init__(
+        self, WORKING_DIR: str, DB_NAME: str, DRIVES: List[str], dbserver: str
+    ):
+        """
+        Initialize the Config class with typed members.
+
+        Args:
+            WORKING_DIR (str): The working directory path
+            DB_NAME (str): The database name
+            DRIVES (List[str]): A list of drive paths
+            dbserver (str): The database server URL
+        """
+        self.WORKING_DIR: str = WORKING_DIR
+        self.DB_NAME: str = DB_NAME
+        self.DRIVES: List[str] = DRIVES
+        self.dbserver: str = dbserver
+
 
 # Create the config instance with all required attributes
 config = Config(
