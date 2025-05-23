@@ -1,6 +1,7 @@
 # Models for communicating via FastAPI
-from typing import List, Union, Literal, Optional
+import string
 from datetime import datetime
+from typing import List, Union, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,8 +23,6 @@ class Drive(BaseModel):
 class Project(BaseModel):
     """
     Project path: the path to the project folder
-    bearer: the bearer token to use for the request
-    db: the database to use for the request
     name: [optional] the name of the project else take the name of the project folder
     instrumentSerialNumber: the serial number of the instrument need to be in the DB else raise an exception
     ecotaxaProjectID: [optional] the id of the ecotaxa project
@@ -33,10 +32,10 @@ class Project(BaseModel):
     updatedAt: [optional] the last update date of the project
     """
 
-    path: str
-    id: str
     bearer: str = ""  # Union[str, None] = None
     db: str = ""  # Union[str, None] = None
+    path: str
+    id: str
     name: Union[str, None] = None
     instrumentSerialNumber: str  # Union[str, None] = None
     acronym: Union[str, None] = None
@@ -72,37 +71,40 @@ class SubSample(BaseModel):
 
 
 class Folder(BaseModel):
+    bearer: Optional[str] = None
+    db: Optional[str] = None
     path: str
-    # bearer: str | None = None
-    # bd: str | None = None
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
     taskId: Union[str, None] = None
     scanId: Union[str, None] = None
 
 
 class Background(BaseModel):
+    id: str
+    name: str
+    url: str
+    user: User
+    instrument: "Instrument"
+    createdAt: datetime
+    error: Optional[datetime] = None
     # path: str
     # bearer: str | None = None
     # bd: str | None = None
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
-    taskId: Union[str, None] = None
+    # taskId: Union[str, None] = None
     # back1scanId: str
     # back2scanId: str
-    projectId: str
-    background: List[str]
-    instrumentId: str
+    # projectId: str
+    # background: List[str]
+    # instrumentId: str
 
 
 class BMProcess(BaseModel):
+    bearer: Union[str, None] = None
+    db: Union[str, None] = None
     src: str
     dst: Union[str, None] = None
     scan: str
     back: str
     taskId: Union[str, None] = None
-    bearer: Union[str, None] = None
-    db: Union[str, None] = None
 
 
 class Scan(BaseModel):

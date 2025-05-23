@@ -39,7 +39,7 @@ def test_returns_none_when_no_match(mocker: MockFixture):
 # Test the new endpoint for getting an instrument by ID
 def test_get_instrument_by_id():
     # Arrange
-    from remote.DB import get_instrument_by_id
+    from modern.instrument import get_instrument_by_id
 
     # Act
     result = get_instrument_by_id("1")
@@ -55,7 +55,7 @@ def test_get_instrument_by_id():
 # Test the new endpoint for getting an instrument by ID when the ID doesn't exist
 def test_get_instrument_by_id_not_found():
     # Arrange
-    from remote.DB import get_instrument_by_id
+    from modern.instrument import get_instrument_by_id
 
     # Act
     result = get_instrument_by_id("999")

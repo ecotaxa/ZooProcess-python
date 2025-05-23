@@ -5,7 +5,6 @@ from typing import Union, List, Tuple
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -25,8 +24,9 @@ from Models import (
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from auth import get_current_user_from_credentials, security
+from auth import get_current_user_from_credentials
 from demo_get_vignettes import generate_json
+from helpers.web import raise_500
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
 from legacy.drives import validate_drives, get_drive_path
@@ -36,7 +36,11 @@ from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 from legacy_to_remote.importe import listWorkFolders
 from local_DB.db_dependencies import get_db
 from logger import logger
-from modern.from_legacy import project_from_legacy, samples_from_legacy_project
+from modern.from_legacy import (
+    project_from_legacy,
+    samples_from_legacy_project,
+    backgrounds_from_legacy_project,
+)
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.DB import DB
@@ -95,6 +99,7 @@ origins = [
     # "http://localhost:3001",
     # "http://127.0.0.1:59245",
 ]
+
 
 # app.add_middleware(
 #     CORSMiddleware,
@@ -572,7 +577,7 @@ def mediumBackground(back1url, back2url):
 
 
 @app.post("/background/")
-def background(background: Background):
+def add_background(background: Background):
     """
     Process the background scans
     """
@@ -778,7 +783,6 @@ def get_current_user(
 def get_projects(
     project_id: str = None,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Union[Project, List[Project]]:
     """
     Returns a list of subdirectories inside each element of DRIVES or a specific project if project_id is provided.
@@ -857,7 +861,6 @@ def list_all_projects(drives_to_check=None):
 @app.get("/drives")
 def get_drives(
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> List[Drive]:
     """
     Returns a list of all drives.
@@ -1051,7 +1054,7 @@ def get_instruments(full: bool = False):
     Args:
         full (bool, optional): If True, returns the full instrument details. Defaults to False.
     """
-    from remote.DB import get_instruments as get_all_instruments
+    from modern.instrument import get_instruments as get_all_instruments
 
     instruments = get_all_instruments()
 
@@ -1078,7 +1081,7 @@ def get_instrument(instrument_id: str):
     Raises:
         HTTPException: If the instrument is not found.
     """
-    from remote.DB import get_instrument_by_id
+    from modern.instrument import get_instrument_by_id
 
     instrument = get_instrument_by_id(instrument_id)
     if instrument is None:
@@ -1147,7 +1150,8 @@ def create_calibration(
         HTTPException: If the instrument is not found or the user is not authorized.
     """
     # Check if the instrument exists
-    from remote.DB import get_instrument_by_id, DB
+    from remote.DB import DB
+    from modern.instrument import get_instrument_by_id
     import modern.calibration as calibration_module
 
     instrument = get_instrument_by_id(instrumentId)
@@ -1167,7 +1171,6 @@ def create_calibration(
 def get_samples(
     project_hash: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> List[Sample]:
     """
     Get the list of samples associated with a project.
@@ -1184,11 +1187,40 @@ def get_samples(
     logger.info(f"Getting samples for project {project_hash}")
 
     drive, project_name, _ = extract_drive_and_project(project_hash)
-
-    drive = ZooscanDrive(drive)
-    project = drive.get_project_folder(project_name)
+    zoo_drive = ZooscanDrive(drive)
+    project = zoo_drive.get_project_folder(project_name)
 
     return samples_from_legacy_project(project)
+
+
+@app.get("/projects/{project_hash}/backgrounds")
+def get_backgrounds(
+    project_hash: str, user=Depends(get_current_user_from_credentials)
+) -> List[Background]:
+    """
+    Get the list of backgrounds associated with a project.
+
+    Args:
+        project_hash (str): The hash of the project to get backgrounds for.
+        user: Security dependency to get the current user.
+
+    Returns:
+        List[Background]: A list of backgrounds associated with the project.
+
+    Raises:
+        HTTPException: If the project is not found or the user is not authorized.
+    """
+    logger.info(f"Getting backgrounds for project {project_hash}")
+
+    drive, project_name, _ = extract_drive_and_project(project_hash)
+    zoo_drive = ZooscanDrive(drive)
+    project = zoo_drive.get_project_folder(project_name)
+
+    try:
+        return backgrounds_from_legacy_project(project)
+    except Exception as e:
+        raise_500(f"Error retrieving backgrounds for project {project_hash}: {str(e)}")
+        return []
 
 
 @app.post("/projects/{project_id}/samples")
@@ -1196,7 +1228,6 @@ def create_sample(
     project_hash: str,
     sample: Sample,
     user=Depends(get_current_user_from_credentials),
-    db: Session = Depends(get_db),
 ) -> Sample:
     """
     Add a new sample to a project.
@@ -1231,11 +1262,7 @@ def create_sample(
         # For now, we'll just return the sample
         created_sample = sample
     except Exception as e:
-        logger.error(f"Error creating sample for project {project_hash}: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error creating sample: {str(e)}",
-        )
+        raise_500(f"Error creating sample for project {project_hash}: {str(e)}")
 
     return created_sample
 
@@ -1245,7 +1272,6 @@ def get_sample(
     project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Sample:
     """
     Get a specific sample from a project.
@@ -1338,12 +1364,8 @@ def update_sample(
         # For now, we'll just return the sample
         updated_sample = sample
     except Exception as e:
-        logger.error(
+        raise_500(
             f"Error updating sample {sample_id} for project {project_hash}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error updating sample: {str(e)}",
         )
 
     return updated_sample
@@ -1354,7 +1376,6 @@ def delete_sample(
     project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
     """
     Delete a specific sample from a project.
@@ -1393,12 +1414,8 @@ def delete_sample(
         # For now, we'll just return a success message
         pass
     except Exception as e:
-        logger.error(
+        raise_500(
             f"Error deleting sample {sample_id} for project {project_hash}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error deleting sample: {str(e)}",
         )
 
     return {"message": f"Sample {sample_id} deleted successfully"}
@@ -1409,7 +1426,6 @@ def get_subsamples(
     project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> List[SubSample]:
     """
     Get the list of subsamples associated with a sample.
@@ -1512,12 +1528,8 @@ def create_subsample(
         # For now, we'll just return the subsample
         created_subsample = subsample
     except Exception as e:
-        logger.error(
+        raise_500(
             f"Error creating subsample for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error creating subsample: {str(e)}",
         )
 
     return created_subsample
@@ -1529,7 +1541,6 @@ def get_subsample(
     sample_id: str,
     subsample_id: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> SubSample:
     """
     Get a specific subsample from a sample.
@@ -1588,7 +1599,6 @@ def delete_subsample(
     sample_id: str,
     subsample_id: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
     """
     Delete a specific subsample from a sample.
@@ -1638,12 +1648,8 @@ def delete_subsample(
         # For now, we'll just return a success message
         pass
     except Exception as e:
-        logger.error(
+        raise_500(
             f"Error deleting subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error deleting subsample: {str(e)}",
         )
 
     return {"message": f"Subsample {subsample_id} deleted successfully"}
@@ -1657,7 +1663,6 @@ def process_subsample(
     sample_id: str,
     subsample_id: str,
     user=Depends(get_current_user_from_credentials),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
     """
     Process a specific subsample.
@@ -1710,12 +1715,8 @@ def process_subsample(
             "message": f"Subsample {subsample_id} processed successfully",
         }
     except Exception as e:
-        logger.error(
+        raise_500(
             f"Error processing subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error processing subsample: {str(e)}",
         )
 
     return result

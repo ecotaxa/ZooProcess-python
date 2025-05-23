@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from Models import Project, Drive, Sample
+from Models import Project, Drive, Sample, Background, User, Instrument
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from modern.utils import (
     extract_serial_number,
@@ -70,3 +70,59 @@ def samples_from_legacy_project(project: ZooscanProjectFolder) -> list[Sample]:
         # Create the sample with metadata
         samples.append(Sample(id=sample_name, name=sample_name, metadata=metadata))
     return samples
+
+
+def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Background]:
+    """
+    Extract background information from a ZooscanProjectFolder and return a list of Background objects.
+
+    Args:
+        project (ZooscanProjectFolder): The project folder to extract backgrounds from.
+
+    Returns:
+        list[Background]: A list of Background objects representing the backgrounds in the project.
+    """
+    backgrounds = []
+
+    # Get the background folder from the project
+    back_folder = project.zooscan_back
+
+    # Get all dates for which backgrounds exist
+    dates = back_folder.get_dates()
+
+    # Create a mock user and instrument for the backgrounds
+    # In a real implementation, these would be fetched from a database
+    mock_user = User(id="user1", name="n/a", email="user@example.com")
+    mock_instrument = Instrument(
+        id="instrument1",
+        model="Zooscan",
+        name="Default Zooscan",
+        sn=extract_serial_number(project.project),
+    )
+
+    # For each date, create a Background object. Dates are in ZooProcess format
+    for a_date in dates:
+        # Get the background entry for this date
+        entry = back_folder.content[a_date]
+
+        # If there's a final background, add it to the list
+        if entry["final_background"]:
+            background_path = entry["final_background"]
+            background_id = f"{a_date}"
+            background_name = f"{a_date}_background"
+            background_url = str(background_path)
+
+            api_date = datetime.strptime(a_date, "%Y%m%d_%H%M")
+            # Create the Background object
+            background = Background(
+                id=background_id,
+                name=background_url,  # TODO: Tell frontend owner there is an invert here
+                url=background_name,
+                user=mock_user,
+                instrument=mock_instrument,
+                createdAt=api_date,
+            )
+
+            backgrounds.append(background)
+
+    return backgrounds

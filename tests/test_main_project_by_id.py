@@ -3,23 +3,11 @@ from fastapi.testclient import TestClient
 from pytest_mock import MockFixture
 
 from main import app, get_db
-from auth import decode_jwt_token
-from local_DB.models import User as DBUser
 
 
-@pytest.fixture
-def client():
-    # Create the test client
-    client = TestClient(app)
-
-    # Return the client for use in tests
-    yield {"client": client}
-
-    # Cleanup (equivalent to tearDown)
-    app.dependency_overrides.clear()
-
-
-def test_project_by_id_endpoint_with_valid_token(mocker: MockFixture, client, local_db):
+def test_project_by_id_endpoint_with_valid_token(
+    mocker: MockFixture, app_client, local_db
+):
     """Test that the /projects/{project_id} endpoint returns a specific project with a valid token"""
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
@@ -66,11 +54,11 @@ def test_project_by_id_endpoint_with_valid_token(mocker: MockFixture, client, lo
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = client["client"].post("/login", json=login_data)
+    login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /projects/{project_id} endpoint with the token
-    response = client["client"].get(
+    response = app_client.get(
         "/projects/drive1|Project1", headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -96,7 +84,7 @@ def test_project_by_id_endpoint_with_valid_token(mocker: MockFixture, client, lo
 
 
 def test_project_by_id_endpoint_with_invalid_drive(
-    mocker: MockFixture, client, local_db
+    mocker: MockFixture, app_client, local_db
 ):
     """Test that the /projects/{project_id} endpoint returns 404 when the drive is not found"""
     # Override the get_db dependency to return our local_db
@@ -108,11 +96,11 @@ def test_project_by_id_endpoint_with_invalid_drive(
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = client["client"].post("/login", json=login_data)
+    login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /projects/{project_id} endpoint with the token and an invalid drive
-    response = client["client"].get(
+    response = app_client.get(
         "/projects/invalid_drive|Project1", headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -131,7 +119,7 @@ def test_project_by_id_endpoint_with_invalid_drive(
 
 
 def test_project_by_id_endpoint_with_invalid_project(
-    mocker: MockFixture, client, local_db
+    mocker: MockFixture, app_client, local_db
 ):
     """Test that the /projects/{project_id} endpoint returns 404 when the project does not exist"""
     # Override the get_db dependency to return our local_db
@@ -159,11 +147,11 @@ def test_project_by_id_endpoint_with_invalid_project(
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = client["client"].post("/login", json=login_data)
+    login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /projects/{project_id} endpoint with the token and a non-existent project
-    response = client["client"].get(
+    response = app_client.get(
         "/projects/drive1|NonExistentProject",
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -182,18 +170,18 @@ def test_project_by_id_endpoint_with_invalid_project(
     app.dependency_overrides.clear()
 
 
-def test_project_by_id_endpoint_with_invalid_format(client, local_db):
+def test_project_by_id_endpoint_with_invalid_format(app_client, local_db):
     """Test that the /projects/{project_id} endpoint returns an error when the project_id is not in the correct format"""
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = client["client"].post("/login", json=login_data)
+    login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /projects/{project_id} endpoint with the token and a project_id in an invalid format
-    response = client["client"].get(
+    response = app_client.get(
         "/projects/invalid_format",
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -205,19 +193,19 @@ def test_project_by_id_endpoint_with_invalid_format(client, local_db):
     app.dependency_overrides.clear()
 
 
-def test_project_by_id_endpoint_without_token(client):
+def test_project_by_id_endpoint_without_token(app_client):
     """Test that the /projects/{project_id} endpoint returns 401 without a token"""
     # Make request to the /projects/{project_id} endpoint without a token
-    response = client["client"].get("/projects/drive1|Project1")
+    response = app_client.get("/projects/drive1|Project1")
 
     # Check that the response is 401 Unauthorized
     assert response.status_code == 401
 
 
-def test_project_by_id_endpoint_with_invalid_token(client):
+def test_project_by_id_endpoint_with_invalid_token(app_client):
     """Test that the /projects/{project_id} endpoint returns 401 with an invalid token"""
     # Make request to the /projects/{project_id} endpoint with an invalid token
-    response = client["client"].get(
+    response = app_client.get(
         "/projects/drive1|Project1",
         headers={"Authorization": "Bearer invalid_token"},
     )

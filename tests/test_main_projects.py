@@ -3,23 +3,9 @@ from fastapi.testclient import TestClient
 from pytest_mock import MockFixture
 
 from main import app, get_db
-from auth import decode_jwt_token
-from local_DB.models import User as DBUser
 
 
-@pytest.fixture
-def client():
-    # Create the test client
-    client = TestClient(app)
-
-    # Return the client for use in tests
-    yield {"client": client}
-
-    # Cleanup (equivalent to tearDown)
-    app.dependency_overrides.clear()
-
-
-def test_projects_endpoint_with_valid_token(mocker: MockFixture, client, local_db):
+def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, local_db):
     """Test that the /projects endpoint returns subdirectories from DRIVES with a valid token"""
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
@@ -72,13 +58,11 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, client, local_d
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = client["client"].post("/login", json=login_data)
+    login_response = app_client.post("/login", json=login_data)
     token = login_response.json()  # The login endpoint returns the token as JSON
 
     # Make request to the /projects endpoint with the token
-    response = client["client"].get(
-        "/projects", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = app_client.get("/projects", headers={"Authorization": f"Bearer {token}"})
 
     # Check that the response is successful
     assert response.status_code == 200
@@ -96,19 +80,19 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, client, local_d
     app.dependency_overrides.clear()
 
 
-def test_projects_endpoint_without_token(client):
+def test_projects_endpoint_without_token(app_client):
     """Test that the /projects endpoint returns 401 without a token"""
     # Make request to the /projects endpoint without a token
-    response = client["client"].get("/projects")
+    response = app_client.get("/projects")
 
     # Check that the response is 401 Unauthorized
     assert response.status_code == 401
 
 
-def test_projects_endpoint_with_invalid_token(client):
+def test_projects_endpoint_with_invalid_token(app_client):
     """Test that the /projects endpoint returns 401 with an invalid token"""
     # Make request to the /projects endpoint with an invalid token
-    response = client["client"].get(
+    response = app_client.get(
         "/projects", headers={"Authorization": "Bearer invalid_token"}
     )
 

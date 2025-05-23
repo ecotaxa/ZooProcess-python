@@ -59,7 +59,7 @@ def extract_serial_number(project_name: str) -> str:
 def parse_sample_name(sample_name: str) -> dict:
     """
     Parse a sample name into its components.
-    Sample names follow the structure: [program]_[ship]_[nettype]_[optional_mesh_size]_[cruise_number]_st[station_id]_[day_night]_n[net_number]_d[fraction_type]_[fraction_number]_sur_[total_fractions]_[scan_number]
+    Sample names follow the structure: [program]_[ship]_[net_type]_[optional_mesh_size]_[cruise_number]_st[station_id]_[day_night]_n[net_number]_d[fraction_type]_[fraction_number]_sur_[total_fractions]_[scan_number]
     Example: apero2023_tha_bioness_sup2000_017_st66_d_n1_d3_1_sur_4_1
 
     Components Breakdown:
@@ -98,7 +98,7 @@ def parse_sample_name(sample_name: str) -> dict:
         idx += 1
 
     if idx < len(components):
-        parsed["nettype"] = components[idx]
+        parsed["net_type"] = components[idx]
         idx += 1
 
     # Check for optional mesh size (if present)

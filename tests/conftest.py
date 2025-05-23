@@ -5,11 +5,40 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from fastapi.testclient import TestClient
 
 # Add the project root and src directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from local_DB.models import Base, User
+from main import app, get_db
+
+
+@pytest.fixture
+def app_client():
+    """
+    Create a TestClient for the FastAPI app.
+
+    This fixture creates a TestClient instance for testing API endpoints.
+
+    Example usage:
+    ```python
+    def test_something(app_client):
+        response = app_client.get("/some-endpoint")
+        assert response.status_code == 200
+    ```
+
+    Returns:
+        A FastAPI TestClient instance.
+    """
+    # Create the test client
+    client = TestClient(app)
+
+    # Return the client for use in tests
+    yield client
+
+    # Cleanup (equivalent to tearDown)
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture

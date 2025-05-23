@@ -1,25 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
-from pytest_mock import MockFixture
 
-from main import app, get_db
 from auth import decode_jwt_token
-from local_DB.models import User as DBUser
+from main import app, get_db
 
 
-@pytest.fixture
-def client():
-    # Create the test client
-    client = TestClient(app)
-
-    # Return the client for use in tests
-    yield {"client": client}
-
-    # Cleanup (equivalent to tearDown)
-    app.dependency_overrides.clear()
-
-
-def test_login_endpoint(client, local_db):
+def test_login_endpoint(app_client, local_db):
     """Test that the /login endpoint returns a valid JWT token"""
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
@@ -28,7 +14,7 @@ def test_login_endpoint(client, local_db):
     login_data = {"email": "test@example.com", "password": "test_password"}
 
     # Make request to the login endpoint
-    response = client["client"].post("/login", json=login_data)
+    response = app_client.post("/login", json=login_data)
 
     # Check that the response is successful
     assert response.status_code == 200

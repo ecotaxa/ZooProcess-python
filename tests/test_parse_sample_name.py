@@ -4,7 +4,7 @@ import pytest
 def parse_sample_name(sample_name: str) -> dict:
     """
     Parse a sample name into its components.
-    Sample names follow the structure: [program]_[ship]_[nettype]_[optional_mesh_size]_[cruise_number]_st[station_id]_[day_night]_n[net_number]_d[fraction_type]_[fraction_number]_sur_[total_fractions]_[scan_number]
+    Sample names follow the structure: [program]_[ship]_[net_type]_[optional_mesh_size]_[cruise_number]_st[station_id]_[day_night]_n[net_number]_d[fraction_type]_[fraction_number]_sur_[total_fractions]_[scan_number]
     Example: apero2023_tha_bioness_sup2000_017_st66_d_n1_d3_1_sur_4_1
 
     Components Breakdown:
@@ -43,7 +43,7 @@ def parse_sample_name(sample_name: str) -> dict:
         idx += 1
 
     if idx < len(components):
-        parsed["nettype"] = components[idx]
+        parsed["net_type"] = components[idx]
         idx += 1
 
     # Check for optional mesh size (if present)
@@ -96,7 +96,7 @@ def test_parse_sample_name_full():
     assert len(parsed) == 13
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
-    assert parsed["nettype"] == "bioness"
+    assert parsed["net_type"] == "bioness"
     assert parsed["mesh_size"] == "sup2000"
     assert parsed["cruise_number"] == "017"
     assert parsed["station_id"] == "st66"
@@ -117,7 +117,7 @@ def test_parse_sample_name_without_mesh_size():
     assert len(parsed) == 12
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
-    assert parsed["nettype"] == "bioness"
+    assert parsed["net_type"] == "bioness"
     assert "mesh_size" not in parsed
     assert parsed["cruise_number"] == "017"
     assert parsed["station_id"] == "st66"
@@ -138,7 +138,7 @@ def test_parse_sample_name_partial():
     assert len(parsed) == 3
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
-    assert parsed["nettype"] == "bioness"
+    assert parsed["net_type"] == "bioness"
     assert "mesh_size" not in parsed
     assert "cruise_number" not in parsed
     assert "station_id" not in parsed
@@ -159,7 +159,7 @@ def test_parse_sample_name_single():
     assert len(parsed) == 1
     assert parsed["program"] == "apero2023"
     assert "ship" not in parsed
-    assert "nettype" not in parsed
+    assert "net_type" not in parsed
     assert "mesh_size" not in parsed
     assert "cruise_number" not in parsed
     assert "station_id" not in parsed
