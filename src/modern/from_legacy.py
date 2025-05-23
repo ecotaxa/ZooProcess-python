@@ -1,15 +1,16 @@
 #
 # Transformers from Legacy data to modern models
 #
+import os
 from datetime import datetime
 from pathlib import Path
 
 from Models import Project, Drive, Sample
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from modern.utils import (
-    find_latest_modification_time,
     extract_serial_number,
     parse_sample_name,
+    find_latest_modification_time,
 )
 
 
@@ -27,7 +28,7 @@ def project_from_legacy(
     )
     sample_models = samples_from_legacy_project(zoo_project)
     # Get the creation time of the directory
-    creation_time = datetime.fromtimestamp(a_prj_path.stat().st_ctime)
+    creation_time = datetime.fromtimestamp(os.path.getmtime(a_prj_path))
 
     # Find the most recent modification time of any file in the project directory
     latest_mtime = find_latest_modification_time(a_prj_path)
