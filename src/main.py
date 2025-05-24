@@ -2,7 +2,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Union, List, Tuple
+from typing import Union, List
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
@@ -37,7 +37,7 @@ from helpers.web import (
 )
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
-from legacy.drives import validate_drives, get_drive_path
+from legacy.drives import validate_drives
 from legacy.files import find_background_file
 from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 from legacy_to_remote.importe import listWorkFolders
@@ -49,6 +49,7 @@ from modern.from_legacy import (
     backgrounds_from_legacy_project,
     drives_from_legacy,
 )
+from modern.ids import drive_and_project_from_hash
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.DB import DB
@@ -782,34 +783,12 @@ def get_projects(
         return list_all_projects()
     else:
         # If project_id is provided, return the specific project
-        drive_path, project_name, project_path = extract_drive_and_project(project_id)
+        drive_path, project_name, project_path = drive_and_project_from_hash(project_id)
         drive_model = Drive(
             id=drive_path.name, name=drive_path.name, url=str(drive_path)
         )
         project = project_from_legacy(drive_model, project_path, "TEST123")
         return project
-
-
-def extract_drive_and_project(project_id: str) -> Tuple[Path, str, Path]:
-    try:
-        drive_name, project_name = project_id.split("|")
-    except ValueError:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Invalid project ID format: {project_id}. Expected format: drive|project",
-        )
-
-    drive_path = get_drive_path(drive_name)
-    if drive_path is None:
-        raise HTTPException(
-            status_code=404, detail=f"Project with ID {project_id} not found"
-        )
-    project_path = Path(drive_path) / project_name
-    if not (project_path.exists() and project_path.is_dir()):
-        raise HTTPException(
-            status_code=404, detail=f"Project with ID {project_id} not found"
-        )
-    return drive_path, project_name, project_path
 
 
 def list_all_projects(drives_to_check=None):
@@ -1155,7 +1134,7 @@ def get_samples(
     """
     logger.info(f"Getting samples for project {project_hash}")
 
-    drive, project_name, _ = extract_drive_and_project(project_hash)
+    drive, project_name, _ = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive)
     project = zoo_drive.get_project_folder(project_name)
 
@@ -1181,7 +1160,7 @@ def get_backgrounds(
     """
     logger.info(f"Getting backgrounds for project {project_hash}")
 
-    drive_path, project_name, _ = extract_drive_and_project(project_hash)
+    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
@@ -1215,7 +1194,7 @@ async def get_background(
     """
     logger.info(f"Getting background {background_id} for project {project_hash}")
 
-    drive_path, project_name, _ = extract_drive_and_project(project_hash)
+    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
@@ -1259,7 +1238,7 @@ def create_sample(
     logger.info(f"Creating sample for project {project_hash}")
 
     # Check if the project exists
-    drive_path, project_name, project_path = extract_drive_and_project(project_hash)
+    drive_path, project_name, project_path = drive_and_project_from_hash(project_hash)
 
     # Create a DB instance
     db_instance = DB(bearer=user.id)
@@ -1299,7 +1278,7 @@ def get_sample(
     """
     logger.info(f"Getting sample {sample_id} for project {project_hash}")
 
-    drive, project_name, _ = extract_drive_and_project(project_hash)
+    drive, project_name, _ = drive_and_project_from_hash(project_hash)
 
     drive = ZooscanDrive(drive)
     project = drive.get_project_folder(project_name)

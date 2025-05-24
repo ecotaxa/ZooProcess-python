@@ -14,6 +14,7 @@ def test_background_from_legacy_project(mocker: MockFixture):
     # Create a mock ZooscanProjectFolder
     mock_project = mocker.MagicMock()
     mock_project.project = "test_project"
+    mock_project.path = Path("/path/to/test_project")
 
     # Create a mock Drive
     mock_drive = Drive(id="test_drive", name="test_drive", url="/path/to/test_drive")
@@ -44,11 +45,18 @@ def test_background_from_legacy_project(mocker: MockFixture):
         },
     }
 
+    # Mock the config.public_url
+    mocker.patch("modern.from_legacy.config.public_url", "http://localhost:5000")
+
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
         "modern.from_legacy.extract_serial_number"
     )
     mock_extract_serial_number.return_value = "TEST123"
+
+    # Mock the hash_from_drive_and_project function
+    mock_hash = mocker.patch("modern.from_legacy.hash_from_drive_and_project")
+    mock_hash.return_value = "test_drive|test_project"
 
     # Call the function
     backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
@@ -57,17 +65,23 @@ def test_background_from_legacy_project(mocker: MockFixture):
     assert len(backgrounds) == 2
 
     # Check the first background
-    assert backgrounds[0].id == "test_project_20230101_1200_background"
+    assert backgrounds[0].id == "20230101_1200"
     assert backgrounds[0].name == "20230101_1200_background"
-    assert backgrounds[0].url == "/path/to/background1.tif"
+    assert (
+        backgrounds[0].url
+        == "http://localhost:5000/projects/test_drive|test_project/background/20230101_1200.jpg"
+    )
     assert backgrounds[0].createdAt.strftime("%Y%m%d_%H%M") == "20230101_1200"
     assert backgrounds[0].user.id == "user1"
     assert backgrounds[0].instrument.sn == "TEST123"
 
     # Check the second background
-    assert backgrounds[1].id == "test_project_20230102_1300_background"
+    assert backgrounds[1].id == "20230102_1300"
     assert backgrounds[1].name == "20230102_1300_background"
-    assert backgrounds[1].url == "/path/to/background2.tif"
+    assert (
+        backgrounds[1].url
+        == "http://localhost:5000/projects/test_drive|test_project/background/20230102_1300.jpg"
+    )
     assert backgrounds[1].createdAt.strftime("%Y%m%d_%H%M") == "20230102_1300"
     assert backgrounds[1].user.id == "user1"
     assert backgrounds[1].instrument.sn == "TEST123"
@@ -85,6 +99,7 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     # Create a mock ZooscanProjectFolder
     mock_project = mocker.MagicMock()
     mock_project.project = "test_project"
+    mock_project.path = Path("/path/to/test_project")
 
     # Create a mock Drive
     mock_drive = Drive(id="test_drive", name="test_drive", url="/path/to/test_drive")
@@ -100,11 +115,18 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     # Mock the content dictionary
     mock_back_folder.content = {}
 
+    # Mock the config.public_url
+    mocker.patch("modern.from_legacy.config.public_url", "http://localhost:5000")
+
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
         "modern.from_legacy.extract_serial_number"
     )
     mock_extract_serial_number.return_value = "TEST123"
+
+    # Mock the hash_from_drive_and_project function
+    mock_hash = mocker.patch("modern.from_legacy.hash_from_drive_and_project")
+    mock_hash.return_value = "test_drive|test_project"
 
     # Call the function
     backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
@@ -123,6 +145,7 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
     # Create a mock ZooscanProjectFolder
     mock_project = mocker.MagicMock()
     mock_project.project = "test_project"
+    mock_project.path = Path("/path/to/test_project")
 
     # Create a mock Drive
     mock_drive = Drive(id="test_drive", name="test_drive", url="/path/to/test_drive")
@@ -143,11 +166,18 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
         }
     }
 
+    # Mock the config.public_url
+    mocker.patch("modern.from_legacy.config.public_url", "http://localhost:5000")
+
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
         "modern.from_legacy.extract_serial_number"
     )
     mock_extract_serial_number.return_value = "TEST123"
+
+    # Mock the hash_from_drive_and_project function
+    mock_hash = mocker.patch("modern.from_legacy.hash_from_drive_and_project")
+    mock_hash.return_value = "test_drive|test_project"
 
     # Call the function
     backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)

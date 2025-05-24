@@ -16,8 +16,8 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_exists = mocker.patch("pathlib.Path.exists")
     mock_is_dir = mocker.patch("pathlib.Path.is_dir")
 
-    # Mock the extract_drive_and_project function
-    mock_extract = mocker.patch("main.extract_drive_and_project")
+    # Mock the drive_and_project_from_hash function
+    mock_extract = mocker.patch("main.drive_and_project_from_hash")
 
     # Set up the mocks for Path methods
     mock_exists.return_value = True
@@ -35,7 +35,7 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_project_path.name = "Project1"
     mock_project_path.__str__.return_value = "/path/to/drive1/Project1"
 
-    # Set up mock for extract_drive_and_project to return our mock paths
+    # Set up mock for drive_and_project_from_hash to return our mock paths
     mock_extract.return_value = (mock_drive_path, "Project1", mock_project_path)
 
     # Create a test project
@@ -73,7 +73,7 @@ def test_project_by_id_endpoint_with_valid_token(
     assert project_data["id"] == "drive1|Project1"
     assert project_data["instrumentSerialNumber"] == "TEST123"
 
-    # Verify that extract_drive_and_project was called with the correct project_id
+    # Verify that drive_and_project_from_hash was called with the correct project_id
     mock_extract.assert_called_once_with("drive1|Project1")
 
     # Verify that project_from_legacy was called with the correct arguments
@@ -91,7 +91,7 @@ def test_project_by_id_endpoint_with_invalid_drive(
     app.dependency_overrides[get_db] = lambda: local_db
 
     # Mock get_drive_path to return None (drive not found)
-    mock_get_drive_path = mocker.patch("main.get_drive_path")
+    mock_get_drive_path = mocker.patch("modern.ids.get_drive_path")
     mock_get_drive_path.return_value = None
 
     # First, get a valid token by logging in
@@ -126,7 +126,7 @@ def test_project_by_id_endpoint_with_invalid_project(
     app.dependency_overrides[get_db] = lambda: local_db
 
     # Mock get_drive_path to return a valid drive path
-    mock_get_drive_path = mocker.patch("main.get_drive_path")
+    mock_get_drive_path = mocker.patch("modern.ids.get_drive_path")
 
     # Create a mock drive path
     from pathlib import Path

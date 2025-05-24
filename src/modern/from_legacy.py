@@ -8,6 +8,7 @@ from pathlib import Path
 from Models import Project, Drive, Sample, Background, User, Instrument
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
+from modern.ids import hash_from_drive_and_project
 from modern.utils import (
     extract_serial_number,
     parse_sample_name,
@@ -37,7 +38,7 @@ def drives_from_legacy():
 def project_from_legacy(
     drive_model: Drive, a_prj_path: Path, serial_number: str = None
 ):
-    unq_id = url_id(drive_model, a_prj_path)
+    unq_id = hash_from_drive_and_project(drive_model, a_prj_path)
 
     # Extract serial number from project name if not provided
     if serial_number is None:
@@ -64,14 +65,6 @@ def project_from_legacy(
         updatedAt=latest_mtime,
     )
     return project
-
-
-def url_id(drive_model: Drive, a_prj_path: Path):
-    """
-    Compute some user-visible ID for URLs
-    """
-    unq_id = f"{drive_model.name}|{a_prj_path.name}"
-    return unq_id
 
 
 def samples_from_legacy_project(project: ZooscanProjectFolder) -> list[Sample]:
@@ -141,7 +134,7 @@ def backgrounds_from_legacy_project(
     )
 
     # Use the provided drive if available, otherwise use the project's drive
-    project_hash = url_id(drive, project.path)
+    project_hash = hash_from_drive_and_project(drive, project.path)
 
     # For each date, create a Background object. Dates are in ZooProcess format
     for a_date in dates:
@@ -150,10 +143,11 @@ def backgrounds_from_legacy_project(
 
         # If there's a final background, add it to the list
         if entry["final_background"]:
-            background_path = entry["final_background"]
-            background_id = f"{project.project}_{a_date}_background"
+            background_id = f"{a_date}"
             background_name = f"{a_date}_background"
-            background_url = str(background_path)
+            background_url = (
+                config.public_url + f"/projects/{project_hash}/background/{a_date}.jpg"
+            )
 
             # Convert the date string to a datetime object for the model
             api_date = datetime.strptime(a_date, "%Y%m%d_%H%M")
