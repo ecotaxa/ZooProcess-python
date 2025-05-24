@@ -1,17 +1,55 @@
-import sys
 import os
+import subprocess
+import sys
+import tempfile
+import time
 import uuid
 from pathlib import Path
+
 import pytest
+import requests
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
 
 # Add the project root and src directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
+# Add the ZooProcess-lib sibling src directory to the Python path
+zooprocess_lib_path = Path(__file__).parent.parent.parent / "ZooProcess-lib" / "src"
+if zooprocess_lib_path.exists():
+    sys.path.append(str(zooprocess_lib_path))
+
 from local_DB.models import Base, User
-from main import app, get_db
+from main import app
+
+
+@pytest.fixture
+def project_python_path():
+    """
+    Return a list of Python paths for the project.
+
+    This fixture provides a list of paths that should be added to sys.path for tests.
+    It includes the project's src directory and may include other related directories
+    such as the ZooProcess-lib sibling src directory.
+
+    Example usage:
+    ```python
+    def test_something(project_python_path):
+        # Use project_python_path as a list of paths to add to sys.path
+        for path in project_python_path:
+            sys.path.append(path)
+    ```
+
+    Returns:
+        list: A list of paths to add to the Python path.
+    """
+    paths = [str(Path(__file__).parent.parent / "src")]
+
+    if zooprocess_lib_path.exists():
+        paths.append(str(zooprocess_lib_path))
+
+    return paths
 
 
 @pytest.fixture
@@ -39,6 +77,171 @@ def app_client():
 
     # Cleanup (equivalent to tearDown)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def server_client():
+    """
+    Launch a server in a subprocess and return a client to make requests to it.
+
+    This fixture starts a server using uvicorn in a subprocess, waits for it to be ready,
+    and then provides a way to make HTTP requests to it. It ensures the server is properly
+    shut down after the test.
+
+    Example usage:
+    ```python
+    def test_something(server_client):
+        response = server_client.get("/some-endpoint")
+        assert response.status_code == 200
+    ```
+
+    Returns:
+        A requests.Session instance configured to make requests to the server.
+    """
+    # host and port of temp server
+    host = "127.0.0.1"
+    port = "8789"
+
+    # Create temporary files for stdout and stderr
+    stdout_file = tempfile.NamedTemporaryFile(
+        prefix="server_stdout_", suffix=".log", delete=False
+    )
+    stderr_file = tempfile.NamedTemporaryFile(
+        prefix="server_stderr_", suffix=".log", delete=False
+    )
+
+    # Create a temporary directory for DRIVES
+    temp_drives_dir = tempfile.mkdtemp(prefix="zooprocess_drives_")
+
+    # Set up environment with DRIVES
+    env = os.environ.copy()
+    env["DRIVES"] = temp_drives_dir
+
+    # Add ZooProcess-lib to PYTHONPATH
+    if Path(zooprocess_lib_path).exists():
+        if "PYTHONPATH" in env:
+            env["PYTHONPATH"] = f"{zooprocess_lib_path}{os.pathsep}{env['PYTHONPATH']}"
+        else:
+            env["PYTHONPATH"] = zooprocess_lib_path
+
+    # Get the path to the src directory
+    src_dir = Path(__file__).parent.parent / "src"
+
+    # Start the server in a subprocess
+    server_process = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "main:app",
+            "--host",
+            host,
+            "--port",
+            port,
+            "--app-dir",
+            str(src_dir),
+        ],
+        stdout=stdout_file,
+        stderr=stderr_file,
+        env=env,
+    )
+
+    # Store file paths and temp directory for potential debugging and cleanup
+    server_process.stdout_path = stdout_file.name
+    server_process.stderr_path = stderr_file.name
+    server_process.temp_drives_dir = temp_drives_dir
+
+    # Close file handles (subprocess will keep writing to the files)
+    stdout_file.close()
+    stderr_file.close()
+
+    # Create a session for making requests
+    session = requests.Session()
+    base_url = f"http://{host}:{port}"
+
+    # Wait for the server to start
+    max_retries = 10
+    server_started = False
+    for i in range(max_retries):
+        try:
+            # Try to connect to the server
+            response = session.get(f"{base_url}/ping", timeout=0.5)
+            if 200 <= response.status_code < 300:
+                server_started = True
+                break
+        except requests.exceptions.ConnectionError:
+            # Server not ready yet, wait and retry
+            time.sleep(0.5)
+
+    if not server_started:
+        # Server failed to start
+        server_process.terminate()
+        server_process.wait()
+
+        # Read the content of the log files
+        stdout_content = ""
+        stderr_content = ""
+        try:
+            with open(server_process.stdout_path, "r") as f:
+                stdout_content = f.read()
+            with open(server_process.stderr_path, "r") as f:
+                stderr_content = f.read()
+        except Exception as e:
+            print(f"Error reading log files: {e}")
+
+        # Clean up the log files
+        try:
+            os.unlink(server_process.stdout_path)
+            os.unlink(server_process.stderr_path)
+        except Exception as e:
+            print(f"Error removing log files: {e}")
+
+        # Clean up the temporary DRIVES directory
+        try:
+            os.rmdir(server_process.temp_drives_dir)
+        except Exception as e:
+            print(f"Error removing temporary DRIVES directory: {e}")
+
+        # Raise an exception with the log content
+        raise Exception(
+            f"Server failed to start.\nSTDOUT:\n{stdout_content}\nSTDERR:\n{stderr_content}"
+        )
+
+    # Add a method to the session to make it behave like TestClient
+    def get_url(url):
+        if url.startswith("/"):
+            url = f"{base_url}{url}"
+        return url
+
+    original_get = session.get
+    original_post = session.post
+    original_put = session.put
+    original_delete = session.delete
+
+    session.get = lambda url, **kwargs: original_get(get_url(url), **kwargs)
+    session.post = lambda url, **kwargs: original_post(get_url(url), **kwargs)
+    session.put = lambda url, **kwargs: original_put(get_url(url), **kwargs)
+    session.delete = lambda url, **kwargs: original_delete(get_url(url), **kwargs)
+
+    # Return the session for use in tests
+    yield session
+
+    # Cleanup: terminate the server process
+    server_process.terminate()
+    server_process.wait()
+
+    # Clean up the log files
+    try:
+        os.unlink(server_process.stdout_path)
+        os.unlink(server_process.stderr_path)
+    except Exception as e:
+        print(f"Error removing log files during cleanup: {e}")
+
+    # Clean up the temporary DRIVES directory
+    try:
+        os.rmdir(server_process.temp_drives_dir)
+    except Exception as e:
+        print(f"Error removing temporary DRIVES directory: {e}")
 
 
 @pytest.fixture

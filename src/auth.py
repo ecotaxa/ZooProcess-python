@@ -100,7 +100,9 @@ def create_jwt_token(data: Dict, expires_delta: Optional[int] = None) -> str:
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_delta)
+        expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            seconds=expires_delta
+        )
         to_encode.update({"exp": expire})
 
     # Create the JWT token

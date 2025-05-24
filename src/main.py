@@ -29,14 +29,17 @@ from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
 from demo_get_vignettes import generate_json
-from helpers.web import raise_500, raise_404, get_stream, internal_server_error_handler
+from helpers.web import (
+    raise_404,
+    get_stream,
+    internal_server_error_handler,
+    TimingMiddleware,
+)
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
 from legacy.drives import validate_drives, get_drive_path
 from legacy.files import find_background_file
 from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
-
-# for /test
 from legacy_to_remote.importe import listWorkFolders
 from local_DB.db_dependencies import get_db
 from logger import logger
@@ -67,20 +70,14 @@ nikoserver = Server("http://niko.obs-vlfr.fr:5000", "/")
 # separateServer = SeparateServer(server,dbserver)
 separateServer = SeparateServer(tunnelserver, dbserver)
 
-# app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
 
-# from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-import time
-
-# Import sys for DRIVES validation
 from contextlib import asynccontextmanager
 from config_rdr import config
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Lifespan event handler for application startup and shutdown"""
     # Run validation on application startup
     validate_drives()
@@ -107,25 +104,6 @@ origins = [
     # "http://localhost:3001",
     # "http://127.0.0.1:59245",
 ]
-
-
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
-
-class TimingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        start_time = time.time()
-        response = await call_next(request)
-        process_time = time.time() - start_time
-        logger.info(f"Request to {request.url.path} took {process_time:.4f} seconds")
-        return response
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -857,11 +835,8 @@ def list_all_projects(drives_to_check=None):
         drive_zoo = ZooscanDrive(drive_path)
 
         for a_prj_path in drive_zoo.list():
-            try:
-                project = project_from_legacy(drive_model, a_prj_path)
-                all_projects.append(project)
-            except Exception as e:
-                logger.error(f"Error in GET /projects, drive {drive_path}: {str(e)}")
+            project = project_from_legacy(drive_model, a_prj_path)
+            all_projects.append(project)
 
     return all_projects
 
@@ -907,142 +882,135 @@ def test(project: Project):
 
     # projectClass = ProjectClass(project.name,"")
 
-    try:
-        db = DB(bearer=project.bearer, db=project.db)
+    db = DB(bearer=project.bearer, db=project.db)
 
-        # response = db.get(f'/projects/{project.id}')
-        # logger.info(f"get projectData: {response}")
-        # if response["status"] != "success":
-        #     logger.error("Failed to retrieve project data")
-        #     return HTTPException(status_code=404, detail="Project not found")
+    # response = db.get(f'/projects/{project.id}')
+    # logger.info(f"get projectData: {response}")
+    # if response["status"] != "success":
+    #     logger.error("Failed to retrieve project data")
+    #     return HTTPException(status_code=404, detail="Project not found")
 
-        # logger.info("Project data retrieved successfully")
-        # if not response["data"]:
-        #     logger.error("Failed to retrieve project data")
-        #     return HTTPException(status_code=404, detail="Project not found")
+    # logger.info("Project data retrieved successfully")
+    # if not response["data"]:
+    #     logger.error("Failed to retrieve project data")
+    #     return HTTPException(status_code=404, detail="Project not found")
 
-        # projectData = response["data"]
+    # projectData = response["data"]
 
+    if not project.name:
+        logger.error("Project name is required")
+        project.name = Path(project.path).name
         if not project.name:
-            logger.error("Project name is required")
-            project.name = Path(project.path).name
-            if not project.name:
-                logger.error("Failed to retrieve project data")
-                raise HTTPException(status_code=400, detail="Project name is required")
+            logger.error("Failed to retrieve project data")
+            raise HTTPException(status_code=400, detail="Project name is required")
 
-        logger.info(f"project.name: {project.name}")
-        projectData = getProjectDataFromDB(project.name, db)
-        # logger.info(f"projectData: {projectData}")
+    logger.info(f"project.name: {project.name}")
+    projectData = getProjectDataFromDB(project.name, db)
+    # logger.info(f"projectData: {projectData}")
 
-        logger.info(f"projecctData.id: {projectData['id']}")
-        # response = db.get(f'/projects/{projectData.id}/backgrounds')
+    logger.info(f"projecctData.id: {projectData['id']}")
+    # response = db.get(f'/projects/{projectData.id}/backgrounds')
 
-        # logger.info(f"response: {response}")
-        # if response.status_code == 200:
-        #     project.backgrounds = response.json()
-        #     logger.info(f"project.backgrounds: {project.backgrounds}")
-        # else:
-        #     logger.error("Failed to retrieve backgrounds")
-        #     raise HTTPException(status_code=400, detail="Backgrounds not found")
+    # logger.info(f"response: {response}")
+    # if response.status_code == 200:
+    #     project.backgrounds = response.json()
+    #     logger.info(f"project.backgrounds: {project.backgrounds}")
+    # else:
+    #     logger.error("Failed to retrieve backgrounds")
+    #     raise HTTPException(status_code=400, detail="Backgrounds not found")
 
-        # project.backgrounds = db.get(f'/projects/{projectData["id"]}/backgrounds')
-        backgrounds = db.get(f'/projects/{projectData["id"]}/backgrounds')
+    # project.backgrounds = db.get(f'/projects/{projectData["id"]}/backgrounds')
+    backgrounds = db.get(f'/projects/{projectData["id"]}/backgrounds')
 
-        # logger.info(f"backgrounds: {backgrounds}")
+    # logger.info(f"backgrounds: {backgrounds}")
 
-        workpath = Path(project.path, "Zooscan_scan/_work")
-        logger.info(f"workpath: {workpath}")
+    workpath = Path(project.path, "Zooscan_scan/_work")
+    logger.info(f"workpath: {workpath}")
 
-        samples = projectData["samples"]
-        # return samples
+    samples = projectData["samples"]
+    # return samples
 
-        folders = listWorkFolders(workpath)
-        # logger.info(f"folders: {folders}")
+    folders = listWorkFolders(workpath)
+    # logger.info(f"folders: {folders}")
 
-        for folder in folders:
-            logger.info(f"folder: {folder}")
-            folder_path = Path(workpath, folder)
-            logger.info(f"folder_path: {folder_path}")
+    for folder in folders:
+        logger.info(f"folder: {folder}")
+        folder_path = Path(workpath, folder)
+        logger.info(f"folder_path: {folder_path}")
 
-            dat_path = getDat1Path(folder_path)
-            json_dat = pid2json(dat_path)
+        dat_path = getDat1Path(folder_path)
+        json_dat = pid2json(dat_path)
 
-            background_correct_using = json_dat["Image_Process"][
-                "Background_correct_using"
-            ]
-            logger.info(f"background_correct_using: {background_correct_using}")
-            image = json_dat["Image_Process"]["Image"]
-            logger.info(f"image name: {image}")
+        background_correct_using = json_dat["Image_Process"]["Background_correct_using"]
+        logger.info(f"background_correct_using: {background_correct_using}")
+        image = json_dat["Image_Process"]["Image"]
+        logger.info(f"image name: {image}")
 
-            sampleName = json_dat["Sample"]["SampleId"]
-            logger.info(f"sampleName: {sampleName}")
-            subsampleName = image.replace(".tif", "")
-            logger.info(f"subsample: {subsampleName}")
+        sampleName = json_dat["Sample"]["SampleId"]
+        logger.info(f"sampleName: {sampleName}")
+        subsampleName = image.replace(".tif", "")
+        logger.info(f"subsample: {subsampleName}")
 
-            def searchSample(samples, name):
-                for sample in samples:
-                    if sample["name"] == name:
-                        return sample
+        def searchSample(samples, name):
+            for sample in samples:
+                if sample["name"] == name:
+                    return sample
 
-                return None
+            return None
 
-            def searchSubSample(subsamples, name):
-                for sub in subsamples:
-                    # if subsampleName in sub[subsampleName]:
-                    if sub["name"] == name:
-                        return sub
-                return None
+        def searchSubSample(subsamples, name):
+            for sub in subsamples:
+                # if subsampleName in sub[subsampleName]:
+                if sub["name"] == name:
+                    return sub
+            return None
 
-            def searchScan(scans, type):
-                for scan in scans:
-                    if scan["type"] == type:
-                        return scan
-                return None
+        def searchScan(scans, type):
+            for scan in scans:
+                if scan["type"] == type:
+                    return scan
+            return None
 
-            sample = searchSample(samples, sampleName)
-            subsample = searchSubSample(sample["subsample"], subsampleName)
+        sample = searchSample(samples, sampleName)
+        subsample = searchSubSample(sample["subsample"], subsampleName)
 
-            scan = searchScan(sample["scan"], "SCAN")
-            if scan is None:
-                raise HTTPException(status_code=400, detail="Scan not found")
-                # continue
+        scan = searchScan(sample["scan"], "SCAN")
+        if scan is None:
+            raise HTTPException(status_code=400, detail="Scan not found")
+            # continue
 
-            userId = scan["userId"]
+        userId = scan["userId"]
 
-            prefix = background_correct_using.split("_back", 1)[0]
-            logger.info(f"prefix: {prefix}")
+        prefix = background_correct_using.split("_back", 1)[0]
+        logger.info(f"prefix: {prefix}")
 
-            for back in backgrounds:
-                file = Path(back["url"]).name
+        for back in backgrounds:
+            file = Path(back["url"]).name
 
-                if file.startswith(prefix):
-                    logger.info(f"file: {file}")
-                    logger.info(f"back: {back}")
+            if file.startswith(prefix):
+                logger.info(f"file: {file}")
+                logger.info(f"back: {back}")
 
-                    # remove the back from the backgrounds list
-                    backgrounds.remove(back)
+                # remove the back from the backgrounds list
+                backgrounds.remove(back)
 
-                    # update back with userId
-                    back["userId"] = userId
-                    back["subsampleId"] = subsample["id"]
+                # update back with userId
+                back["userId"] = userId
+                back["subsampleId"] = subsample["id"]
 
-                    subsample["scan"].append(back)
-                    # update the DB
-                    db.put(f'/backgrounds/{back["id"]}', back)
+                subsample["scan"].append(back)
+                # update the DB
+                db.put(f'/backgrounds/{back["id"]}', back)
 
-            # logger.info(f"sample: {sample}")
-            # logger.info(f"subsample: {subsample}")
+        # logger.info(f"sample: {sample}")
+        # logger.info(f"subsample: {subsample}")
 
-            return subsample
-            # return sample
-            # return sample["subsample"]
-            # # return sample["name"] == folder
-            # return {sample, subsample}
-            # return 1
-
-    except Exception as e:
-        logger.error(f"Exception: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed: {e}")
+        return subsample
+        # return sample
+        # return sample["subsample"]
+        # # return sample["name"] == folder
+        # return {sample, subsample}
+        # return 1
 
     return "test OK"
 
@@ -1222,11 +1190,7 @@ def get_backgrounds(
         id=Path(drive_path).name, name=Path(drive_path).name, url=drive_path.as_posix()
     )
 
-    try:
-        return backgrounds_from_legacy_project(drive_model, project)
-    except Exception as e:
-        raise_500(f"Error retrieving backgrounds for project {project_hash}: {str(e)}")
-        return []
+    return backgrounds_from_legacy_project(drive_model, project)
 
 
 @app.get("/projects/{project_hash}/background/{background_id}")
@@ -1306,13 +1270,10 @@ def create_sample(
         sample.id = f"sample_{len(get_samples(project_hash, user)) + 1}"
 
     # Try to create the sample in the database
-    try:
-        # This is a placeholder - in a real implementation, you would save the sample to a database
-        # For example: created_sample = db_instance.post(f"/projects/{project_hash}/samples", sample.dict())
-        # For now, we'll just return the sample
-        created_sample = sample
-    except Exception as e:
-        raise_500(f"Error creating sample for project {project_hash}: {str(e)}")
+    # This is a placeholder - in a real implementation, you would save the sample to a database
+    # For example: created_sample = db_instance.post(f"/projects/{project_hash}/samples", sample.dict())
+    # For now, we'll just return the sample
+    created_sample = sample
 
     return created_sample
 
@@ -1408,15 +1369,10 @@ def update_sample(
         )
 
     # Try to update the sample in the database
-    try:
-        # This is a placeholder - in a real implementation, you would update the sample in a database
-        # For example: updated_sample = db_instance.put(f"/projects/{project_hash}/samples/{sample_id}", sample.dict())
-        # For now, we'll just return the sample
-        updated_sample = sample
-    except Exception as e:
-        raise_500(
-            f"Error updating sample {sample_id} for project {project_hash}: {str(e)}"
-        )
+    # This is a placeholder - in a real implementation, you would update the sample in a database
+    # For example: updated_sample = db_instance.put(f"/projects/{project_hash}/samples/{sample_id}", sample.dict())
+    # For now, we'll just return the sample
+    updated_sample = sample
 
     return updated_sample
 
@@ -1458,15 +1414,10 @@ def delete_sample(
     db_instance = DB(bearer=user.id)
 
     # Try to delete the sample from the database
-    try:
-        # This is a placeholder - in a real implementation, you would delete the sample from a database
-        # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}")
-        # For now, we'll just return a success message
-        pass
-    except Exception as e:
-        raise_500(
-            f"Error deleting sample {sample_id} for project {project_hash}: {str(e)}"
-        )
+    # This is a placeholder - in a real implementation, you would delete the sample from a database
+    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}")
+    # For now, we'll just return a success message
+    pass
 
     return {"message": f"Sample {sample_id} deleted successfully"}
 
@@ -1508,19 +1459,12 @@ def get_subsamples(
     db_instance = DB(bearer=user.id)
 
     # Try to get subsamples from the database
-    try:
-        # This is a placeholder - in a real implementation, you would fetch the subsamples from a database
-        # For example: subsamples = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples")
-        # For now, we'll return a mock list of subsamples
-        subsample1 = SubSample(id="subsample1", name="Subsample 1")
-        subsample2 = SubSample(id="subsample2", name="Subsample 2")
-        subsamples = [subsample1, subsample2]
-    except Exception as e:
-        logger.error(
-            f"Error getting subsamples for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
-        # Return an empty list if there's an error
-        subsamples = []
+    # This is a placeholder - in a real implementation, you would fetch the subsamples from a database
+    # For example: subsamples = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples")
+    # For now, we'll return a mock list of subsamples
+    subsample1 = SubSample(id="subsample1", name="Subsample 1")
+    subsample2 = SubSample(id="subsample2", name="Subsample 2")
+    subsamples = [subsample1, subsample2]
 
     return subsamples
 
@@ -1572,15 +1516,10 @@ def create_subsample(
         )
 
     # Try to create the subsample in the database
-    try:
-        # This is a placeholder - in a real implementation, you would save the subsample to a database
-        # For example: created_subsample = db_instance.post(f"/projects/{project_hash}/samples/{sample_id}/subsamples", subsample.dict())
-        # For now, we'll just return the subsample
-        created_subsample = subsample
-    except Exception as e:
-        raise_500(
-            f"Error creating subsample for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
+    # This is a placeholder - in a real implementation, you would save the subsample to a database
+    # For example: created_subsample = db_instance.post(f"/projects/{project_hash}/samples/{sample_id}/subsamples", subsample.dict())
+    # For now, we'll just return the subsample
+    created_subsample = subsample
 
     return created_subsample
 
@@ -1626,19 +1565,10 @@ def get_subsample(
     db_instance = DB(bearer=user.id)
 
     # Try to get the subsample from the database
-    try:
-        # This is a placeholder - in a real implementation, you would fetch the subsample from a database
-        # For example: subsample = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
-        # For now, we'll return a mock subsample
-        subsample = SubSample(id=subsample_id, name=f"Subsample {subsample_id}")
-    except Exception as e:
-        logger.error(
-            f"Error getting subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=404,
-            detail=f"Subsample with ID {subsample_id} not found",
-        )
+    # This is a placeholder - in a real implementation, you would fetch the subsample from a database
+    # For example: subsample = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
+    # For now, we'll return a mock subsample
+    subsample = SubSample(id=subsample_id, name=f"Subsample {subsample_id}")
 
     return subsample
 
@@ -1692,15 +1622,10 @@ def delete_subsample(
     db_instance = DB(bearer=user.id)
 
     # Try to delete the subsample from the database
-    try:
-        # This is a placeholder - in a real implementation, you would delete the subsample from a database
-        # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
-        # For now, we'll just return a success message
-        pass
-    except Exception as e:
-        raise_500(
-            f"Error deleting subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
+    # This is a placeholder - in a real implementation, you would delete the subsample from a database
+    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
+    # For now, we'll just return a success message
+    pass
 
     return {"message": f"Subsample {subsample_id} deleted successfully"}
 
@@ -1756,20 +1681,38 @@ def process_subsample(
     db_instance = DB(bearer=user.id)
 
     # Try to process the subsample
-    try:
-        # This is a placeholder - in a real implementation, you would process the subsample
-        # For example: result = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}/process")
-        # For now, we'll just return a success message
-        result = {
-            "status": "success",
-            "message": f"Subsample {subsample_id} processed successfully",
-        }
-    except Exception as e:
-        raise_500(
-            f"Error processing subsample {subsample_id} for sample {sample_id} in project {project_hash}: {str(e)}"
-        )
+    # This is a placeholder - in a real implementation, you would process the subsample
+    # For example: result = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}/process")
+    # For now, we'll just return a success message
+    result = {
+        "status": "success",
+        "message": f"Subsample {subsample_id} processed successfully",
+    }
 
     return result
+
+
+@app.get("/ping")
+def ping():
+    """
+    Simple health check endpoint that returns 'pong!'.
+
+    This endpoint can be used to verify that the server is running and responding to requests.
+    """
+    logger.info("Ping endpoint called")
+    return "pong!"
+
+
+@app.get("/crash")
+def crash_endpoint():
+    """
+    Endpoint that deliberately raises an exception to test error handling and logging.
+
+    This endpoint will always return a 500 Internal Server Error and log the stack trace.
+    """
+    logger.info("Crash endpoint called - about to raise an exception")
+    # Deliberately raise an exception
+    raise Exception("This is a deliberate crash for testing error handling")
 
 
 # Start the application when run directly

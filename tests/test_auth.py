@@ -66,7 +66,8 @@ def test_decode_jwt_token_expired():
     # Create an expired token
     payload = {
         "sub": "123456789",
-        "exp": datetime.datetime.utcnow() - datetime.timedelta(seconds=1),
+        "exp": datetime.datetime.now(datetime.timezone.utc)
+        - datetime.timedelta(seconds=1),
     }
     token = jwt.encode(payload, config.SECRET_KEY, algorithm=ALGORITHM)
 

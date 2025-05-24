@@ -30,7 +30,7 @@ def getInstrumentFromSN(db, instrumentSN):
     instruments = get_instruments()
     for instrument in instruments:
         if instrument.sn == instrumentSN:
-            return instrument.dict()
+            return instrument.model_dump()
     return None
 
 

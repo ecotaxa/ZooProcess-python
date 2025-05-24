@@ -1,4 +1,5 @@
 import sys
+import time
 import traceback
 from os import fstat
 from pathlib import Path
@@ -6,6 +7,7 @@ from typing import Tuple, BinaryIO, Any
 
 from fastapi import HTTPException
 from starlette import status
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
 from logger import logger
@@ -102,6 +104,16 @@ async def internal_server_error_handler(
     for ndx, a_line in enumerate(tb):
         if a_line.find("main.py") != -1:
             our_stack_ndx = ndx
-            break
-    data = "\n----------- BACK-END -------------\n" + "".join(tb[our_stack_ndx:])
+    our_tb = "".join(tb[our_stack_ndx:])
+    data = "\n----------- BACK-END -------------\n" + our_tb
+    logger.error(our_tb)
     return PlainTextResponse(data, status_code=status_code)
+
+
+class TimingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        logger.info(f"Request to {request.url.path} took {process_time:.4f} seconds")
+        return response

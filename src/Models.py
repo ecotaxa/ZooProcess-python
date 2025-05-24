@@ -117,10 +117,14 @@ class LoginReq(BaseModel):
 
     email: str = Field(
         ...,
-        description="User email used during registration",
-        example="ecotaxa.api.user@gmail.com",
+        json_schema_extra={
+            "description": "User email used during registration",
+            "example": "ecotaxa.api.user@gmail.com",
+        },
     )
-    password: str = Field(..., description="User password", example="test!")
+    password: str = Field(
+        ..., json_schema_extra={"description": "User password", "example": "test!"}
+    )
 
 
 class Calibration(BaseModel):

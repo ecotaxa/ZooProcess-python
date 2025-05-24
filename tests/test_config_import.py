@@ -4,19 +4,19 @@ import subprocess
 import tempfile
 import shutil
 
-# Get the project root directory
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Test script to verify that main.py validation works correctly
-def test_empty_drives():
+def test_empty_drives(project_python_path):
     """Test that importing main.py fails when DRIVES is empty."""
     # Create a temporary script that imports config_rdr.py and then main.py
+    paths_str = ", ".join([f'"{path}"' for path in project_python_path])
     script = f"""
 import os
 import sys
-# Add the project root directory to the Python path
-sys.path.append("{PROJECT_ROOT}")
+# Add the project paths to the Python path
+for path in [{paths_str}]:
+    sys.path.append(path)
+print(sys.path)
 # Unset DRIVES environment variable
 if "DRIVES" in os.environ:
     del os.environ["DRIVES"]
@@ -52,14 +52,16 @@ except SystemExit:
         os.unlink(script_path)
 
 
-def test_invalid_drives():
+def test_invalid_drives(project_python_path):
     """Test that importing main.py fails when DRIVES contains invalid paths."""
     # Create a temporary script that imports config_rdr.py and then main.py
+    paths_str = ", ".join([f'"{path}"' for path in project_python_path])
     script = f"""
 import os
 import sys
-# Add the project root directory to the Python path
-sys.path.append("{PROJECT_ROOT}")
+# Add the project paths to the Python path
+for path in [{paths_str}]:
+    sys.path.append(path)
 # Set DRIVES environment variable with invalid paths
 os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 # Import config.py first to set up config.DRIVES
@@ -94,18 +96,20 @@ except SystemExit:
         os.unlink(script_path)
 
 
-def test_valid_drives():
+def test_valid_drives(project_python_path):
     """Test that importing main.py succeeds when DRIVES contains valid paths."""
     # Create temporary directories for testing
     temp_dir1 = tempfile.mkdtemp()
     temp_dir2 = tempfile.mkdtemp()
 
     # Create a temporary script that imports config_rdr.py and then main.py
+    paths_str = ", ".join([f'"{path}"' for path in project_python_path])
     script = f"""
 import os
 import sys
-# Add the project root directory to the Python path
-sys.path.append("{PROJECT_ROOT}")
+# Add the project paths to the Python path
+for path in [{paths_str}]:
+    sys.path.append(path)
 # Set DRIVES environment variable with valid paths
 os.environ["DRIVES"] = "{temp_dir1},{temp_dir2}"
 # Import config.py first to set up config.DRIVES
