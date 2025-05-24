@@ -1,5 +1,6 @@
 # import os
 import os
+import tempfile
 from pathlib import Path
 from typing import Union, List, Tuple
 
@@ -7,6 +8,8 @@ import requests
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from starlette import status
+from starlette.responses import StreamingResponse
 
 from Models import (
     Scan,
@@ -26,10 +29,11 @@ from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
 from demo_get_vignettes import generate_json
-from helpers.web import raise_500
+from helpers.web import raise_500, raise_404, get_stream, internal_server_error_handler
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
 from legacy.drives import validate_drives, get_drive_path
+from legacy.files import find_background_file
 from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
 
 # for /test
@@ -40,6 +44,7 @@ from modern.from_legacy import (
     project_from_legacy,
     samples_from_legacy_project,
     backgrounds_from_legacy_project,
+    drives_from_legacy,
 )
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
@@ -86,6 +91,9 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI with lifespan event handler
 app = FastAPI(lifespan=lifespan)
 
+app.add_exception_handler(
+    status.HTTP_500_INTERNAL_SERVER_ERROR, internal_server_error_handler
+)
 # Security scheme for JWT bearer token authentication is imported from auth.py
 
 origins = [
@@ -864,16 +872,9 @@ def get_drives(
 ) -> List[Drive]:
     """
     Returns a list of all drives.
-
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    ret = []
-    a_drive: str
-    for a_drive in config.DRIVES:
-        drv = Path(a_drive)
-        name = drv.name
-        ret.append(Drive(id=name, name=name, url=a_drive))
-    return ret
+    return drives_from_legacy()
 
 
 @app.get("/test")
@@ -1212,15 +1213,64 @@ def get_backgrounds(
     """
     logger.info(f"Getting backgrounds for project {project_hash}")
 
-    drive, project_name, _ = extract_drive_and_project(project_hash)
-    zoo_drive = ZooscanDrive(drive)
+    drive_path, project_name, _ = extract_drive_and_project(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
+    # Create a Drive model from the drive path
+    drive_model = Drive(
+        id=Path(drive_path).name, name=Path(drive_path).name, url=drive_path.as_posix()
+    )
+
     try:
-        return backgrounds_from_legacy_project(project)
+        return backgrounds_from_legacy_project(drive_model, project)
     except Exception as e:
         raise_500(f"Error retrieving backgrounds for project {project_hash}: {str(e)}")
         return []
+
+
+@app.get("/projects/{project_hash}/background/{background_id}")
+async def get_background(
+    project_hash: str,
+    background_id: str,
+    # user=Depends(get_current_user_from_credentials), # TODO: Should be protected?
+) -> StreamingResponse:
+    """
+    Get a specific background from a project by its ID.
+
+    Args:
+        project_hash (str): The hash of the project to get the background from.
+        background_id (str): The ID of the background to retrieve from the project.
+        user: Security dependency to get the current user.
+
+    Returns:
+        Background: The requested background.
+
+    Raises:
+        HTTPException: If the project or background is not found
+    """
+    logger.info(f"Getting background {background_id} for project {project_hash}")
+
+    drive_path, project_name, _ = extract_drive_and_project(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    project = zoo_drive.get_project_folder(project_name)
+
+    assert background_id.endswith(
+        ".jpg"
+    )  # This comes from @see:backgrounds_from_legacy_project
+    background_name = background_id[:-4]
+
+    background_file = find_background_file(project, background_name)
+    if background_file is None:
+        raise_404(
+            f"Background with ID {background_id} not found in project {project_hash}"
+        )
+
+    tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
+    convert_tiff_to_jpeg(background_file, tmp_jpg)
+    file_like, length, media_type = get_stream(tmp_jpg)
+    headers = {"content-length": str(length)}
+    return StreamingResponse(file_like, headers=headers, media_type=media_type)
 
 
 @app.post("/projects/{project_id}/samples")

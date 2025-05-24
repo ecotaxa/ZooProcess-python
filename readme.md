@@ -40,6 +40,7 @@ The application uses the following environment variables:
 
 - `APP_ENV`: Determines which configuration to use (`development` or `production`). Defaults to `development`.
 - `WORKING_DIR`: The working directory where the application will look for configuration files and other resources. Defaults to the current working directory.
+- `SECRET`: The secret key used for JWT token signing and verification. If not set, a default value is used, but it's strongly recommended to set this to a secure, unique value in production environments.
 
 You can set these environment variables before running the application:
 
@@ -50,6 +51,9 @@ export APP_ENV=production
 # Set the working directory
 export WORKING_DIR=/path/to/your/working/directory
 
+# Set the secret key for JWT token signing and verification
+export SECRET="your-secure-secret-key"
+
 # Run the application
 python -m uvicorn main:app --reload
 ```
@@ -57,7 +61,7 @@ python -m uvicorn main:app --reload
 Or you can set them when running the application:
 
 ```bash
-APP_ENV=production WORKING_DIR=/path/to/your/working/directory python -m uvicorn main:app --reload
+APP_ENV=production WORKING_DIR=/path/to/your/working/directory SECRET="your-secure-secret-key" python -m uvicorn main:app --reload
 ```
 
 

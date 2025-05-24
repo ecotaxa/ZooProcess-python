@@ -268,6 +268,51 @@ paths:
       security:
         - BearerAuth: [ ]
 
+  /projects/{projectId}/background/{backgroundId}:
+    parameters:
+      - name: projectId
+        in: path
+        description: The project id
+        example: "42"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - name: backgroundId
+        in: path
+        description: The background id
+        example: "20230101_1200"
+        explode: false
+        required: true
+        schema:
+          type: string
+        style: simple
+
+    get:
+      description: Return a specific background scan by ID
+      operationId: Background.getById
+
+      responses:
+        '200':
+          description: Returned the specific background scan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Background'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Background not found
+        '500':
+          description: Internal server error
+      tags:
+        - User
+        - Manager
+        - Admin
+      security:
+        - BearerAuth: [ ]
+
     # post:
     #   description: Add a background scan to the project
     #   operationId: Background.add

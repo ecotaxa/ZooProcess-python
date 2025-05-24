@@ -13,6 +13,7 @@ sys.modules["ZooProcess_lib.ZooscanFolder"].ZooscanDrive = MagicMock
 
 # Now we can import from modern.from_legacy
 from modern.from_legacy import backgrounds_from_legacy_project
+from Models import Drive
 
 
 def test_background_from_legacy_project(mocker: MockFixture):
@@ -22,6 +23,10 @@ def test_background_from_legacy_project(mocker: MockFixture):
     # Create a mock ZooscanProjectFolder
     mock_project = mocker.MagicMock()
     mock_project.project = "test_project"
+
+    # Create a mock Drive
+    mock_drive = Drive(id="test_drive", name="test_drive", url="/path/to/test_drive")
+    mock_project.drive = mock_drive
 
     # Create a mock ZooscanBackFolder
     mock_back_folder = mocker.MagicMock()
@@ -55,7 +60,7 @@ def test_background_from_legacy_project(mocker: MockFixture):
     mock_extract_serial_number.return_value = "TEST123"
 
     # Call the function
-    backgrounds = backgrounds_from_legacy_project(mock_project)
+    backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
 
     # Verify the results
     assert len(backgrounds) == 2
@@ -88,6 +93,10 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     mock_project = mocker.MagicMock()
     mock_project.project = "test_project"
 
+    # Create a mock Drive
+    mock_drive = Drive(id="test_drive", name="test_drive", url="/path/to/test_drive")
+    mock_project.drive = mock_drive
+
     # Create a mock ZooscanBackFolder
     mock_back_folder = mocker.MagicMock()
     mock_project.zooscan_back = mock_back_folder
@@ -105,7 +114,7 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     mock_extract_serial_number.return_value = "TEST123"
 
     # Call the function
-    backgrounds = backgrounds_from_legacy_project(mock_project)
+    backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
 
     # Verify the results
     assert len(backgrounds) == 0
@@ -121,6 +130,10 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
     # Create a mock ZooscanProjectFolder
     mock_project = mocker.MagicMock()
     mock_project.project = "test_project"
+
+    # Create a mock Drive
+    mock_drive = Drive(id="test_drive", name="test_drive", url="/path/to/test_drive")
+    mock_project.drive = mock_drive
 
     # Create a mock ZooscanBackFolder
     mock_back_folder = mocker.MagicMock()
@@ -144,7 +157,7 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
     mock_extract_serial_number.return_value = "TEST123"
 
     # Call the function
-    backgrounds = backgrounds_from_legacy_project(mock_project)
+    backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
 
     # Verify the results
     assert len(backgrounds) == 0

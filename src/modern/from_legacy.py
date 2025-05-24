@@ -7,6 +7,7 @@ from pathlib import Path
 
 from Models import Project, Drive, Sample, Background, User, Instrument
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
+from config_rdr import config
 from modern.utils import (
     extract_serial_number,
     parse_sample_name,
@@ -14,10 +15,29 @@ from modern.utils import (
 )
 
 
+def drives_from_legacy():
+    """
+    Retrieve a list of Drive objects from the legacy configuration.
+
+    This function reads the drive paths from the configuration and converts them
+    into Drive objects with id and name set to the drive name, and url set to the drive path.
+
+    Returns:
+        list[Drive]: A list of Drive objects representing the drives configured in the app.
+    """
+    ret = []
+    a_drive: str
+    for a_drive in config.DRIVES:
+        drv = Path(a_drive)
+        name = drv.name
+        ret.append(Drive(id=name, name=name, url=a_drive))
+    return ret
+
+
 def project_from_legacy(
     drive_model: Drive, a_prj_path: Path, serial_number: str = None
 ):
-    unq_id = f"{drive_model.name}|{a_prj_path.name}"
+    unq_id = url_id(drive_model, a_prj_path)
 
     # Extract serial number from project name if not provided
     if serial_number is None:
@@ -46,6 +66,14 @@ def project_from_legacy(
     return project
 
 
+def url_id(drive_model: Drive, a_prj_path: Path):
+    """
+    Compute some user-visible ID for URLs
+    """
+    unq_id = f"{drive_model.name}|{a_prj_path.name}"
+    return unq_id
+
+
 def samples_from_legacy_project(project: ZooscanProjectFolder) -> list[Sample]:
     # In a real implementation, you would fetch the samples from a database
     # For now, we'll return a mock list of samples
@@ -72,12 +100,15 @@ def samples_from_legacy_project(project: ZooscanProjectFolder) -> list[Sample]:
     return samples
 
 
-def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Background]:
+def backgrounds_from_legacy_project(
+    drive: Drive, project: ZooscanProjectFolder
+) -> list[Background]:
     """
     Extract background information from a ZooscanProjectFolder and return a list of Background objects.
 
     Args:
         project (ZooscanProjectFolder): The project folder to extract backgrounds from.
+        drive (Drive, optional): The drive model containing the project. If None, the drive from the project will be used.
 
     Returns:
         list[Background]: A list of Background objects representing the backgrounds in the project.
@@ -100,6 +131,9 @@ def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Backg
         sn=extract_serial_number(project.project),
     )
 
+    # Use the provided drive if available, otherwise use the project's drive
+    project_hash = url_id(drive, project.path)
+
     # For each date, create a Background object. Dates are in ZooProcess format
     for a_date in dates:
         # Get the background entry for this date
@@ -111,13 +145,17 @@ def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Backg
             background_id = f"{a_date}"
             background_name = f"{a_date}_background"
             background_url = str(background_path)
+            # TODO: From client code it looks like a shared directory is used
+            background_url = (
+                config.public_url + f"/projects/{project_hash}/background/{a_date}.jpg"
+            )
 
             api_date = datetime.strptime(a_date, "%Y%m%d_%H%M")
             # Create the Background object
             background = Background(
                 id=background_id,
-                name=background_url,  # TODO: Tell frontend owner there is an invert here
-                url=background_name,
+                url=background_url,
+                name=background_name,
                 user=mock_user,
                 instrument=mock_instrument,
                 createdAt=api_date,

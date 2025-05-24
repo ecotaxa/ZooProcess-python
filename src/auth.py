@@ -1,4 +1,5 @@
 import jwt
+import os
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from typing import Dict, Optional
 from starlette.requests import Request
 
 from local_DB.db_dependencies import get_db
+from config_rdr import config
 
 
 class CustomHTTPBearer(HTTPBearer):
@@ -47,9 +49,7 @@ class CustomHTTPBearer(HTTPBearer):
 
 security = CustomHTTPBearer()
 
-# Secret key for JWT token signing and verification
-# In a real application, this should be stored securely (e.g., environment variable)
-SECRET_KEY = "your-secret-key"
+# Algorithm for JWT token signing and verification
 ALGORITHM = "HS256"
 
 
@@ -68,7 +68,7 @@ def decode_jwt_token(token: str) -> Dict:
     """
     try:
         # Decode the JWT token
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -104,7 +104,7 @@ def create_jwt_token(data: Dict, expires_delta: Optional[int] = None) -> str:
         to_encode.update({"exp": expire})
 
     # Create the JWT token
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
