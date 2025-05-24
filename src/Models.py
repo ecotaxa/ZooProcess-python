@@ -1,5 +1,4 @@
 # Models for communicating via FastAPI
-import string
 from datetime import datetime
 from typing import List, Union, Literal, Optional
 
@@ -107,9 +106,23 @@ class BMProcess(BaseModel):
     taskId: Union[str, None] = None
 
 
-class Scan(BaseModel):
+class ScanIn(BaseModel):
+    """As POST-ed"""
+
     scanId: str
     bearer: str
+
+
+class Scan(BaseModel):
+    """As GET returns"""
+
+    id: str
+    url: str
+    type: str
+    archived: bool = False
+    deleted: bool = False
+    metadata: Optional[List["MetadataModel"]] = None
+    user: User
 
 
 class LoginReq(BaseModel):

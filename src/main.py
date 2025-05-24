@@ -12,7 +12,7 @@ from starlette import status
 from starlette.responses import StreamingResponse
 
 from Models import (
-    Scan,
+    ScanIn,
     Folder,
     BMProcess,
     Background,
@@ -24,6 +24,7 @@ from Models import (
     Calibration,
     Sample,
     SubSample,
+    Scan,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
@@ -48,6 +49,7 @@ from modern.from_legacy import (
     samples_from_legacy_project,
     backgrounds_from_legacy_project,
     drives_from_legacy,
+    scans_from_legacy_project,
 )
 from modern.ids import drive_and_project_from_hash
 from providers.SeparateServer import SeparateServer
@@ -153,7 +155,7 @@ def read_root():
 
 
 @app.post("/separator/scan")
-def separate(scan: Scan) -> None:
+def separate(scan: ScanIn) -> None:
     # import os
 
     logger.info(f"POST /separator/scan: {scan}")
@@ -1170,6 +1172,33 @@ def get_backgrounds(
     )
 
     return backgrounds_from_legacy_project(drive_model, project)
+
+
+@app.get("/projects/{project_hash}/scans")
+def get_scans(
+    project_hash: str,
+    # user=Depends(get_current_user_from_credentials)
+) -> List[Scan]:
+    """
+    Get the list of scans associated with a project.
+
+    Args:
+        project_hash (str): The hash of the project to get scans for.
+        user: Security dependency to get the current user.
+
+    Returns:
+        List[ScanIn]: A list of scans associated with the project.
+
+    Raises:
+        HTTPException: If the project is not found or the user is not authorized.
+    """
+    logger.info(f"Getting scans for project {project_hash}")
+
+    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    project = zoo_drive.get_project_folder(project_name)
+
+    return scans_from_legacy_project(project)
 
 
 @app.get("/projects/{project_hash}/background/{background_id}")

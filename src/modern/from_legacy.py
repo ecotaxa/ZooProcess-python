@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from Models import Project, Drive, Sample, Background, User, Instrument
+from Models import Project, Drive, Sample, Background, User, Instrument, ScanIn, Scan
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
 from modern.ids import hash_from_drive_and_project
@@ -165,3 +165,30 @@ def backgrounds_from_legacy_project(
             backgrounds.append(background)
 
     return backgrounds
+
+
+def scans_from_legacy_project(project: ZooscanProjectFolder) -> list[Scan]:
+    """
+    Extract scan information from a ZooscanProjectFolder and return a list of Scan objects.
+
+    Args:
+        project (ZooscanProjectFolder): The project folder to extract scans from.
+
+    Returns:
+        list[ScanIn]: A list of Scan objects representing the scans in the project.
+    """
+    scans = []
+
+    # Create a mock user and instrument for the backgrounds
+    # In a real implementation, these would be fetched from a database
+    mock_user = User(id="user1", name="n/a", email="user@example.com")
+
+    # Iterate over all samples in the project
+    for sample_name in project.zooscan_scan.list_samples_with_state():
+        # Create a Scan object for each sample
+        # The scanId is the sample name, and the bearer is an empty string
+        # In a real implementation, you would fetch the bearer from a database
+
+        scans.append(Scan(id=sample_name, url="toto", type="MEDIUM", user=mock_user))
+
+    return scans
