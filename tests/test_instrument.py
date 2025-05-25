@@ -10,7 +10,7 @@ client = TestClient(app)
 def test_returns_matching_instrument(mocker: MockFixture):
     # Arrange
     db = mocker.Mock()  # Mock DB object
-    sn = "ZS001"  # Use a serial number from the hardcoded list
+    sn = "sn001"  # Use a serial number from the hardcoded list
 
     # Act
     result = getInstrumentFromSN(db, sn)
@@ -19,7 +19,7 @@ def test_returns_matching_instrument(mocker: MockFixture):
     assert result is not None
     assert result["sn"] == sn
     assert result["name"] == "Zooscan 1"
-    assert result["id"] == "1"
+    assert result["id"] == "sn001"
     assert result["model"] == "Zooscan"
 
 
@@ -42,14 +42,25 @@ def test_get_instrument_by_id():
     from modern.instrument import get_instrument_by_id
 
     # Act
-    result = get_instrument_by_id("1")
+    result = get_instrument_by_id("sn001")
 
     # Assert
     assert result is not None
-    assert result.id == "1"
+    assert result.id == "sn001"
     assert result.name == "Zooscan 1"
-    assert result.sn == "ZS001"
+    assert result.sn == "sn001"
     assert result.model == "Zooscan"
+    # Check that ZooscanCalibration is present and has the expected structure
+    assert result.ZooscanCalibration is not None
+    assert isinstance(result.ZooscanCalibration, list)
+    assert len(result.ZooscanCalibration) > 0
+    calibration = result.ZooscanCalibration[0]
+    assert calibration.id == f"cal-{result.id}"
+    assert calibration.frame == "default"
+    assert calibration.xOffset == 0.0
+    assert calibration.yOffset == 0.0
+    assert calibration.xSize == 2400.0
+    assert calibration.ySize == 1800.0
 
 
 # Test the new endpoint for getting an instrument by ID when the ID doesn't exist
@@ -96,3 +107,21 @@ def test_get_instruments_full():
         assert "name" in instrument
         assert "model" in instrument
         assert "sn" in instrument
+        # Check that ZooscanCalibration is present
+        assert "ZooscanCalibration" in instrument
+        assert instrument["ZooscanCalibration"] is not None
+        assert len(instrument["ZooscanCalibration"]) > 0
+        # Check the first calibration
+        calibration = instrument["ZooscanCalibration"][0]
+        assert "id" in calibration
+        assert calibration["id"] == f"cal-{instrument['id']}"
+        assert "frame" in calibration
+        assert calibration["frame"] == "default"
+        assert "xOffset" in calibration
+        assert calibration["xOffset"] == 0.0
+        assert "yOffset" in calibration
+        assert calibration["yOffset"] == 0.0
+        assert "xSize" in calibration
+        assert calibration["xSize"] == 2400.0
+        assert "ySize" in calibration
+        assert calibration["ySize"] == 1800.0

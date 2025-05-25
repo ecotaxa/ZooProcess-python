@@ -9,6 +9,7 @@ from Models import Project, Drive, Sample, Background, User, Instrument, ScanIn,
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
 from modern.ids import hash_from_drive_and_project
+from modern.instrument import get_instrument_by_id, INSTRUMENTS
 from modern.utils import (
     extract_serial_number,
     parse_sample_name,
@@ -54,11 +55,15 @@ def project_from_legacy(
     # Find the most recent modification time of any file in the project directory
     latest_mtime = find_latest_modification_time(a_prj_path)
 
+    instrument_model = get_instrument_by_id(serial_number)
+    if instrument_model is None:
+        instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
     project = Project(
         path=str(a_prj_path),
         id=unq_id,
         name=a_prj_path.name,
         instrumentSerialNumber=serial_number,
+        instrument=instrument_model,
         drive=drive_model,
         samples=sample_models,
         createdAt=creation_time,
@@ -94,14 +99,14 @@ def samples_from_legacy_project(project: ZooscanProjectFolder) -> list[Sample]:
 
 
 def backgrounds_from_legacy_project(
-    drive: Drive, project: ZooscanProjectFolder
+    drive_model: Drive, project: ZooscanProjectFolder
 ) -> list[Background]:
     """
     Extract background information from a ZooscanProjectFolder and return a list of Background objects.
 
     Args:
         project (ZooscanProjectFolder): The project folder to extract backgrounds from.
-        drive (Drive, optional): The drive model containing the project. If None, the drive from the project will be used.
+        drive_model (Drive): The drive model containing the project. If None, the drive from the project will be used.
 
     Returns:
         list[Background]: A list of Background objects representing the backgrounds in the project.
@@ -121,20 +126,21 @@ def backgrounds_from_legacy_project(
     # Always call extract_serial_number to ensure it's called as expected by tests
     serial_number = extract_serial_number(project.project)
 
-    # For testing purposes, override the serial number if we're in a test environment
-    # This ensures the test passes while still calling the function as expected
-    if project.project == "test_project":
-        serial_number = "TEST123"
+    # Try to find an instrument with matching serial number from the hardcoded list
+    instrument = None
+    for instr in INSTRUMENTS:
+        if instr["sn"] == serial_number:
+            instrument = Instrument(**instr)
+            break
 
-    mock_instrument = Instrument(
-        id="instrument1",
-        model="Zooscan",
-        name="Default Zooscan",
-        sn=serial_number,
-    )
+    # If no matching instrument found, use the first one from the list but set its serial number to match
+    if instrument is None:
+        instrument_data = INSTRUMENTS[0].copy()
+        instrument_data["sn"] = serial_number
+        instrument = Instrument(**instrument_data)
 
     # Use the provided drive if available, otherwise use the project's drive
-    project_hash = hash_from_drive_and_project(drive, project.path)
+    project_hash = hash_from_drive_and_project(drive_model, project.path)
 
     # For each date, create a Background object. Dates are in ZooProcess format
     for a_date in dates:
@@ -158,7 +164,7 @@ def backgrounds_from_legacy_project(
                 url=background_url,
                 name=background_name,
                 user=mock_user,
-                instrument=mock_instrument,
+                instrument=instrument,
                 createdAt=api_date,
             )
 

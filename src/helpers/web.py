@@ -102,7 +102,7 @@ async def internal_server_error_handler(
     our_stack_ndx = 0
     # Remove all until our code
     for ndx, a_line in enumerate(tb):
-        if a_line.find("main.py") != -1:
+        if a_line.find("src/main.py") != -1:
             our_stack_ndx = ndx
     our_tb = "".join(tb[our_stack_ndx:])
     data = "\n----------- BACK-END -------------\n" + our_tb

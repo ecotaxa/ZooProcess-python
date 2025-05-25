@@ -22,7 +22,7 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
 
     # Create mock Path objects for subdirectories
     from pathlib import Path
-    from Models import Project, Drive
+    from Models import Project, Drive, Instrument
 
     mock_dir1 = mocker.MagicMock(spec=Path)
     mock_dir1.is_dir.return_value = True
@@ -39,6 +39,11 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
 
     # Set up mock for list_all_projects to return test projects
     drive_model = Drive(id="drive1", name="drive1", url="/path/to/drive1")
+    instrument_model = Instrument(
+        id="1",
+        name="Default Zooscan",
+        sn="TEST123",
+    )
     mock_list_all_projects.return_value = [
         Project(
             path="/path/to/drive1/Project1",
@@ -46,6 +51,7 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
             name="Project1",
             instrumentSerialNumber="TEST123",
             drive=drive_model,
+            instrument=instrument_model,
         ),
         Project(
             path="/path/to/drive1/Project2",
@@ -53,6 +59,7 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
             name="Project2",
             instrumentSerialNumber="TEST123",
             drive=drive_model,
+            instrument=instrument_model,
         ),
     ]
 

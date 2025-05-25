@@ -27,6 +27,7 @@ class Project(BaseModel):
     ecotaxaProjectID: [optional] the id of the ecotaxa project
     drive: [optional] the drive name, if empty the parent project folder name will be used. The drive name will be searched in the DB if not found, an exception will raise
     samples: [optional] a list of samples inside the project
+    instrument: [optional] the instrument used for this project
     createdAt: [optional] the creation date of the project
     updatedAt: [optional] the last update date of the project
     """
@@ -40,8 +41,9 @@ class Project(BaseModel):
     acronym: Union[str, None] = None
     description: Union[str, None] = None
     ecotaxaProjectID: Union[str, None] = None
-    drive: Union["Drive", None] = None
+    drive: "Drive"
     samples: Union[List["Sample"], None] = None
+    instrument: "Instrument"
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
 
@@ -155,7 +157,7 @@ class Instrument(BaseModel):
     """Instrument model as defined in the OpenAPI specification"""
 
     id: str
-    model: Literal["Zooscan"]
+    model: Literal["Zooscan"] = "Zooscan"
     name: str
     sn: str
     ZooscanCalibration: Optional[List[Calibration]] = None

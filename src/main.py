@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, Response
 
 from Models import (
     ScanIn,
@@ -58,6 +58,7 @@ from remote.DB import DB
 from remote.TaskStatus import TaskStatus
 from separate import Separate
 from separate_fn import separate_images
+from static.favicon import create_plankton_favicon
 
 # import csv
 # import requests
@@ -118,6 +119,18 @@ app.add_middleware(
 
 # Add timing middleware to log execution time of all endpoints
 app.add_middleware(TimingMiddleware)
+
+
+@app.get("/favicon.ico")
+def get_favicon():
+    """
+    Serve a plankton-inspired favicon.
+
+    Returns:
+        Response: A response containing the favicon image.
+    """
+    favicon_bytes = create_plankton_favicon()
+    return Response(content=favicon_bytes.getvalue(), media_type="image/x-icon")
 
 
 @app.get("/")
@@ -768,9 +781,9 @@ def get_current_user(
 
 
 @app.get("/projects")
-@app.get("/projects/{project_id}")
+@app.get("/projects/{project_hash}")
 def get_projects(
-    project_id: str = None,
+    project_hash: str = None,
     user=Depends(get_current_user_from_credentials),
 ) -> Union[Project, List[Project]]:
     """
@@ -779,13 +792,15 @@ def get_projects(
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
 
     Args:
-        project_id: Optional. If provided, returns the project with the specified ID.
+        project_hash: Optional. If provided, returns the project with the specified ID.
     """
-    if project_id is None:
+    if project_hash is None:
         return list_all_projects()
     else:
-        # If project_id is provided, return the specific project
-        drive_path, project_name, project_path = drive_and_project_from_hash(project_id)
+        # If project_hash is provided, return the specific project
+        drive_path, project_name, project_path = drive_and_project_from_hash(
+            project_hash
+        )
         drive_model = Drive(
             id=drive_path.name, name=drive_path.name, url=str(drive_path)
         )
@@ -1039,6 +1054,58 @@ def get_instrument(instrument_id: str):
             status_code=404, detail=f"Instrument with ID {instrument_id} not found"
         )
     return instrument
+
+
+@app.get("/background/{instrument_id}")
+def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
+    """
+    Returns the last scanned backgrounds for a given instrument.
+
+    Args:
+        instrument_id (str): The ID of the instrument to retrieve backgrounds for.
+
+    Returns:
+        List[Background]: A list of backgrounds associated with the instrument.
+
+    Raises:
+        HTTPException: If the instrument is not found.
+    """
+    from modern.instrument import get_instrument_by_id
+
+    # Check if the instrument exists
+    instrument = get_instrument_by_id(instrument_id)
+    if instrument is None:
+        raise HTTPException(
+            status_code=404, detail=f"Instrument with ID {instrument_id} not found"
+        )
+
+    # Get all projects
+    projects = list_all_projects()
+
+    # Collect all backgrounds from all projects
+    all_backgrounds = []
+    a_project: Project
+    for a_project in projects:
+        if a_project.instrument.id != instrument_id:
+            continue
+        zoo_drive = ZooscanDrive(Path(a_project.drive.url))
+        project_folder = zoo_drive.get_project_folder(a_project.name)
+        # Get backgrounds for this project
+        project_backgrounds = backgrounds_from_legacy_project(
+            a_project.drive, project_folder
+        )
+        # Add to the list
+        all_backgrounds.extend(project_backgrounds)
+
+    # Filter backgrounds by instrument ID
+    instrument_backgrounds = [
+        bg for bg in all_backgrounds if bg.instrument.id == instrument_id
+    ]
+
+    # Sort by creation date (newest first)
+    instrument_backgrounds.sort(key=lambda bg: bg.createdAt, reverse=True)
+
+    return instrument_backgrounds
 
 
 @app.put("/users/{instrumentId}/calibration/{calibrationId}")

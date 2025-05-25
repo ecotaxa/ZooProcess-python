@@ -25,7 +25,7 @@ def test_project_by_id_endpoint_with_valid_token(
 
     # Create mock Path objects
     from pathlib import Path
-    from Models import Project, Drive
+    from Models import Project, Drive, Instrument
 
     mock_drive_path = mocker.MagicMock(spec=Path)
     mock_drive_path.name = "drive1"
@@ -40,12 +40,18 @@ def test_project_by_id_endpoint_with_valid_token(
 
     # Create a test project
     drive_model = Drive(id="drive1", name="drive1", url="/path/to/drive1")
+    instrument_model = Instrument(
+        id="1",
+        name="Default Zooscan",
+        sn="TEST123",
+    )
     test_project = Project(
         path="/path/to/drive1/Project1",
         id="drive1|Project1",
         name="Project1",
         instrumentSerialNumber="TEST123",
         drive=drive_model,
+        instrument=instrument_model,
     )
 
     # Mock the project_from_legacy function to return our test project
