@@ -2,7 +2,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, OrderedDict
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
@@ -25,6 +25,7 @@ from Models import (
     Sample,
     SubSample,
     Scan,
+    SampleWithBackRef,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
@@ -50,6 +51,8 @@ from modern.from_legacy import (
     backgrounds_from_legacy_project,
     drives_from_legacy,
     scans_from_legacy_project,
+    drive_from_legacy,
+    sample_from_legacy,
 )
 from modern.ids import drive_and_project_from_hash
 from providers.SeparateServer import SeparateServer
@@ -804,7 +807,7 @@ def get_projects(
         drive_model = Drive(
             id=drive_path.name, name=drive_path.name, url=str(drive_path)
         )
-        project = project_from_legacy(drive_model, project_path, "TEST123")
+        project = project_from_legacy(drive_model, project_path)
         return project
 
 
@@ -1083,7 +1086,7 @@ def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
     projects = list_all_projects()
 
     # Collect all backgrounds from all projects
-    all_backgrounds = []
+    all_backgrounds = OrderedDict()
     a_project: Project
     for a_project in projects:
         if a_project.instrument.id != instrument_id:
@@ -1095,17 +1098,15 @@ def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
             a_project.drive, project_folder
         )
         # Add to the list
-        all_backgrounds.extend(project_backgrounds)
-
-    # Filter backgrounds by instrument ID
-    instrument_backgrounds = [
-        bg for bg in all_backgrounds if bg.instrument.id == instrument_id
-    ]
+        for a_bg in project_backgrounds:
+            if a_bg.id not in all_backgrounds:
+                all_backgrounds[a_bg.id] = a_bg
 
     # Sort by creation date (newest first)
-    instrument_backgrounds.sort(key=lambda bg: bg.createdAt, reverse=True)
+    ret = list(all_backgrounds.values())
+    ret.sort(key=lambda bg: bg.createdAt, reverse=True)
 
-    return instrument_backgrounds
+    return ret
 
 
 @app.put("/users/{instrumentId}/calibration/{calibrationId}")
@@ -1203,8 +1204,8 @@ def get_samples(
     """
     logger.info(f"Getting samples for project {project_hash}")
 
-    drive, project_name, _ = drive_and_project_from_hash(project_hash)
-    zoo_drive = ZooscanDrive(drive)
+    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
     return samples_from_legacy_project(project)
@@ -1357,8 +1358,8 @@ def create_sample(
 def get_sample(
     project_hash: str,
     sample_id: str,
-    user=Depends(get_current_user_from_credentials),
-) -> Sample:
+    # user=Depends(get_current_user_from_credentials),
+) -> SampleWithBackRef:
     """
     Get a specific sample from a project.
 
@@ -1374,27 +1375,31 @@ def get_sample(
     """
     logger.info(f"Getting sample {sample_id} for project {project_hash}")
 
-    drive, project_name, _ = drive_and_project_from_hash(project_hash)
+    drive_path, project_name, project_path = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    drive_model = drive_from_legacy(drive_path)
 
-    drive = ZooscanDrive(drive)
-    project = drive.get_project_folder(project_name)
+    zoo_project = zoo_drive.get_project_folder(project_name)
 
     # Check if the sample exists in the list of samples
-    sample_exists = False
-    for sample_name in project.zooscan_scan.list_samples_with_state():
+    for sample_name in zoo_project.zooscan_scan.list_samples_with_state():
         if sample_name == sample_id:
-            sample_exists = True
             break
-
-    if not sample_exists:
+    else:
         logger.error(f"Sample with ID {sample_id} not found in project {project_hash}")
         raise HTTPException(
             status_code=404,
             detail=f"Sample with ID {sample_id} not found",
         )
 
-    # Return the sample
-    return Sample(id=sample_id, name=sample_id)
+    project = project_from_legacy(drive_model, project_path)
+    reduced = sample_from_legacy(sample_name)
+    # Return the sample, enriched with back ref
+    return SampleWithBackRef(
+        **reduced.model_dump(),
+        projectId=project.id,
+        project=project,
+    )
 
 
 @app.put("/projects/{project_hash}/samples/{sample_id}")

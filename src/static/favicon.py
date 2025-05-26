@@ -49,7 +49,6 @@ def create_plankton_favicon():
     img_byte_arr.seek(0)
 
     # Cache the favicon for future requests
-    global _cached_favicon
     _cached_favicon = BytesIO(img_byte_arr.getvalue())
     _cached_favicon.seek(0)
 

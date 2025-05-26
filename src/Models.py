@@ -50,10 +50,8 @@ class Project(BaseModel):
 
 class Sample(BaseModel):
     """
-    Sample model as defined in the OpenAPI specification
-
-    createdAt: [optional] the creation date of the sample
-    updatedAt: [optional] the last update date of the sample
+    Sample model as defined in the OpenAPI specification.
+    _This_ kind of sample is returned inside a Project.
     """
 
     id: str
@@ -62,6 +60,16 @@ class Sample(BaseModel):
     metadata: Union[List["MetadataModel"], None] = None
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
+
+
+class SampleWithBackRef(Sample):
+    """
+    Sample model as defined in the OpenAPI specification.
+    _This_ kind of sample is returned when queried uniquely.
+    """
+
+    projectId: str
+    project: Project
 
 
 class SubSample(BaseModel):

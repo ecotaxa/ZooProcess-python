@@ -5,7 +5,16 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from Models import Project, Drive, Sample, Background, User, Instrument, ScanIn, Scan
+from Models import (
+    Project,
+    Drive,
+    Sample,
+    Background,
+    User,
+    Instrument,
+    ScanIn,
+    Scan,
+)
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
 from modern.ids import hash_from_drive_and_project
@@ -17,7 +26,7 @@ from modern.utils import (
 )
 
 
-def drives_from_legacy():
+def drives_from_legacy() -> list[Drive]:
     """
     Retrieve a list of Drive objects from the legacy configuration.
 
@@ -36,19 +45,23 @@ def drives_from_legacy():
     return ret
 
 
+def drive_from_legacy(drive_path: Path) -> Drive:
+    """
+    Retrieve a Drive object from the legacy configuration.
+    """
+    return Drive(id=drive_path.name, name=drive_path.name, url=str(drive_path))
+
+
 def project_from_legacy(
     drive_model: Drive, a_prj_path: Path, serial_number: str = None
-):
+) -> Project:
     unq_id = hash_from_drive_and_project(drive_model, a_prj_path)
-
+    project_name = a_prj_path.name
     # Extract serial number from project name if not provided
     if serial_number is None:
-        serial_number = extract_serial_number(a_prj_path.name)
+        serial_number = extract_serial_number(project_name)
 
-    zoo_project = ZooscanDrive(Path(drive_model.url)).get_project_folder(
-        a_prj_path.name
-    )
-    sample_models = samples_from_legacy_project(zoo_project)
+    zoo_project = ZooscanDrive(Path(drive_model.url)).get_project_folder(project_name)
     # Get the creation time of the directory
     creation_time = datetime.fromtimestamp(os.path.getmtime(a_prj_path))
 
@@ -58,10 +71,13 @@ def project_from_legacy(
     instrument_model = get_instrument_by_id(serial_number)
     if instrument_model is None:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
+
+    sample_models = samples_from_legacy_project(zoo_project)
+
     project = Project(
         path=str(a_prj_path),
         id=unq_id,
-        name=a_prj_path.name,
+        name=project_name,
         instrumentSerialNumber=serial_number,
         instrument=instrument_model,
         drive=drive_model,
@@ -72,30 +88,34 @@ def project_from_legacy(
     return project
 
 
-def samples_from_legacy_project(project: ZooscanProjectFolder) -> list[Sample]:
-    # In a real implementation, you would fetch the samples from a database
-    # For now, we'll return a mock list of samples
+def samples_from_legacy_project(
+    project: ZooscanProjectFolder,
+) -> list[Sample]:
     samples = []
     for sample_name in project.zooscan_scan.list_samples_with_state():
-        # Parse the sample name into components
-        parsed_name = parse_sample_name(sample_name)
-
-        # Create metadata from parsed components
-        metadata = []
-        for key, value in parsed_name.items():
-            if key not in ["full_name", "components", "num_components"]:
-                metadata.append(
-                    {
-                        "id": f"{sample_name}_{key}",
-                        "name": key,
-                        "value": str(value),
-                        "description": f"Extracted from sample name: {key}",
-                    }
-                )
-
-        # Create the sample with metadata
-        samples.append(Sample(id=sample_name, name=sample_name, metadata=metadata))
+        sample_to_add = sample_from_legacy(sample_name)
+        samples.append(sample_to_add)
     return samples
+
+
+def sample_from_legacy(sample_name: str) -> Sample:
+    # Parse the sample name into components
+    parsed_name = parse_sample_name(sample_name)
+    # Create metadata from parsed components
+    metadata = []
+    for key, value in parsed_name.items():
+        if key not in ["full_name", "components", "num_components"]:
+            metadata.append(
+                {
+                    "id": f"{sample_name}_{key}",
+                    "name": key,
+                    "value": str(value),
+                    "description": f"Extracted from sample name: {key}",
+                }
+            )
+    # Create the sample with metadata
+    ret = Sample(id=sample_name, name=sample_name, metadata=metadata, subsample=list())
+    return ret
 
 
 def backgrounds_from_legacy_project(
