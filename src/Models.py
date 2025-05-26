@@ -38,6 +38,7 @@ class Project(BaseModel):
     id: str
     name: Union[str, None] = None
     instrumentSerialNumber: str  # Union[str, None] = None
+    instrumentId: Optional[str] = None  # A Project can be uninitialized
     acronym: Union[str, None] = None
     description: Union[str, None] = None
     ecotaxaProjectID: Union[str, None] = None

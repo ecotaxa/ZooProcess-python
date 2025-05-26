@@ -79,6 +79,7 @@ def project_from_legacy(
         id=unq_id,
         name=project_name,
         instrumentSerialNumber=serial_number,
+        instrumentId=serial_number,
         instrument=instrument_model,
         drive=drive_model,
         samples=sample_models,
