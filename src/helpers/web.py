@@ -6,9 +6,11 @@ from pathlib import Path
 from typing import Tuple, BinaryIO, Any
 
 from fastapi import HTTPException
+from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import PlainTextResponse
+from starlette.requests import Request
+from starlette.responses import PlainTextResponse, JSONResponse
 
 from logger import logger
 
@@ -117,3 +119,17 @@ class TimingMiddleware(BaseHTTPMiddleware):
         process_time = time.time() - start_time
         logger.info(f"Request to {request.url.path} took {process_time:.4f} seconds")
         return response
+
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Get the request body
+    body = await request.body()
+
+    # Log the validation error with the request body
+    logger.error(f"Validation error: {exc.errors()}, Request body: {body.decode()}")
+
+    # Return the standard validation error response
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )

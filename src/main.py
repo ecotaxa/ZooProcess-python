@@ -6,6 +6,7 @@ from typing import Union, List, OrderedDict
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
@@ -26,6 +27,7 @@ from Models import (
     SubSample,
     Scan,
     SampleWithBackRef,
+    SubSampleIn,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
@@ -36,6 +38,7 @@ from helpers.web import (
     get_stream,
     internal_server_error_handler,
     TimingMiddleware,
+    validation_exception_handler,
 )
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
@@ -55,6 +58,7 @@ from modern.from_legacy import (
     sample_from_legacy,
 )
 from modern.ids import drive_and_project_from_hash
+from modern.to_legacy import add_subsample
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.DB import DB
@@ -98,6 +102,10 @@ app = FastAPI(lifespan=lifespan)
 app.add_exception_handler(
     status.HTTP_500_INTERNAL_SERVER_ERROR, internal_server_error_handler
 )
+
+# Add exception handler for 422 validation errors
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
 # Security scheme for JWT bearer token authentication is imported from auth.py
 
 origins = [
@@ -603,7 +611,7 @@ def add_background(background: Background):
         )
         raise HTTPException(status_code=404, detail="Backgroud scan(s) not found")
 
-    # if back1.instrumentId == back2.instrumentId:
+    # if back1.instrument_id == back2.instrument_id:
     #     markTaskWithErrorStatus(background.taskId,background.db,background.bearer,"Background scans must be from the same instrument")
     #     raise HTTPException(status_code=404, detail="Background scans must be from the same instrument")
 
@@ -784,31 +792,35 @@ def get_current_user(
 
 
 @app.get("/projects")
-@app.get("/projects/{project_hash}")
 def get_projects(
-    project_hash: str = None,
     user=Depends(get_current_user_from_credentials),
-) -> Union[Project, List[Project]]:
+) -> List[Project]:
     """
-    Returns a list of subdirectories inside each element of DRIVES or a specific project if project_id is provided.
+    Returns a list of subdirectories inside each element of DRIVES.
+
+    This endpoint requires authentication using a JWT token obtained from the /login endpoint.
+    """
+    return list_all_projects()
+
+
+@app.get("/projects/{project_hash}")
+def get_project_by_hash(
+    project_hash: str,
+    user=Depends(get_current_user_from_credentials),
+) -> Project:
+    """
+    Returns a specific project identified by its hash.
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
 
     Args:
-        project_hash: Optional. If provided, returns the project with the specified ID.
+        project_hash: The hash of the project to retrieve.
     """
-    if project_hash is None:
-        return list_all_projects()
-    else:
-        # If project_hash is provided, return the specific project
-        drive_path, project_name, project_path = drive_and_project_from_hash(
-            project_hash
-        )
-        drive_model = Drive(
-            id=drive_path.name, name=drive_path.name, url=str(drive_path)
-        )
-        project = project_from_legacy(drive_model, project_path)
-        return project
+    # Get the specific project by hash
+    drive_path, project_name, project_path = drive_and_project_from_hash(project_hash)
+    drive_model = Drive(id=drive_path.name, name=drive_path.name, url=str(drive_path))
+    project = project_from_legacy(drive_model, project_path)
+    return project
 
 
 def list_all_projects(drives_to_check=None):
@@ -1109,9 +1121,9 @@ def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
     return ret
 
 
-@app.put("/users/{instrumentId}/calibration/{calibrationId}")
+@app.put("/users/{instrument_id}/calibration/{calibrationId}")
 def update_calibration(
-    instrumentId: str,
+    instrument_id: str,
     calibrationId: str,
     calibration: Calibration,
     user=Depends(get_current_user_from_credentials),
@@ -1121,7 +1133,7 @@ def update_calibration(
     Update a calibration.
 
     Args:
-        instrumentId (str): The ID of the instrument which owns the calibration.
+        instrument_id (str): The ID of the instrument which owns the calibration.
         calibrationId (str): The ID of the calibration to update.
         calibration (Calibration): The updated calibration data.
 
@@ -1147,9 +1159,9 @@ def update_calibration(
     return calibration_module.update(calibrationId, calibration.dict(), db_instance)
 
 
-@app.post("/instruments/{instrumentId}/calibration")
+@app.post("/instruments/{instrument_id}/calibration")
 def create_calibration(
-    instrumentId: str,
+    instrument_id: str,
     calibration: Calibration,
     user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
@@ -1158,7 +1170,7 @@ def create_calibration(
     Add a calibration to an instrument.
 
     Args:
-        instrumentId (str): The ID of the instrument to add the calibration to.
+        instrument_id (str): The ID of the instrument to add the calibration to.
         calibration (Calibration): The calibration data.
 
     Returns:
@@ -1172,17 +1184,17 @@ def create_calibration(
     from modern.instrument import get_instrument_by_id
     import modern.calibration as calibration_module
 
-    instrument = get_instrument_by_id(instrumentId)
+    instrument = get_instrument_by_id(instrument_id)
     if instrument is None:
         raise HTTPException(
-            status_code=404, detail=f"Instrument with ID {instrumentId} not found"
+            status_code=404, detail=f"Instrument with ID {instrument_id} not found"
         )
 
     # Create a DB instance
     db_instance = DB(bearer=user.id)
 
     # Create the calibration
-    return calibration_module.create(instrumentId, calibration.dict(), db_instance)
+    return calibration_module.create(instrument_id, calibration.dict(), db_instance)
 
 
 @app.get("/projects/{project_hash}/samples")
@@ -1359,6 +1371,7 @@ def get_sample(
     project_hash: str,
     sample_id: str,
     # user=Depends(get_current_user_from_credentials),
+    user: User = None,
 ) -> SampleWithBackRef:
     """
     Get a specific sample from a project.
@@ -1386,11 +1399,8 @@ def get_sample(
         if sample_name == sample_id:
             break
     else:
-        logger.error(f"Sample with ID {sample_id} not found in project {project_hash}")
-        raise HTTPException(
-            status_code=404,
-            detail=f"Sample with ID {sample_id} not found",
-        )
+        raise_404(f"Sample with ID {sample_id} not found in project {project_hash}")
+        sample_name = None  # Unreached
 
     project = project_from_legacy(drive_model, project_path)
     reduced = sample_from_legacy(sample_name)
@@ -1428,7 +1438,7 @@ def update_sample(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
@@ -1480,13 +1490,13 @@ def delete_sample(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user, credentials)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        existing_sample = get_sample(project_hash, sample_id, user, credentials)
+        existing_sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
@@ -1525,13 +1535,13 @@ def get_subsamples(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user, credentials)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
@@ -1553,7 +1563,7 @@ def get_subsamples(
 def create_subsample(
     project_hash: str,
     sample_id: str,
-    subsample: SubSample,
+    subsample: SubSampleIn,
     user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> SubSample:
@@ -1563,7 +1573,9 @@ def create_subsample(
     Args:
         project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to add the subsample to.
-        subsample (SubSample): The subsample data.
+        subsample (SubSampleIn): The subsample data containing name, metadataModelId, and additional data.
+        user (User, optional): The authenticated user. Defaults to the current user from credentials.
+        db (Session, optional): Database session. Defaults to the session from dependency.
 
     Returns:
         SubSample: The created subsample.
@@ -1575,7 +1587,7 @@ def create_subsample(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
@@ -1585,23 +1597,17 @@ def create_subsample(
     except HTTPException as e:
         raise e
 
-    # Create a DB instance
-    db_instance = DB(bearer=user.id)
-
-    # In a real implementation, you would save the subsample to a database
-    # For now, we'll just return the subsample with a generated ID
-    if not subsample.id:
-        subsample.id = (
-            f"subsample_{len(get_subsamples(project_hash, sample_id, user)) + 1}"
-        )
-
-    # Try to create the subsample in the database
-    # This is a placeholder - in a real implementation, you would save the subsample to a database
-    # For example: created_subsample = db_instance.post(f"/projects/{project_hash}/samples/{sample_id}/subsamples", subsample.dict())
-    # For now, we'll just return the subsample
-    created_subsample = subsample
-
-    return created_subsample
+    add_subsample(
+        project.path,
+        sample.name,
+        subsample.name,
+        subsample.metadataModelId,
+        subsample.data,
+    )
+    ret = SubSample(
+        id="subsample1", name="Subsample 1", scan=[], metadata=[]
+    )  # TODO: a subsample_from_legacy primitive
+    return ret
 
 
 @app.get("/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
@@ -1631,24 +1637,23 @@ def get_subsample(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user, credentials)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
-
-    # Create a DB instance
-    db_instance = DB(bearer=user.id)
 
     # Try to get the subsample from the database
     # This is a placeholder - in a real implementation, you would fetch the subsample from a database
     # For example: subsample = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
     # For now, we'll return a mock subsample
-    subsample = SubSample(id=subsample_id, name=f"Subsample {subsample_id}")
+    subsample = SubSample(
+        id=subsample_id, name=f"Subsample {subsample_id}", scan=[], metadata=[]
+    )
 
     return subsample
 
@@ -1680,21 +1685,19 @@ def delete_subsample(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user, credentials)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
     # Check if the subsample exists
     try:
-        subsample = get_subsample(
-            project_hash, sample_id, subsample_id, user, credentials
-        )
+        subsample = get_subsample(project_hash, sample_id, subsample_id, user)
     except HTTPException as e:
         raise e
 
@@ -1739,21 +1742,19 @@ def process_subsample(
 
     # Check if the project exists
     try:
-        project = get_projects(project_hash, user, credentials)
+        project = get_project_by_hash(project_hash, user)
     except HTTPException as e:
         raise e
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user, credentials)
+        sample = get_sample(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
     # Check if the subsample exists
     try:
-        subsample = get_subsample(
-            project_hash, sample_id, subsample_id, user, credentials
-        )
+        subsample = get_subsample(project_hash, sample_id, subsample_id, user)
     except HTTPException as e:
         raise e
 

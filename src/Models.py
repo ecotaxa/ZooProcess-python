@@ -77,7 +77,26 @@ class SubSample(BaseModel):
     """SubSample model as defined in the OpenAPI specification"""
 
     id: str
-    name: Union[str, None] = None
+    name: str
+    metadata: List["MetadataModel"]
+    scan: List["Scan"]
+
+
+class SubSampleIn(BaseModel):
+    """A POST-ed subsample"""
+
+    name: str
+    metadataModelId: str  # TODO: Hardcoded on UI side
+    # TODO: enforce fields AKA keys, e.g.
+    #  'scanning_operator': 'Admin',
+    #  'scan_id': 'd1_01',
+    #  'fraction_number': 'd1',
+    #  'fraction_id_suffix': '01',
+    #  'fraction_min_mesh': 200,
+    #  'fraction_max_mesh': 300,
+    #  'spliting_ratio': 4,
+    #  'observation': 'sss'
+    data: dict
 
 
 class Folder(BaseModel):
