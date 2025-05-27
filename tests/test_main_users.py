@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from main import app, get_db
+from local_DB.db_dependencies import get_db
+from main import app
 
 
 def test_users_me_endpoint_with_valid_token(app_client, local_db):

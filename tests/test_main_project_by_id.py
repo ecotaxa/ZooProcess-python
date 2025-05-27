@@ -1,8 +1,7 @@
-import pytest
-from fastapi.testclient import TestClient
 from pytest_mock import MockFixture
 
-from main import app, get_db
+from local_DB.db_dependencies import get_db
+from main import app
 
 
 def test_project_by_id_endpoint_with_valid_token(
@@ -17,7 +16,7 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_is_dir = mocker.patch("pathlib.Path.is_dir")
 
     # Mock the drive_and_project_from_hash function
-    mock_extract = mocker.patch("main.drive_and_project_from_hash")
+    mock_extract = mocker.patch("routers.projects.drive_and_project_from_hash")
 
     # Set up the mocks for Path methods
     mock_exists.return_value = True
@@ -54,8 +53,29 @@ def test_project_by_id_endpoint_with_valid_token(
         instrument=instrument_model,
     )
 
+    # Mock the ZooscanDrive.get_project_folder method to prevent it from trying to read files
+    mock_get_project_folder = mocker.patch(
+        "ZooProcess_lib.ZooscanFolder.ZooscanDrive.get_project_folder"
+    )
+    mock_project_folder = mocker.MagicMock()
+    mock_get_project_folder.return_value = mock_project_folder
+
+    # Mock os.path.getmtime to return a fixed timestamp
+    mock_getmtime = mocker.patch("os.path.getmtime")
+    mock_getmtime.return_value = 1625097600  # July 1, 2021
+
+    # Mock find_latest_modification_time to return a fixed timestamp
+    from datetime import datetime
+
+    mock_find_latest = mocker.patch("modern.from_legacy.find_latest_modification_time")
+    mock_find_latest.return_value = datetime.fromtimestamp(1625097600)  # July 1, 2021
+
+    # Mock extract_serial_number to return TEST123
+    mock_extract_serial = mocker.patch("modern.from_legacy.extract_serial_number")
+    mock_extract_serial.return_value = "TEST123"
+
     # Mock the project_from_legacy function to return our test project
-    mock_project_from_legacy = mocker.patch("main.project_from_legacy")
+    mock_project_from_legacy = mocker.patch("routers.projects.project_from_legacy")
     mock_project_from_legacy.return_value = test_project
 
     # First, get a valid token by logging in

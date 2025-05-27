@@ -1,8 +1,6 @@
-import pytest
-from fastapi.testclient import TestClient
-
 from auth import decode_jwt_token
-from main import app, get_db
+from local_DB.db_dependencies import get_db
+from main import app
 
 
 def test_login_endpoint(app_client, local_db):

@@ -1,8 +1,7 @@
-import pytest
-from fastapi.testclient import TestClient
 from pytest_mock import MockFixture
 
-from main import app, get_db
+from local_DB.db_dependencies import get_db
+from main import app
 
 
 def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, local_db):
@@ -14,7 +13,7 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
     mock_iterdir = mocker.patch("pathlib.Path.iterdir")
     mock_exists = mocker.patch("pathlib.Path.exists")
     mock_is_dir = mocker.patch("pathlib.Path.is_dir")
-    mock_list_all_projects = mocker.patch("main.list_all_projects")
+    mock_list_all_projects = mocker.patch("routers.projects.list_all_projects")
 
     # Set up the mocks for Path methods
     mock_exists.return_value = True
