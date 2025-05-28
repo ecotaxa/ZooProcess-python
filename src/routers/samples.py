@@ -68,7 +68,7 @@ def get_sample(
         sample_id (str): The ID of the sample to get.
 
     Returns:
-        Sample: The requested sample.
+        Sample: The requested sample, including its parent project.
 
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
@@ -82,7 +82,7 @@ def get_sample(
     zoo_project = zoo_drive.get_project_folder(project_name)
 
     # Check if the sample exists in the list of samples
-    for sample_name in zoo_project.zooscan_scan.list_samples_with_state():
+    for sample_name in zoo_project.list_samples_with_state():
         if sample_name == sample_id:
             break
     else:
@@ -90,7 +90,7 @@ def get_sample(
         sample_name = None  # Unreached
 
     project = project_from_legacy(drive_model, project_path)
-    reduced = sample_from_legacy(sample_name)
+    reduced = sample_from_legacy(zoo_project, sample_name)
     # Return the sample, enriched with back ref
     return SampleWithBackRef(
         **reduced.model_dump(),

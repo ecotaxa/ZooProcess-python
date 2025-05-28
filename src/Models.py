@@ -57,10 +57,11 @@ class Sample(BaseModel):
 
     id: str
     name: str
-    subsample: Union[List["SubSample"], None] = None
-    metadata: Union[List["MetadataModel"], None] = None
+    subsample: List["SubSample"]
+    metadata: List["MetadataModel"]
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
+    metadataModel: str = "foo"  # WIP on front side, but needed for form display
 
 
 class SampleWithBackRef(Sample):
@@ -151,7 +152,7 @@ class Scan(BaseModel):
     type: str
     archived: bool = False
     deleted: bool = False
-    metadata: Optional[List["MetadataModel"]] = None
+    metadata: List["MetadataModel"]
     user: User
 
 
@@ -194,7 +195,14 @@ class Instrument(BaseModel):
 class MetadataModel(BaseModel):
     """Metadata model as defined in the OpenAPI specification"""
 
-    id: str
     name: str
     value: str
-    description: Optional[str] = None
+    type: str
+
+
+class MetadataTemplateModel(BaseModel):
+    """Metadata template model, basically some info on each metadata field"""
+
+    id: str
+    name: str
+    description: str

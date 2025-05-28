@@ -141,3 +141,33 @@ def parse_sample_name(sample_name: str) -> dict:
         parsed["scan_number"] = components[idx]
 
     return parsed
+
+
+def convert_ddm_to_decimal_degrees(a_value):
+    """
+    Convert a coordinate from Degrees Decimal Minutes (DDM) format to Decimal Degrees (DD) format.
+
+    In DDM format, the decimal part represents minutes divided by 100 (e.g., 45.30 means 45 degrees and 30 minutes).
+    This function converts it to decimal degrees where minutes are divided by 60 (e.g., 45.5 degrees).
+
+    The conversion formula is: DD = degrees + (minutes/60)
+    Which is implemented as: degrees + (decimal_part * 100/60)/100
+
+    Args:
+        a_value: A coordinate value in DDM format (e.g., 45.30 for 45°30')
+
+    Returns:
+        The coordinate converted to decimal degrees format (e.g., 45.50 for 45.5°)
+        If the input cannot be converted to a float, returns the original value.
+
+    Examples:
+        >>> convert_ddm_to_decimal_degrees(45.30)
+        45.5
+        >>> convert_ddm_to_decimal_degrees(10.3030)
+        10.505
+    """
+    val = float(a_value)
+    degrees = int(val)
+    decimal = (val - degrees) * 100
+    decimal = round(decimal / 30 * 50, 4)
+    return degrees + decimal / 100

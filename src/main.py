@@ -23,15 +23,8 @@ from Models import (
     Drive,
     Instrument,
     Calibration,
-    Sample,
-    SubSample,
     Scan,
-    SampleWithBackRef,
-    SubSampleIn,
 )
-from routers.projects import router as projects_router
-from routers.samples import router as samples_router, get_sample
-from routers.subsamples import router as subsamples_router
 from ZooProcess_lib.Processor import Processor, Lut
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
@@ -47,24 +40,23 @@ from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
 from legacy.drives import validate_drives
 from legacy.files import find_background_file
-from legacy_to_remote.importe import import_old_project, getDat1Path, pid2json
+from legacy_to_remote.importe import getDat1Path, pid2json
 from legacy_to_remote.importe import listWorkFolders
 from local_DB.db_dependencies import get_db
 from logger import logger
 from modern.from_legacy import (
-    project_from_legacy,
-    samples_from_legacy_project,
     backgrounds_from_legacy_project,
     drives_from_legacy,
     scans_from_legacy_project,
-    drive_from_legacy,
-    sample_from_legacy,
 )
 from modern.ids import drive_and_project_from_hash
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.DB import DB
 from remote.TaskStatus import TaskStatus
+from routers.projects import router as projects_router
+from routers.samples import router as samples_router
+from routers.subsamples import router as subsamples_router
 from separate import Separate
 from separate_fn import separate_images
 from static.favicon import create_plankton_favicon
@@ -86,7 +78,6 @@ separateServer = SeparateServer(tunnelserver, dbserver)
 from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
-from config_rdr import config
 
 
 @asynccontextmanager

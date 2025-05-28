@@ -43,6 +43,20 @@ def raise_404(error_message: str):
     raise HTTPException(status_code=404, detail=error_message)
 
 
+def raise_501(error_message: str):
+    """
+    Logs an error and raises an HTTP 501 exception for not implemented functionality.
+
+    Args:
+        error_message (str): The error message to log and include in the exception detail.
+
+    Raises:
+        HTTPException: An HTTP 501 exception with the provided error message as detail.
+    """
+    logger.info(error_message)
+    raise HTTPException(status_code=501, detail=error_message)
+
+
 class AutoCloseBinaryIO(object):
     """
     An IO object which closes underlying file pointer when going out of scope.
@@ -104,7 +118,7 @@ async def internal_server_error_handler(
     our_stack_ndx = 0
     # Remove all until our code
     for ndx, a_line in enumerate(tb):
-        if a_line.find("src/main.py") != -1:
+        if a_line.find("src/main.py") != -1 or (a_line.find("src/routers") != -1):
             our_stack_ndx = ndx
     our_tb = "".join(tb[our_stack_ndx:])
     data = "\n----------- BACK-END -------------\n" + our_tb
