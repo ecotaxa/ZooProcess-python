@@ -21,11 +21,14 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
 from legacy.utils import (
     find_sample_metadata,
-    find_subsample_metadata,
+    find_scan_metadata,
     sub_table_for_sample,
 )
-from logger import logger
-from modern.ids import hash_from_drive_and_project
+from modern.ids import (
+    hash_from_drive_and_project,
+    subsample_name_from_scan_name,
+    scan_name_from_subsample_name,
+)
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
 from modern.users import get_mock_user
 from modern.utils import (
@@ -82,7 +85,7 @@ def project_from_legacy(
     if instrument_model is None:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
 
-    sample_models = samples_from_legacy_project(zoo_project)
+    sample_models = samples_from_legacy_project(unq_id, zoo_project)
 
     project = Project(
         path=str(a_prj_path),
@@ -100,29 +103,33 @@ def project_from_legacy(
 
 
 def samples_from_legacy_project(
+    project_hash: str,
     zoo_project: ZooscanProjectFolder,
 ) -> list[Sample]:
     ret = []
     for sample_name in zoo_project.list_samples_with_state():
-        sample_to_add = sample_from_legacy(zoo_project, sample_name)
+        sample_to_add = sample_from_legacy(project_hash, zoo_project, sample_name)
         ret.append(sample_to_add)
     return ret
 
 
 def subsamples_from_legacy_project_and_sample(
-    zoo_project: ZooscanProjectFolder, sample_name: str
+    project_hash: str, zoo_project: ZooscanProjectFolder, sample_name: str
 ):
     ret = []
     project_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
     sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
-    for subsample_name in zoo_project.list_scans_with_state():
-        zoo_metadata_sample = find_subsample_metadata(
-            sample_scans_metadata, sample_name, subsample_name
-        )
+    for scan_name in zoo_project.list_scans_with_state():
+        subsample_name = subsample_name_from_scan_name(scan_name)
+        zoo_metadata_sample = find_scan_metadata(
+            sample_scans_metadata, sample_name, scan_name
+        )  # No concept of "subsample" in legacy"
         if zoo_metadata_sample is None:
             # Not an error or warning, we don't have the relationship samples->subsample beforehand
             continue
-        sample_to_add = subsample_from_legacy(subsample_name, zoo_metadata_sample)
+        sample_to_add = subsample_from_legacy(
+            project_hash, sample_name, subsample_name, zoo_metadata_sample
+        )
         ret.append(sample_to_add)
     return ret
 
@@ -140,7 +147,9 @@ def to_modern_meta(metadata_dict: Dict) -> List[MetadataModel]:
     return ret
 
 
-def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> Sample:
+def sample_from_legacy(
+    project_hash: str, zoo_project: ZooscanProjectFolder, sample_name: str
+) -> Sample:
     # Parse the sample name into components
     parsed_name = parse_sample_name(sample_name)
     # Create metadata from parsed components
@@ -151,7 +160,7 @@ def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> S
     ), f"Sample {sample_name} metadata not found in {zoo_project.zooscan_meta.samples_table_path}"
     metadata = to_modern_meta(from_legacy_meta(zoo_metadata))
     subsample_models = subsamples_from_legacy_project_and_sample(
-        zoo_project, sample_name
+        project_hash, zoo_project, sample_name
     )
     # for key, value in parsed_name.items():
     #     if key not in ["full_name", "components", "num_components"]:
@@ -170,25 +179,34 @@ def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> S
     return ret
 
 
-def subsample_from_legacy(subsample_name: str, zoo_scan_metadata: Dict) -> SubSample:
+def subsample_from_legacy(
+    project_hash: str, sample_name: str, subsample_name: str, zoo_scan_metadata: Dict
+) -> SubSample:
     metadata_dict = from_legacy_meta(zoo_scan_metadata)
     metadata = to_modern_meta(metadata_dict)
     # Parse the subsample name into components
     parsed_name = parse_sample_name(subsample_name)
-    scans = [
-        Scan(
-            id=subsample_name,
-            url="toto",
-            metadata=[],
-            type="MEDIUM",
-            user=get_mock_user(),
-        )
-    ]
+    scans = scans_from_legacy(project_hash, sample_name, subsample_name)
     # Create the sample with metadata and scans
     ret = SubSample(
         id=subsample_name, name=subsample_name, metadata=metadata, scan=scans
     )
     return ret
+
+
+def scans_from_legacy(
+    project_hash: str, sample_name: str, subsample_name: str
+) -> List[Scan]:
+    # So far there is a _maximum_ of 1 scan per subsample
+    the_scan = Scan(
+        id=scan_name_from_subsample_name(subsample_name),
+        url=config.public_url
+        + f"/projects/{project_hash}/samples/{sample_name}/subsamples/{subsample_name}/scan.jpg",
+        metadata=[],
+        type="MEDIUM",
+        user=get_mock_user(),
+    )
+    return [the_scan]
 
 
 def backgrounds_from_legacy_project(

@@ -10,6 +10,7 @@ from modern.from_legacy import project_from_legacy
 from legacy_to_remote.importe import import_old_project
 from remote.DB import DB
 from logger import logger
+from config_rdr import config
 
 # Create a routers instance
 router = APIRouter(
@@ -33,8 +34,6 @@ def list_all_projects(drives_to_check=None):
     all_projects = []
     # Use provided drives or default to config.DRIVES
     if drives_to_check is None:
-        from config_rdr import config
-
         drives_to_check = config.DRIVES
     # Iterate through each drive in the list
     for drive_path in drives_to_check:

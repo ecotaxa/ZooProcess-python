@@ -1,23 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List
-from sqlalchemy.orm import Session
+import tempfile
 from pathlib import Path
+from typing import List
 
-from Models import SubSample, SubSampleIn, User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
+
+from Models import SubSample, SubSampleIn
+from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
-from modern.to_legacy import add_subsample
+from helpers.web import raise_404, get_stream
+from img_proc.convert import convert_tiff_to_jpeg
+from legacy.utils import find_scan_metadata, sub_table_for_sample
+from local_DB.db_dependencies import get_db
+from logger import logger
 from modern.from_legacy import (
     subsamples_from_legacy_project_and_sample,
     subsample_from_legacy,
 )
+from modern.ids import (
+    drive_and_project_from_hash,
+    scan_name_from_subsample_name,
+    THE_SCAN_PER_SUBSAMPLE,
+)
+from modern.to_legacy import add_subsample
+from remote.DB import DB
 from routers.projects import get_project_by_hash
 from routers.samples import get_sample, check_sample_exists
-from helpers.web import raise_404
-from remote.DB import DB
-from logger import logger
-from local_DB.db_dependencies import get_db
-from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from legacy.utils import find_subsample_metadata, sub_table_for_sample
 
 # Create a router instance
 router = APIRouter(
@@ -63,7 +72,9 @@ def get_subsamples(
     zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(project.name)
 
     # Get subsamples using the same structure as in subsamples_from_legacy_project_and_sample
-    subsamples = subsamples_from_legacy_project_and_sample(zoo_project, sample_id)
+    subsamples = subsamples_from_legacy_project_and_sample(
+        project_hash, zoo_project, sample_id
+    )
 
     return subsamples
 
@@ -166,14 +177,15 @@ def get_subsample(
     sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_id)
 
     # Find the metadata for the specific subsample
-    zoo_metadata_sample = find_subsample_metadata(
-        sample_scans_metadata, sample_id, subsample_id
-    )
+    scan_id = scan_name_from_subsample_name(subsample_id)
+    zoo_metadata_sample = find_scan_metadata(sample_scans_metadata, sample_id, scan_id)
 
     if zoo_metadata_sample is None:
         raise_404(f"Subsample {subsample_id} not found in sample {sample_id}")
 
-    subsample = subsample_from_legacy(subsample_id, zoo_metadata_sample)
+    subsample = subsample_from_legacy(
+        project_hash, sample_id, subsample_id, zoo_metadata_sample
+    )
 
     return subsample
 
@@ -289,3 +301,57 @@ def process_subsample(
     }
 
     return result
+
+
+@router.get("/{subsample_id}/scan.jpg")
+async def get_subsample_scan(
+    project_hash: str,
+    sample_id: str,
+    subsample_id: str,
+    user=Depends(get_current_user_from_credentials),  # TODO: Should be protected?
+) -> StreamingResponse:
+    """
+    Get the scan image for a specific subsample.
+
+    Args:
+        project_hash (str): The hash of the project.
+        sample_id (str): The ID of the sample.
+        subsample_id (str): The ID of the subsample.
+
+    Returns:
+        StreamingResponse: The scan image as a streaming response.
+
+    Raises:
+        HTTPException: If the project, sample, or subsample is not found, or the scan image is not found.
+    """
+    logger.info(
+        f"Getting scan image for subsample {subsample_id} in sample {sample_id} in project {project_hash}"
+    )
+
+    # Get the project and sample paths
+    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    project = zoo_drive.get_project_folder(project_name)
+
+    # Get the files for the subsample
+    try:
+        subsample_files = project.zooscan_scan.work.get_files(
+            subsample_id, THE_SCAN_PER_SUBSAMPLE
+        )
+    except Exception as e:
+        logger.error(f"Error getting files for subsample {subsample_id}: {str(e)}")
+        raise_404(f"Scan image not found for subsample {subsample_id}")
+
+    scan_file = project.zooscan_scan.get_8bit_file(subsample_id, THE_SCAN_PER_SUBSAMPLE)
+    if not scan_file.exists():
+        raise_404(f"Scan image not found for subsample {subsample_id}")
+
+    # Convert the TIF file to JPG
+    tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
+    convert_tiff_to_jpeg(scan_file, tmp_jpg)
+    scan_file = tmp_jpg
+
+    # Stream the file
+    file_like, length, media_type = get_stream(scan_file)
+    headers = {"content-length": str(length)}
+    return StreamingResponse(file_like, headers=headers, media_type=media_type)

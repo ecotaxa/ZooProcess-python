@@ -30,7 +30,7 @@ router = APIRouter(
 @router.get("")
 def get_samples(
     project_hash: str,
-    user=Depends(get_current_user_from_credentials),
+    # user=Depends(get_current_user_from_credentials),
 ) -> List[Sample]:
     """
     Get the list of samples associated with a project.
@@ -50,7 +50,7 @@ def get_samples(
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
-    return samples_from_legacy_project(project)
+    return samples_from_legacy_project(project_hash, project)
 
 
 @router.get("/{sample_id}")
@@ -90,7 +90,7 @@ def get_sample(
         sample_name = None  # Unreached
 
     project = project_from_legacy(drive_model, project_path)
-    reduced = sample_from_legacy(zoo_project, sample_name)
+    reduced = sample_from_legacy(project_hash, zoo_project, sample_name)
     # Return the sample, enriched with back ref
     return SampleWithBackRef(
         **reduced.model_dump(),

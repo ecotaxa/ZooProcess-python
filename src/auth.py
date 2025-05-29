@@ -1,13 +1,15 @@
+import datetime
+from typing import Dict, Optional
+
 import jwt
-import os
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
-from typing import Dict, Optional
 from starlette.requests import Request
 
-from local_DB.db_dependencies import get_db
 from config_rdr import config
+from local_DB.db_dependencies import get_db
+from local_DB.models import User
 
 
 class CustomHTTPBearer(HTTPBearer):
@@ -21,6 +23,13 @@ class CustomHTTPBearer(HTTPBearer):
         authorization = request.headers.get("Authorization")
         scheme, credentials = self.get_authorization_scheme_param(authorization)
         if not (authorization and scheme and credentials):
+            # Check if authentication is in the cookie before raising an error
+            if (
+                SESSION_COOKIE_NAME in request.cookies
+                and request.cookies[SESSION_COOKIE_NAME]
+            ):
+                # We have a cookie with a token, let the get_current_user_from_credentials function handle it
+                return None
             if self.auto_error:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -30,6 +39,13 @@ class CustomHTTPBearer(HTTPBearer):
             else:
                 return None
         if scheme.lower() != "bearer":
+            # Check if authentication is in the cookie before raising an error
+            if (
+                SESSION_COOKIE_NAME in request.cookies
+                and request.cookies[SESSION_COOKIE_NAME]
+            ):
+                # We have a cookie with a token, let the get_current_user_from_credentials function handle it
+                return None
             if self.auto_error:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -51,6 +67,9 @@ security = CustomHTTPBearer()
 
 # Algorithm for JWT token signing and verification
 ALGORITHM = "HS256"
+
+# Cookie name for session token
+SESSION_COOKIE_NAME = "zoopp_session"
 
 
 def decode_jwt_token(token: str) -> Dict:
@@ -95,7 +114,6 @@ def create_jwt_token(data: Dict, expires_delta: Optional[int] = None) -> str:
     Returns:
         The encoded JWT token
     """
-    import datetime
 
     to_encode = data.copy()
 
@@ -143,12 +161,12 @@ def get_user_from_db(email: str, db):
     Returns:
         The user if found, None otherwise
     """
-    from local_DB.models import User
 
     return db.query(User).filter(User.email == email).first()
 
 
 async def get_current_user_from_credentials(
+    request: Request = None,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ):
@@ -156,6 +174,7 @@ async def get_current_user_from_credentials(
     FastAPI dependency that extracts and validates the user from credentials.
 
     Args:
+        request: The request object to access cookies
         credentials: The HTTP authorization credentials
         db: The database session
 
@@ -165,8 +184,23 @@ async def get_current_user_from_credentials(
     Raises:
         HTTPException: If authentication fails
     """
-    # Extract the token from the authorization header
-    token = credentials.credentials
+    token = None
+
+    # Try to extract token from the authorization header
+    if credentials:
+        token = credentials.credentials
+
+    # If no token from header, try to get it from the session cookie
+    if not token and request:
+        token = request.cookies.get(SESSION_COOKIE_NAME)
+
+    # If still no token, authentication fails
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     # Validate the JWT token and extract user information
     user_data = get_user_from_token(token)

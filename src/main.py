@@ -76,8 +76,13 @@ nikoserver = Server("http://niko.obs-vlfr.fr:5000", "/")
 separateServer = SeparateServer(tunnelserver, dbserver)
 
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from auth import create_jwt_token, get_user_from_db, SESSION_COOKIE_NAME
+from modern.instrument import get_instruments as get_all_instruments
+from modern.instrument import get_instrument_by_id
+from remote.DB import DB
+import modern.calibration as calibration_module
 
 
 @asynccontextmanager
@@ -716,7 +721,6 @@ def login(login_req: LoginReq, db: Session = Depends(get_db)):
 
     If successful, returns a JWT token which will have to be used in bearer authentication scheme for subsequent calls.
     """
-    from auth import create_jwt_token, get_user_from_db
 
     # Validate the credentials against the database
     user = get_user_from_db(login_req.email, db)
@@ -741,9 +745,50 @@ def login(login_req: LoginReq, db: Session = Depends(get_db)):
     token = create_jwt_token(user_data, expires_delta=30 * 24 * 60 * 60)
 
     # Return the token as a JSON response
-    from fastapi.responses import JSONResponse
 
     return JSONResponse(content=token)
+
+
+@app.get("/login")
+def login_get(email: str, password: str, db: Session = Depends(get_db)):
+    """
+    GET variant of the login endpoint
+
+    If successful, returns a JWT token which will have to be used in bearer authentication scheme for subsequent calls.
+
+    Note: While this endpoint is provided for convenience, using POST /login is recommended for better security
+    as it doesn't expose credentials in URL or server logs.
+    """
+
+    # Validate the credentials against the database
+    user = get_user_from_db(email, db)
+
+    if (
+        not user or user.password != password
+    ):  # In a real app, use proper password hashing
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Create user data for the token
+    user_data = {
+        "sub": user.id,
+        "name": user.name,
+        "email": user.email,
+    }
+
+    # Create a JWT token with 30-day expiration
+    token = create_jwt_token(user_data, expires_delta=30 * 24 * 60 * 60)
+
+    # Create a response with the token in the body
+    response = JSONResponse(content=token)
+
+    # Set the token in a session cookie
+    response.set_cookie(key=SESSION_COOKIE_NAME, value=token, httponly=True)
+
+    return response
 
 
 @app.get("/users/me")
@@ -905,7 +950,6 @@ def get_instruments(full: bool = False):
     Args:
         full (bool, optional): If True, returns the full instrument details. Defaults to False.
     """
-    from modern.instrument import get_instruments as get_all_instruments
 
     instruments = get_all_instruments()
 
@@ -932,7 +976,6 @@ def get_instrument(instrument_id: str):
     Raises:
         HTTPException: If the instrument is not found.
     """
-    from modern.instrument import get_instrument_by_id
 
     instrument = get_instrument_by_id(instrument_id)
     if instrument is None:
@@ -956,7 +999,6 @@ def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
     Raises:
         HTTPException: If the instrument is not found.
     """
-    from modern.instrument import get_instrument_by_id
 
     # Check if the instrument exists
     instrument = get_instrument_by_id(instrument_id)
@@ -1014,8 +1056,6 @@ def update_calibration(
     Raises:
         HTTPException: If the calibration is not found or the user is not authorized.
     """
-    from remote.DB import DB
-    import modern.calibration as calibration_module
 
     # Check if the user is authorized to update this calibration
     if user.id != userId:
@@ -1051,9 +1091,6 @@ def create_calibration(
         HTTPException: If the instrument is not found or the user is not authorized.
     """
     # Check if the instrument exists
-    from remote.DB import DB
-    from modern.instrument import get_instrument_by_id
-    import modern.calibration as calibration_module
 
     instrument = get_instrument_by_id(instrument_id)
     if instrument is None:

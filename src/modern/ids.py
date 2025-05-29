@@ -38,3 +38,35 @@ def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str, Path]:
             status_code=404, detail=f"Project with ID {project_hash} not found"
         )
     return drive_path, project_name, project_path
+
+
+THE_SCAN_PER_SUBSAMPLE = 1
+
+
+def subsample_name_from_scan_name(scan_name: str):
+    """
+    Extract subsample name from scan name by removing trailing "_1" if present.
+
+    Args:
+        scan_name (str): The scan name
+
+    Returns:
+        str: The subsample name
+    """
+    if scan_name.endswith(f"_{THE_SCAN_PER_SUBSAMPLE}"):
+        return scan_name[:-2]
+    return scan_name
+
+
+def scan_name_from_subsample_name(subsample_name: str):
+    """
+    Create scan name from subsample name by adding trailing "_1".
+    This is the reverse function of subsample_name_from_scan_name.
+
+    Args:
+        subsample_name (str): The subsample name
+
+    Returns:
+        str: The scan name
+    """
+    return f"{subsample_name}_{THE_SCAN_PER_SUBSAMPLE}"
