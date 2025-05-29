@@ -4,7 +4,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from Models import (
     Project,
@@ -19,7 +19,12 @@ from Models import (
 )
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
-from legacy.utils import find_sample_metadata, find_subsample_metadata
+from legacy.utils import (
+    find_sample_metadata,
+    find_subsample_metadata,
+    sub_table_for_sample,
+)
+from logger import logger
 from modern.ids import hash_from_drive_and_project
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
 from modern.users import get_mock_user
@@ -108,13 +113,17 @@ def subsamples_from_legacy_project_and_sample(
     zoo_project: ZooscanProjectFolder, sample_name: str
 ):
     ret = []
-    scans_metadata = zoo_project.zooscan_meta.read_scans_table()
+    project_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
+    sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
     for subsample_name in zoo_project.list_scans_with_state():
-        sample_to_add = subsample_from_legacy(
-            scans_metadata, sample_name, subsample_name
+        zoo_metadata_sample = find_subsample_metadata(
+            sample_scans_metadata, sample_name, subsample_name
         )
-        if sample_to_add is not None:
-            ret.append(sample_to_add)
+        if zoo_metadata_sample is None:
+            # Not an error or warning, we don't have the relationship samples->subsample beforehand
+            continue
+        sample_to_add = subsample_from_legacy(subsample_name, zoo_metadata_sample)
+        ret.append(sample_to_add)
     return ret
 
 
@@ -161,21 +170,9 @@ def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> S
     return ret
 
 
-def subsample_from_legacy(
-    scans_metadata: List[Dict],
-    sample_name: str,
-    subsample_name: str,
-) -> Optional[SubSample]:
-    # Create metadata from parsed components
-    zoo_metadata = find_subsample_metadata(scans_metadata, sample_name, subsample_name)
-    if zoo_metadata is None:
-        return None
-    else:
-        # assert (
-        #     zoo_metadata is not None
-        # ), f"SubSample {subsample_name} metadata not found in {zoo_project.zooscan_meta.scans_table_path}"
-        metadata_dict = from_legacy_meta(zoo_metadata)
-        metadata = to_modern_meta(metadata_dict)
+def subsample_from_legacy(subsample_name: str, zoo_scan_metadata: Dict) -> SubSample:
+    metadata_dict = from_legacy_meta(zoo_scan_metadata)
+    metadata = to_modern_meta(metadata_dict)
     # Parse the subsample name into components
     parsed_name = parse_sample_name(subsample_name)
     scans = [
@@ -365,7 +362,7 @@ def from_legacy_meta(meta: dict) -> dict:
         # quality_flag_filtered_volume
         #
         # In scan CSV
-        "scanop": "scanning_operator",  # 'adelaide_perruchon',
+        "scanop": "operator",  # 'adelaide_perruchon',
         # 'FracId': 'd1_1_sur_1',
         "fracmin": "fraction_min_mesh",  # '10000',
         "fracsup": "fraction_max_mesh",  # '999999',

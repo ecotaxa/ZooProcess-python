@@ -171,3 +171,5 @@ def convert_ddm_to_decimal_degrees(a_value):
     decimal = (val - degrees) * 100
     decimal = round(decimal / 30 * 50, 4)
     return degrees + decimal / 100
+
+

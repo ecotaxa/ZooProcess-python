@@ -1,16 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from sqlalchemy.orm import Session
+from pathlib import Path
 
 from Models import SubSample, SubSampleIn, User
 from auth import get_current_user_from_credentials
 from modern.to_legacy import add_subsample
+from modern.from_legacy import (
+    subsamples_from_legacy_project_and_sample,
+    subsample_from_legacy,
+)
 from routers.projects import get_project_by_hash
-from routers.samples import get_sample
+from routers.samples import get_sample, check_sample_exists
 from helpers.web import raise_404
 from remote.DB import DB
 from logger import logger
 from local_DB.db_dependencies import get_db
+from ZooProcess_lib.ZooscanFolder import ZooscanDrive
+from legacy.utils import find_subsample_metadata, sub_table_for_sample
 
 # Create a router instance
 router = APIRouter(
@@ -48,20 +55,15 @@ def get_subsamples(
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
-    # Create a DB instance
-    db_instance = DB(bearer=user.id)
+    # Create a ZooscanProjectFolder object from the project
+    zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(project.name)
 
-    # Try to get subsamples from the database
-    # This is a placeholder - in a real implementation, you would fetch the subsamples from a database
-    # For example: subsamples = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples")
-    # For now, we'll return a mock list of subsamples
-    subsample1 = SubSample(id="subsample1", name="Subsample 1")
-    subsample2 = SubSample(id="subsample2", name="Subsample 2")
-    subsamples = [subsample1, subsample2]
+    # Get subsamples using the same structure as in subsamples_from_legacy_project_and_sample
+    subsamples = subsamples_from_legacy_project_and_sample(zoo_project, sample_id)
 
     return subsamples
 
@@ -150,17 +152,28 @@ def get_subsample(
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
-    # Try to get the subsample from the database
-    # This is a placeholder - in a real implementation, you would fetch the subsample from a database
-    # For example: subsample = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
-    # For now, we'll return a mock subsample
-    subsample = SubSample(
-        id=subsample_id, name=f"Subsample {subsample_id}", scan=[], metadata=[]
+    # Create a ZooscanProjectFolder object from the project
+    zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(project.name)
+
+    # Get the project scans metadata
+    project_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
+
+    # Filter the metadata for the specific sample
+    sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_id)
+
+    # Find the metadata for the specific subsample
+    zoo_metadata_sample = find_subsample_metadata(
+        sample_scans_metadata, sample_id, subsample_id
     )
+
+    if zoo_metadata_sample is None:
+        raise_404(f"Subsample {subsample_id} not found in sample {sample_id}")
+
+    subsample = subsample_from_legacy(subsample_id, zoo_metadata_sample)
 
     return subsample
 
@@ -198,7 +211,7 @@ def delete_subsample(
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
@@ -253,7 +266,7 @@ def process_subsample(
 
     # Check if the sample exists
     try:
-        sample = get_sample(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 

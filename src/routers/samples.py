@@ -140,6 +140,30 @@ def create_sample(
     return created_sample
 
 
+def check_sample_exists(project_hash: str, sample_id: str, user: User = None):
+    """
+    Check if a sample exists in a project without retrieving all its data.
+
+    Args:
+        project_hash (str): The ID of the project.
+        sample_id (str): The ID of the sample to check.
+        user (User, optional): The user making the request. Defaults to None.
+
+    Raises:
+        HTTPException: If the sample is not found.
+    """
+    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    zoo_project = zoo_drive.get_project_folder(project_name)
+
+    # Check if the sample exists in the list of samples
+    for sample_name in zoo_project.list_samples_with_state():
+        if sample_name == sample_id:
+            return
+
+    raise_404(f"Sample with ID {sample_id} not found in project {project_hash}")
+
+
 @router.put("/{sample_id}")
 def update_sample(
     project_hash: str,
@@ -172,7 +196,7 @@ def update_sample(
 
     # Check if the sample exists
     try:
-        existing_sample = get_sample(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 
@@ -224,7 +248,7 @@ def delete_sample(
 
     # Check if the sample exists
     try:
-        existing_sample = get_sample(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
         raise e
 

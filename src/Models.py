@@ -52,7 +52,7 @@ class Project(BaseModel):
 class Sample(BaseModel):
     """
     Sample model as defined in the OpenAPI specification.
-    _This_ kind of sample is returned inside a Project.
+    _This_ kind of sample is returned as child of a Project.
     """
 
     id: str
