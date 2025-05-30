@@ -1,6 +1,7 @@
 import importlib
 import os
 import sys
+from pathlib import Path
 
 import pytest
 from pytest_mock import MockFixture
@@ -114,7 +115,7 @@ def test_drives_with_valid_paths(mocker: MockFixture):
         from config_rdr import config
 
         # Check that DRIVES is correctly loaded
-        assert config.DRIVES == [temp_dir1, temp_dir2]
+        assert config.DRIVES == [Path(temp_dir1), Path(temp_dir2)]
     finally:
         # Restore the original DRIVES value
         if original_drives is not None:

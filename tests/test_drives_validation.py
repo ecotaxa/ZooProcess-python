@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import shutil
+from pathlib import Path
 
 import legacy.drives
 from pytest_mock import MockFixture
@@ -225,7 +226,7 @@ def test_config_validation_valid_paths():
         from config_rdr import config
 
         # Check that DRIVES is correctly loaded
-        assert config.DRIVES == [temp_dir1, temp_dir2]
+        assert config.DRIVES == [Path(temp_dir1), Path(temp_dir2)]
     finally:
         # Restore the original DRIVES value
         if original_drives is not None:

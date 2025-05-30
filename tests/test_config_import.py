@@ -107,6 +107,7 @@ def test_valid_drives(project_python_path):
     script = f"""
 import os
 import sys
+from pathlib import Path
 # Add the project paths to the Python path
 for path in [{paths_str}]:
     sys.path.append(path)
@@ -118,7 +119,7 @@ print(f"DEBUG: config.DRIVES = {{config.DRIVES}}")
 # Import main.py, which should succeed
 import main
 # Check that DRIVES is correctly loaded
-if config.DRIVES == ["{temp_dir1}", "{temp_dir2}"]:
+if config.DRIVES == [Path("{temp_dir1}"), Path("{temp_dir2}")]:
     print("SUCCESS: Import succeeded and DRIVES is correctly loaded")
 else:
     print(f"ERROR: DRIVES not correctly loaded. Expected [{temp_dir1}, {temp_dir2}], got {{config.DRIVES}}")

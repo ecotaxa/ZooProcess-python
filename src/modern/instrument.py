@@ -41,7 +41,7 @@ def get_instruments() -> List[Instrument]:
     """
     instruments = []
     for instrument_data in INSTRUMENTS:
-        instrument = Instrument(**instrument_data)
+        instrument = Instrument(**instrument_data, ZooscanCalibration=[])
         # Add a mocked ZooscanCalibration to each instrument
         instrument.ZooscanCalibration = [create_mock_calibration(instrument.id)]
         instruments.append(instrument)

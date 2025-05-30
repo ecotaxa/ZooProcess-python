@@ -13,7 +13,6 @@ from modern.from_legacy import (
     drive_from_legacy,
     sample_from_legacy,
 )
-from routers.projects import get_project_by_hash
 from helpers.web import raise_404
 from remote.DB import DB
 from logger import logger
@@ -46,19 +45,18 @@ def get_samples(
     """
     logger.info(f"Getting samples for project {project_hash}")
 
-    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
-    return samples_from_legacy_project(project_hash, project)
+    return samples_from_legacy_project(project)
 
 
 @router.get("/{sample_id}")
 def get_sample(
     project_hash: str,
     sample_id: str,
-    # user=Depends(get_current_user_from_credentials),
-    user: User = None,
+    user=Depends(get_current_user_from_credentials),
 ) -> SampleWithBackRef:
     """
     Get a specific sample from a project.
@@ -75,7 +73,8 @@ def get_sample(
     """
     logger.info(f"Getting sample {sample_id} for project {project_hash}")
 
-    drive_path, project_name, project_path = drive_and_project_from_hash(project_hash)
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    project_path = Path(drive_path) / project_name
     zoo_drive = ZooscanDrive(drive_path)
     drive_model = drive_from_legacy(drive_path)
 
@@ -89,8 +88,8 @@ def get_sample(
         raise_404(f"Sample with ID {sample_id} not found in project {project_hash}")
         sample_name = None  # Unreached
 
-    project = project_from_legacy(drive_model, project_path)
-    reduced = sample_from_legacy(project_hash, zoo_project, sample_name)
+    project = project_from_legacy(project_path)
+    reduced = sample_from_legacy(zoo_project, sample_name)
     # Return the sample, enriched with back ref
     return SampleWithBackRef(
         **reduced.model_dump(),
@@ -121,7 +120,7 @@ def create_sample(
     logger.info(f"Creating sample for project {project_hash}")
 
     # Check if the project exists
-    drive_path, project_name, project_path = drive_and_project_from_hash(project_hash)
+    drive_and_project_from_hash(project_hash)
 
     # Create a DB instance
     db_instance = DB(bearer=user.id)
@@ -152,7 +151,7 @@ def check_sample_exists(project_hash: str, sample_id: str, user: User = None):
     Raises:
         HTTPException: If the sample is not found.
     """
-    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive_path)
     zoo_project = zoo_drive.get_project_folder(project_name)
 
@@ -188,13 +187,7 @@ def update_sample(
     """
     logger.info(f"Updating sample {sample_id} for project {project_hash}")
 
-    # Check if the project exists
-    try:
-        project = get_project_by_hash(project_hash, user)
-    except HTTPException as e:
-        raise e
-
-    # Check if the sample exists
+    # Check if the sample exists (this also checks if the project exists)
     try:
         check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:
@@ -240,13 +233,7 @@ def delete_sample(
     """
     logger.info(f"Deleting sample {sample_id} for project {project_hash}")
 
-    # Check if the project exists
-    try:
-        project = get_project_by_hash(project_hash, user)
-    except HTTPException as e:
-        raise e
-
-    # Check if the sample exists
+    # Check if the sample exists (this also checks if the project exists)
     try:
         check_sample_exists(project_hash, sample_id, user)
     except HTTPException as e:

@@ -7,15 +7,17 @@ from Models import Drive
 from legacy.drives import get_drive_path
 
 
-def hash_from_drive_and_project(drive_model: Drive, a_prj_path: Path):
+def hash_from_project(a_prj_path: Path):
     """
     Compute some user and browser compatible IDs for URLs
+    Assumes that the drive's name is _always_ the project parent directory name
     """
-    url_hash = f"{drive_model.name}|{a_prj_path.name}"
+    drive_name = a_prj_path.parent.name
+    url_hash = f"{drive_name}|{a_prj_path.name}"
     return url_hash
 
 
-def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str, Path]:
+def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str]:
     """
     Extract drive and project names from a project hash generated above.
     """
@@ -37,7 +39,7 @@ def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str, Path]:
         raise HTTPException(
             status_code=404, detail=f"Project with ID {project_hash} not found"
         )
-    return drive_path, project_name, project_path
+    return drive_path, project_name
 
 
 THE_SCAN_PER_SUBSAMPLE = 1

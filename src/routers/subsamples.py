@@ -25,7 +25,6 @@ from modern.ids import (
 )
 from modern.to_legacy import add_subsample
 from remote.DB import DB
-from routers.projects import get_project_by_hash
 from routers.samples import get_sample, check_sample_exists
 
 # Create a router instance
@@ -58,7 +57,8 @@ def get_subsamples(
 
     # Check if the project exists
     try:
-        project = get_project_by_hash(project_hash, user)
+        drive_path, project_name = drive_and_project_from_hash(project_hash)
+        project_path = Path(drive_path) / project_name
     except HTTPException as e:
         raise e
 
@@ -69,7 +69,7 @@ def get_subsamples(
         raise e
 
     # Create a ZooscanProjectFolder object from the project
-    zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(project.name)
+    zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
     # Get subsamples using the same structure as in subsamples_from_legacy_project_and_sample
     subsamples = subsamples_from_legacy_project_and_sample(
@@ -107,7 +107,8 @@ def create_subsample(
 
     # Check if the project exists
     try:
-        project = get_project_by_hash(project_hash, user)
+        drive_path, project_name = drive_and_project_from_hash(project_hash)
+        project_path = Path(drive_path) / project_name
     except HTTPException as e:
         raise e
 
@@ -118,15 +119,17 @@ def create_subsample(
         raise e
 
     add_subsample(
-        project.path,
+        project_path,
         sample.name,
         subsample.name,
         subsample.metadataModelId,
         subsample.data,
     )
-    ret = SubSample(
-        id="subsample1", name="Subsample 1", scan=[], metadata=[]
-    )  # TODO: a subsample_from_legacy primitive
+    # Basically re-read from FS
+    zoo_scan_metadata = sample.get_scan_metadata(subsample.name)
+    ret = subsample_from_legacy(
+        project_hash, sample_id, subsample.name, zoo_scan_metadata
+    )
     return ret
 
 
@@ -157,7 +160,8 @@ def get_subsample(
 
     # Check if the project exists
     try:
-        project = get_project_by_hash(project_hash, user)
+        drive_path, project_name = drive_and_project_from_hash(project_hash)
+        project_path = Path(drive_path) / project_name
     except HTTPException as e:
         raise e
 
@@ -168,7 +172,7 @@ def get_subsample(
         raise e
 
     # Create a ZooscanProjectFolder object from the project
-    zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(project.name)
+    zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
     # Get the project scans metadata
     project_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
@@ -184,7 +188,7 @@ def get_subsample(
         raise_404(f"Subsample {subsample_id} not found in sample {sample_id}")
 
     subsample = subsample_from_legacy(
-        project_hash, sample_id, subsample_id, zoo_metadata_sample
+        zoo_project, sample_id, subsample_id, zoo_metadata_sample
     )
 
     return subsample
@@ -217,7 +221,8 @@ def delete_subsample(
 
     # Check if the project exists
     try:
-        project = get_project_by_hash(project_hash, user)
+        drive_path, project_name = drive_and_project_from_hash(project_hash)
+        project_path = Path(drive_path) / project_name
     except HTTPException as e:
         raise e
 
@@ -272,7 +277,8 @@ def process_subsample(
 
     # Check if the project exists
     try:
-        project = get_project_by_hash(project_hash, user)
+        drive_path, project_name = drive_and_project_from_hash(project_hash)
+        project_path = Path(drive_path) / project_name
     except HTTPException as e:
         raise e
 
@@ -308,7 +314,7 @@ async def get_subsample_scan(
     project_hash: str,
     sample_id: str,
     subsample_id: str,
-    user=Depends(get_current_user_from_credentials),  # TODO: Should be protected?
+    user=Depends(get_current_user_from_credentials),
 ) -> StreamingResponse:
     """
     Get the scan image for a specific subsample.
@@ -329,13 +335,13 @@ async def get_subsample_scan(
     )
 
     # Get the project and sample paths
-    drive_path, project_name, _ = drive_and_project_from_hash(project_hash)
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
     # Get the files for the subsample
     try:
-        subsample_files = project.zooscan_scan.work.get_files(
+        _subsample_files = project.zooscan_scan.work.get_files(
             subsample_id, THE_SCAN_PER_SUBSAMPLE
         )
     except Exception as e:

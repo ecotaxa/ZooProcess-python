@@ -61,6 +61,8 @@ class Sample(BaseModel):
     metadata: List["MetadataModel"]
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
+    nbScans: int
+    nbFractions: str
     metadataModel: str = "foo"  # WIP on front side, but needed for form display
 
 
@@ -81,6 +83,8 @@ class SubSample(BaseModel):
     name: str
     metadata: List["MetadataModel"]
     scan: List["Scan"]
+    createdAt: datetime
+    updatedAt: datetime
 
 
 class SubSampleIn(BaseModel):

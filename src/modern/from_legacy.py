@@ -24,8 +24,9 @@ from legacy.utils import (
     find_scan_metadata,
     sub_table_for_sample,
 )
+from logger import logger
 from modern.ids import (
-    hash_from_drive_and_project,
+    hash_from_project,
     subsample_name_from_scan_name,
     scan_name_from_subsample_name,
 )
@@ -50,11 +51,8 @@ def drives_from_legacy() -> list[Drive]:
         list[Drive]: A list of Drive objects representing the drives configured in the app.
     """
     ret = []
-    a_drive: str
-    for a_drive in config.DRIVES:
-        drv = Path(a_drive)
-        name = drv.name
-        ret.append(Drive(id=name, name=name, url=a_drive))
+    for drive in config.DRIVES:
+        ret.append(drive_from_legacy(drive))
     return ret
 
 
@@ -65,14 +63,16 @@ def drive_from_legacy(drive_path: Path) -> Drive:
     return Drive(id=drive_path.name, name=drive_path.name, url=str(drive_path))
 
 
-def project_from_legacy(
-    drive_model: Drive, a_prj_path: Path, serial_number: str = None
-) -> Project:
-    unq_id = hash_from_drive_and_project(drive_model, a_prj_path)
+def project_from_legacy(a_prj_path: Path, serial_number: str = None) -> Project:
+    project_hash = hash_from_project(a_prj_path)
     project_name = a_prj_path.name
     # Extract serial number from project name if not provided
     if serial_number is None:
         serial_number = extract_serial_number(project_name)
+
+    # Deduce the drive model from the project path
+    drive_path = a_prj_path.parent
+    drive_model = drive_from_legacy(drive_path)
 
     zoo_project = ZooscanDrive(Path(drive_model.url)).get_project_folder(project_name)
     # Get the creation time of the directory
@@ -85,11 +85,11 @@ def project_from_legacy(
     if instrument_model is None:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
 
-    sample_models = samples_from_legacy_project(unq_id, zoo_project)
+    sample_models = samples_from_legacy_project(zoo_project)
 
     project = Project(
         path=str(a_prj_path),
-        id=unq_id,
+        id=project_hash,
         name=project_name,
         instrumentSerialNumber=serial_number,
         instrumentId=serial_number,
@@ -103,18 +103,19 @@ def project_from_legacy(
 
 
 def samples_from_legacy_project(
-    project_hash: str,
     zoo_project: ZooscanProjectFolder,
 ) -> list[Sample]:
     ret = []
     for sample_name in zoo_project.list_samples_with_state():
-        sample_to_add = sample_from_legacy(project_hash, zoo_project, sample_name)
+        # TODO maybe: Filter out samples which do not have a directory,
+        #  it's possible to copy/paste a samples CSV without the corresponding directory
+        sample_to_add = sample_from_legacy(zoo_project, sample_name)
         ret.append(sample_to_add)
     return ret
 
 
 def subsamples_from_legacy_project_and_sample(
-    project_hash: str, zoo_project: ZooscanProjectFolder, sample_name: str
+    zoo_project: ZooscanProjectFolder, sample_name: str
 ):
     ret = []
     project_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
@@ -127,10 +128,10 @@ def subsamples_from_legacy_project_and_sample(
         if zoo_metadata_sample is None:
             # Not an error or warning, we don't have the relationship samples->subsample beforehand
             continue
-        sample_to_add = subsample_from_legacy(
-            project_hash, sample_name, subsample_name, zoo_metadata_sample
+        subsample_to_add = subsample_from_legacy(
+            zoo_project, sample_name, subsample_name, zoo_metadata_sample
         )
-        ret.append(sample_to_add)
+        ret.append(subsample_to_add)
     return ret
 
 
@@ -147,9 +148,16 @@ def to_modern_meta(metadata_dict: Dict) -> List[MetadataModel]:
     return ret
 
 
-def sample_from_legacy(
-    project_hash: str, zoo_project: ZooscanProjectFolder, sample_name: str
-) -> Sample:
+def fraction_name_from_subsample(sample_name: str, a_subsample: SubSample):
+    subsample_suffix = a_subsample.name.replace(sample_name, "")
+    try:
+        fraction_id = subsample_suffix.split("_")[1]
+    except IndexError:
+        fraction_id = f"?{subsample_suffix}"
+    return fraction_id
+
+
+def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> Sample:
     # Parse the sample name into components
     parsed_name = parse_sample_name(sample_name)
     # Create metadata from parsed components
@@ -158,46 +166,61 @@ def sample_from_legacy(
     assert (
         zoo_metadata is not None
     ), f"Sample {sample_name} metadata not found in {zoo_project.zooscan_meta.samples_table_path}"
-    metadata = to_modern_meta(from_legacy_meta(zoo_metadata))
+    metadata_dict = from_legacy_meta(zoo_metadata)
+    metadata = to_modern_meta(metadata_dict)
     subsample_models = subsamples_from_legacy_project_and_sample(
-        project_hash, zoo_project, sample_name
+        zoo_project, sample_name
     )
-    # for key, value in parsed_name.items():
-    #     if key not in ["full_name", "components", "num_components"]:
-    #         metadata.append(
-    #             {
-    #                 "id": f"{sample_name}_{key}",
-    #                 "name": key,
-    #                 "value": str(value),
-    #                 "description": f"Extracted from sample name: {key}",
-    #             }
-    #         )
-    # Create the sample with metadata
+    # Create the sample with metadata and precomputed aggregates
+    nb_scans = sum(len(a_subsample.scan) for a_subsample in subsample_models)
+    fractions = set(
+        [
+            fraction_name_from_subsample(sample_name, a_subsample)
+            for a_subsample in subsample_models
+        ]
+    )
+    fractions_str = ", ".join(fractions)
+    created_at = parse_legacy_date(metadata_dict.get("sampling_date"), "-")
     ret = Sample(
-        id=sample_name, name=sample_name, metadata=metadata, subsample=subsample_models
+        id=sample_name,
+        name=sample_name,
+        metadata=metadata,
+        subsample=subsample_models,
+        nbScans=nb_scans,
+        nbFractions=fractions_str,
+        createdAt=created_at,
     )
     return ret
 
 
 def subsample_from_legacy(
-    project_hash: str, sample_name: str, subsample_name: str, zoo_scan_metadata: Dict
+    zoo_project: ZooscanProjectFolder,
+    sample_name: str,
+    subsample_name: str,
+    zoo_scan_metadata: Dict,
 ) -> SubSample:
-    metadata_dict = from_legacy_meta(zoo_scan_metadata)
-    metadata = to_modern_meta(metadata_dict)
-    # Parse the subsample name into components
-    parsed_name = parse_sample_name(subsample_name)
-    scans = scans_from_legacy(project_hash, sample_name, subsample_name)
+    metadata = to_modern_meta(from_legacy_meta(zoo_scan_metadata))
+    scans = scans_from_legacy(zoo_project, sample_name, subsample_name)
     # Create the sample with metadata and scans
+    created_at = updated_at = datetime.now()
     ret = SubSample(
-        id=subsample_name, name=subsample_name, metadata=metadata, scan=scans
+        id=subsample_name,
+        name=subsample_name,
+        metadata=metadata,
+        scan=scans,
+        createdAt=created_at,
+        updatedAt=updated_at,
     )
     return ret
 
 
 def scans_from_legacy(
-    project_hash: str, sample_name: str, subsample_name: str
+    zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
 ) -> List[Scan]:
+    # What is presented as a "scan" is in fact several files
+
     # So far there is a _maximum_ of 1 scan per subsample
+    project_hash = hash_from_project(zoo_project.path)
     the_scan = Scan(
         id=scan_name_from_subsample_name(subsample_name),
         url=config.public_url
@@ -209,15 +232,12 @@ def scans_from_legacy(
     return [the_scan]
 
 
-def backgrounds_from_legacy_project(
-    drive_model: Drive, project: ZooscanProjectFolder
-) -> list[Background]:
+def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Background]:
     """
     Extract background information from a ZooscanProjectFolder and return a list of Background objects.
 
     Args:
         project (ZooscanProjectFolder): The project folder to extract backgrounds from.
-        drive_model (Drive): The drive model containing the project. If None, the drive from the project will be used.
 
     Returns:
         list[Background]: A list of Background objects representing the backgrounds in the project.
@@ -250,8 +270,8 @@ def backgrounds_from_legacy_project(
         instrument_data["sn"] = serial_number
         instrument = Instrument(**instrument_data)
 
-    # Use the provided drive if available, otherwise use the project's drive
-    project_hash = hash_from_drive_and_project(drive_model, project.path)
+    # Use the project path to generate the hash
+    project_hash = hash_from_project(project.path)
 
     # For each date, create a Background object. Dates are in ZooProcess format
     for a_date in dates:
@@ -267,7 +287,7 @@ def backgrounds_from_legacy_project(
             )
 
             # Convert the date string to a datetime object for the model
-            api_date = datetime.strptime(a_date, "%Y%m%d_%H%M")
+            api_date = parse_legacy_date(a_date)
 
             # Create the Background object
             background = Background(
@@ -282,6 +302,25 @@ def backgrounds_from_legacy_project(
             backgrounds.append(background)
 
     return backgrounds
+
+
+def parse_legacy_date(a_date: str, separator: str = "_") -> datetime:
+    """
+    Parse a date string in the format "%Y%m%d_%H%M" into a datetime object.
+
+    If the date string is invalid, logs a warning and returns the epoch date (January 1, 1970).
+
+    Args:
+        a_date (str): The date string to parse
+
+    Returns:
+        datetime: The parsed datetime object, or epoch date if parsing fails
+    """
+    try:
+        return datetime.strptime(a_date, f"%Y%m%d{separator}%H%M")
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Invalid date {a_date}. Using epoch date instead. Error: {e}")
+        return datetime(1970, 1, 1)  # Return epoch date
 
 
 def scans_from_legacy_project(project: ZooscanProjectFolder) -> list[Scan]:
@@ -311,7 +350,7 @@ def scans_from_legacy_project(project: ZooscanProjectFolder) -> list[Scan]:
 
 def from_legacy_meta(meta: dict) -> dict:
     """
-    Convert legacy metadata dictionary to modern format.
+    Convert legacy metadata dictionary, from CSV data source, to modern format.
 
     This function transforms a dictionary containing metadata with legacy keys into a new dictionary
     with standardized modern keys. It also performs special transformations on latitude and longitude
@@ -342,8 +381,7 @@ def from_legacy_meta(meta: dict) -> dict:
         "ship": "ship_name",  # 'thalassa',
         "scientificprog": "scientific_program",  # 'apero',
         "stationid": "station_id",  # '66',
-        # 'date': 'sampling_date' , # '20230704-0503',
-        "createdAt": "sampling_date",  # '20230704-0503',
+        "date": "sampling_date",  # '20230704-0503',
         "latitude": "latitude_start",  # '51.5293',
         "longitude": "longitude_start",  # '19.2159',
         "depth": "bottom_depth",  # '99999',
@@ -381,7 +419,7 @@ def from_legacy_meta(meta: dict) -> dict:
         #
         # In scan CSV
         "scanop": "operator",  # 'adelaide_perruchon',
-        # 'FracId': 'd1_1_sur_1',
+        "fracid": "fraction_id",  # 'd1_1_sur_1',
         "fracmin": "fraction_min_mesh",  # '10000',
         "fracsup": "fraction_max_mesh",  # '999999',
         "fracnb": "fraction_number",  # '1',

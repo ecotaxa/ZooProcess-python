@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import List
 
 from dotenv import load_dotenv
@@ -52,7 +53,7 @@ class Config:
         """
         self.WORKING_DIR: str = WORKING_DIR
         self.DB_NAME: str = DB_NAME
-        self.DRIVES: List[str] = DRIVES
+        self.DRIVES: List[Path] = [Path(a_drive) for a_drive in DRIVES]
         self.dbserver: str = dbserver
         self.public_url: str = public_url
         self.SECRET_KEY: str = SECRET_KEY

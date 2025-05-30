@@ -1,5 +1,3 @@
-import importlib
-import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -17,12 +15,9 @@ def get_drive_path(drive_name) -> Optional[Path]:
     Returns:
         Path: The full path of the drive if found, None otherwise
     """
-    from config_rdr import config
-
-    for drive_path in config.DRIVES:
-        drive = Path(drive_path)
+    for drive in config.DRIVES:
         if drive.name == drive_name:
-            return Path(drive_path)
+            return drive
 
     return None
 
@@ -38,20 +33,20 @@ def validate_drives():
     invalid_drives = []
     not_directories = []
     for drive in config.DRIVES:
-        if drive and not os.path.exists(drive):
+        if drive and not drive.exists():
             invalid_drives.append(drive)
-        elif drive and not os.path.isdir(drive):
+        elif drive and not drive.is_dir():
             not_directories.append(drive)
 
     if invalid_drives:
         print(
-            f"ERROR: The following drives do not exist or are not accessible: {', '.join(invalid_drives)}"
+            f"ERROR: The following drives do not exist or are not accessible: {', '.join(str(d) for d in invalid_drives)}"
         )
         sys.exit(1)
 
     if not_directories:
         print(
-            f"ERROR: The following drives are not directories: {', '.join(not_directories)}"
+            f"ERROR: The following drives are not directories: {', '.join(str(d) for d in not_directories)}"
         )
         sys.exit(1)
 
@@ -66,6 +61,6 @@ def validate_drives():
 
     if duplicate_drives:
         print(
-            f"ERROR: The following drives are duplicated: {', '.join(duplicate_drives)}"
+            f"ERROR: The following drives are duplicated: {', '.join(str(d) for d in duplicate_drives)}"
         )
         sys.exit(1)

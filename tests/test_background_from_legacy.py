@@ -54,12 +54,12 @@ def test_background_from_legacy_project(mocker: MockFixture):
     )
     mock_extract_serial_number.return_value = "TEST123"
 
-    # Mock the hash_from_drive_and_project function
-    mock_hash = mocker.patch("modern.from_legacy.hash_from_drive_and_project")
+    # Mock the hash_from_project function
+    mock_hash = mocker.patch("modern.from_legacy.hash_from_project")
     mock_hash.return_value = "test_drive|test_project"
 
     # Call the function
-    backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
+    backgrounds = backgrounds_from_legacy_project(mock_project)
 
     # Verify the results
     assert len(backgrounds) == 2
@@ -124,12 +124,12 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     )
     mock_extract_serial_number.return_value = "TEST123"
 
-    # Mock the hash_from_drive_and_project function
-    mock_hash = mocker.patch("modern.from_legacy.hash_from_drive_and_project")
+    # Mock the hash_from_project function
+    mock_hash = mocker.patch("modern.from_legacy.hash_from_project")
     mock_hash.return_value = "test_drive|test_project"
 
     # Call the function
-    backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
+    backgrounds = backgrounds_from_legacy_project(mock_project)
 
     # Verify the results
     assert len(backgrounds) == 0
@@ -175,12 +175,12 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
     )
     mock_extract_serial_number.return_value = "TEST123"
 
-    # Mock the hash_from_drive_and_project function
-    mock_hash = mocker.patch("modern.from_legacy.hash_from_drive_and_project")
+    # Mock the hash_from_project function
+    mock_hash = mocker.patch("modern.from_legacy.hash_from_project")
     mock_hash.return_value = "test_drive|test_project"
 
     # Call the function
-    backgrounds = backgrounds_from_legacy_project(mock_drive, mock_project)
+    backgrounds = backgrounds_from_legacy_project(mock_project)
 
     # Verify the results
     assert len(backgrounds) == 0

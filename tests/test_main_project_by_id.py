@@ -35,7 +35,7 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_project_path.__str__.return_value = "/path/to/drive1/Project1"
 
     # Set up mock for drive_and_project_from_hash to return our mock paths
-    mock_extract.return_value = (mock_drive_path, "Project1", mock_project_path)
+    mock_extract.return_value = (mock_drive_path, "Project1")
 
     # Create a test project
     drive_model = Drive(id="drive1", name="drive1", url="/path/to/drive1")

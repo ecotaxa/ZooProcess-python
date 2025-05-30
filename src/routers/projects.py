@@ -1,13 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
+import tempfile
 from pathlib import Path
 
-from Models import Project, Drive
+from fastapi.responses import StreamingResponse
+from Models import Project, Drive, Background, Scan
 from auth import get_current_user_from_credentials
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from modern.ids import drive_and_project_from_hash
-from modern.from_legacy import project_from_legacy
+from modern.from_legacy import (
+    project_from_legacy,
+    backgrounds_from_legacy_project,
+    scans_from_legacy_project,
+)
 from legacy_to_remote.importe import import_old_project
+from legacy.files import find_background_file
+from helpers.web import raise_404, get_stream
+from img_proc.convert import convert_tiff_to_jpeg
 from remote.DB import DB
 from logger import logger
 from config_rdr import config
@@ -19,7 +28,7 @@ router = APIRouter(
 )
 
 
-def list_all_projects(drives_to_check=None):
+def list_all_projects(drives_to_check: List[Path]):
     """
     List all projects from the specified drives.
 
@@ -32,17 +41,11 @@ def list_all_projects(drives_to_check=None):
     """
     # Create a list to store all projects
     all_projects = []
-    # Use provided drives or default to config.DRIVES
-    if drives_to_check is None:
-        drives_to_check = config.DRIVES
     # Iterate through each drive in the list
-    for drive_path in drives_to_check:
-        drive = Path(drive_path)
-        drive_model = Drive(id=drive.name, name=drive.name, url=drive_path)
-        drive_zoo = ZooscanDrive(drive_path)
-
-        for a_prj_path in drive_zoo.list():
-            project = project_from_legacy(drive_model, a_prj_path)
+    for drive in drives_to_check:
+        zoo_drive = ZooscanDrive(drive)
+        for a_prj_path in zoo_drive.list():
+            project = project_from_legacy(a_prj_path)
             all_projects.append(project)
 
     return all_projects
@@ -57,7 +60,7 @@ def get_projects(
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    return list_all_projects()
+    return list_all_projects(config.DRIVES)
 
 
 @router.get("/{project_hash}")
@@ -74,9 +77,9 @@ def get_project_by_hash(
         project_hash: The hash of the project to retrieve.
     """
     # Get the specific project by hash
-    drive_path, project_name, project_path = drive_and_project_from_hash(project_hash)
-    drive_model = Drive(id=drive_path.name, name=drive_path.name, url=str(drive_path))
-    project = project_from_legacy(drive_model, project_path)
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    project_path = Path(drive_path) / project_name
+    project = project_from_legacy(project_path)
     return project
 
 
@@ -105,3 +108,99 @@ def test(project: Project):
     db = DB(bearer=project.bearer, db=project.db)
 
     return {"status": "success", "message": "Test endpoint"}
+
+
+@router.get("/{project_hash}/backgrounds")
+def get_backgrounds(
+    project_hash: str, user=Depends(get_current_user_from_credentials)
+) -> List[Background]:
+    """
+    Get the list of backgrounds associated with a project.
+
+    Args:
+        project_hash (str): The hash of the project to get backgrounds for.
+        user: Security dependency to get the current user.
+
+    Returns:
+        List[Background]: A list of backgrounds associated with the project.
+
+    Raises:
+        HTTPException: If the project is not found or the user is not authorized.
+    """
+    logger.info(f"Getting backgrounds for project {project_hash}")
+
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    project = zoo_drive.get_project_folder(project_name)
+    return backgrounds_from_legacy_project(project)
+
+
+@router.get("/{project_hash}/scans")
+def get_scans(
+    project_hash: str,
+    # user=Depends(get_current_user_from_credentials)
+) -> List[Scan]:
+    """
+    Get the list of scans associated with a project.
+
+    Args:
+        project_hash (str): The hash of the project to get scans for.
+        user: Security dependency to get the current user.
+
+    Returns:
+        List[Scan]: A list of scans associated with the project.
+
+    Raises:
+        HTTPException: If the project is not found or the user is not authorized.
+    """
+    logger.info(f"Getting scans for project {project_hash}")
+
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    project = zoo_drive.get_project_folder(project_name)
+
+    return scans_from_legacy_project(project)
+
+
+@router.get("/{project_hash}/background/{background_id}")
+async def get_background(
+    project_hash: str,
+    background_id: str,
+    # user=Depends(get_current_user_from_credentials), # TODO: Should be protected?
+) -> StreamingResponse:
+    """
+    Get a specific background from a project by its ID.
+
+    Args:
+        project_hash (str): The hash of the project to get the background from.
+        background_id (str): The ID of the background to retrieve from the project.
+        user: Security dependency to get the current user.
+
+    Returns:
+        Background: The requested background.
+
+    Raises:
+        HTTPException: If the project or background is not found
+    """
+    logger.info(f"Getting background {background_id} for project {project_hash}")
+
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    zoo_drive = ZooscanDrive(drive_path)
+    project = zoo_drive.get_project_folder(project_name)
+
+    assert background_id.endswith(
+        ".jpg"
+    )  # This comes from @see:backgrounds_from_legacy_project
+    background_name = background_id[:-4]
+
+    background_file = find_background_file(project, background_name)
+    if background_file is None:
+        raise_404(
+            f"Background with ID {background_id} not found in project {project_hash}"
+        )
+
+    tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
+    convert_tiff_to_jpeg(background_file, tmp_jpg)
+    file_like, length, media_type = get_stream(tmp_jpg)
+    headers = {"content-length": str(length)}
+    return StreamingResponse(file_like, headers=headers, media_type=media_type)
