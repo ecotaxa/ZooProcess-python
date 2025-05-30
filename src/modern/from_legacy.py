@@ -12,7 +12,6 @@ from Models import (
     Sample,
     Background,
     Instrument,
-    ScanIn,
     Scan,
     MetadataModel,
     SubSample,
@@ -38,6 +37,7 @@ from modern.utils import (
     find_latest_modification_time,
     convert_ddm_to_decimal_degrees,
 )
+from modern.subsample import get_project_scans_metadata
 
 
 def drives_from_legacy() -> list[Drive]:
@@ -64,7 +64,6 @@ def drive_from_legacy(drive_path: Path) -> Drive:
 
 
 def project_from_legacy(a_prj_path: Path, serial_number: str = None) -> Project:
-    project_hash = hash_from_project(a_prj_path)
     project_name = a_prj_path.name
     # Extract serial number from project name if not provided
     if serial_number is None:
@@ -86,6 +85,7 @@ def project_from_legacy(a_prj_path: Path, serial_number: str = None) -> Project:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
 
     sample_models = samples_from_legacy_project(zoo_project)
+    project_hash = hash_from_project(a_prj_path)
 
     project = Project(
         path=str(a_prj_path),
@@ -118,18 +118,18 @@ def subsamples_from_legacy_project_and_sample(
     zoo_project: ZooscanProjectFolder, sample_name: str
 ):
     ret = []
-    project_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
+    project_scans_metadata = get_project_scans_metadata(zoo_project)
     sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
     for scan_name in zoo_project.list_scans_with_state():
         subsample_name = subsample_name_from_scan_name(scan_name)
-        zoo_metadata_sample = find_scan_metadata(
+        zoo_subsample_metadata = find_scan_metadata(
             sample_scans_metadata, sample_name, scan_name
         )  # No concept of "subsample" in legacy"
-        if zoo_metadata_sample is None:
+        if zoo_subsample_metadata is None:
             # Not an error or warning, we don't have the relationship samples->subsample beforehand
             continue
         subsample_to_add = subsample_from_legacy(
-            zoo_project, sample_name, subsample_name, zoo_metadata_sample
+            zoo_project, sample_name, subsample_name, zoo_subsample_metadata
         )
         ret.append(subsample_to_add)
     return ret
@@ -153,7 +153,7 @@ def fraction_name_from_subsample(sample_name: str, a_subsample: SubSample):
     try:
         fraction_id = subsample_suffix.split("_")[1]
     except IndexError:
-        fraction_id = f"?{subsample_suffix}"
+        fraction_id = f"?{subsample_suffix}?"
     return fraction_id
 
 
@@ -232,12 +232,14 @@ def scans_from_legacy(
     return [the_scan]
 
 
-def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Background]:
+def backgrounds_from_legacy_project(
+    zoo_project: ZooscanProjectFolder,
+) -> list[Background]:
     """
     Extract background information from a ZooscanProjectFolder and return a list of Background objects.
 
     Args:
-        project (ZooscanProjectFolder): The project folder to extract backgrounds from.
+        zoo_project (ZooscanProjectFolder): The project folder to extract backgrounds from.
 
     Returns:
         list[Background]: A list of Background objects representing the backgrounds in the project.
@@ -245,17 +247,16 @@ def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Backg
     backgrounds = []
 
     # Get the background folder from the project
-    back_folder = project.zooscan_back
+    back_folder = zoo_project.zooscan_back
 
     # Get all dates for which backgrounds exist
     dates = back_folder.get_dates()
 
     # Get a mock user for the backgrounds
-    # In a real implementation, this would be fetched from a database
     mock_user = get_mock_user()
 
     # Always call extract_serial_number to ensure it's called as expected by tests
-    serial_number = extract_serial_number(project.project)
+    serial_number = extract_serial_number(zoo_project.project)
 
     # Try to find an instrument with matching serial number from the hardcoded list
     instrument = None
@@ -271,7 +272,7 @@ def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Backg
         instrument = Instrument(**instrument_data)
 
     # Use the project path to generate the hash
-    project_hash = hash_from_project(project.path)
+    project_hash = hash_from_project(zoo_project.path)
 
     # For each date, create a Background object. Dates are in ZooProcess format
     for a_date in dates:
@@ -306,12 +307,13 @@ def backgrounds_from_legacy_project(project: ZooscanProjectFolder) -> list[Backg
 
 def parse_legacy_date(a_date: str, separator: str = "_") -> datetime:
     """
-    Parse a date string in the format "%Y%m%d_%H%M" into a datetime object.
+    Parse a date string in the format "%Y%m%d*%H%M" into a datetime object.
 
     If the date string is invalid, logs a warning and returns the epoch date (January 1, 1970).
 
     Args:
         a_date (str): The date string to parse
+        separator (str): The separator b/w day and time components
 
     Returns:
         datetime: The parsed datetime object, or epoch date if parsing fails
@@ -326,26 +328,39 @@ def parse_legacy_date(a_date: str, separator: str = "_") -> datetime:
 def scans_from_legacy_project(project: ZooscanProjectFolder) -> list[Scan]:
     """
     Extract scan information from a ZooscanProjectFolder and return a list of Scan objects.
+    Uses scans_from_legacy in a loop over samples and subsamples.
 
     Args:
         project (ZooscanProjectFolder): The project folder to extract scans from.
 
     Returns:
-        list[ScanIn]: A list of Scan objects representing the scans in the project.
+        list[Scan]: A list of Scan objects representing the scans in the project.
     """
-    scans = []
+    ret = []
 
-    # Get a mock user for the scans
-    # In a real implementation, this would be fetched from a database
-    mock_user = get_mock_user()
-
+    # Get scan metadata for the project
+    project_scans_metadata = get_project_scans_metadata(project)
     # Iterate over all samples in the project
-    for scan_name in project.list_scans_with_state():
-        scans.append(
-            Scan(id=scan_name, url="toto", type="MEDIUM", metadata=[], user=mock_user)
+    for sample_name in project.list_samples_with_state():
+        sample_scans_metadata = sub_table_for_sample(
+            project_scans_metadata, sample_name
         )
+        # Iterate over all scans in the project
+        for scan_name in project.list_scans_with_state():
+            subsample_name = subsample_name_from_scan_name(scan_name)
+            zoo_subsample_metadata = find_scan_metadata(
+                sample_scans_metadata, sample_name, scan_name
+            )
 
-    return scans
+            # Skip if no metadata found for this scan in this sample
+            if zoo_subsample_metadata is None:
+                continue
+
+            # Get scans for this subsample and add them to the result list
+            subsample_scans = scans_from_legacy(project, sample_name, subsample_name)
+            ret.extend(subsample_scans)
+
+    return ret
 
 
 def from_legacy_meta(meta: dict) -> dict:

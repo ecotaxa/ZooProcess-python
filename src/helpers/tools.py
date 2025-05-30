@@ -1,11 +1,12 @@
 import os
 import sys
+import time
 from pathlib import Path
 from logger import logger
+from functools import wraps
 
 
 def nameit(func):
-    from functools import wraps
 
     @wraps(func)
     def nameit_wrapper(*args, **kwargs):
@@ -17,11 +18,9 @@ def nameit(func):
 
 
 def timeit(func):
-    from functools import wraps
 
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
-        import time
 
         start_time = time.perf_counter()
         result = func(*args, **kwargs)

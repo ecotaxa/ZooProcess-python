@@ -1,15 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+from collections import OrderedDict
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from Models import Instrument, Calibration, Background, Project
-from auth import get_current_user_from_credentials
-from modern.instrument import get_instruments as get_all_instruments
-from modern.instrument import get_instrument_by_id
 import modern.calibration as calibration_module
-from remote.DB import DB
+from Models import Instrument, Calibration, Background
+from ZooProcess_lib.ZooscanFolder import ZooscanDrive
+from auth import get_current_user_from_credentials
+from config_rdr import config
 from local_DB.db_dependencies import get_db
-from logger import logger
+from modern.from_legacy import backgrounds_from_legacy_project
+from modern.instrument import get_instrument_by_id
+from modern.instrument import get_instruments as get_all_instruments
+from remote.DB import DB
 
 # Create a router instance
 router = APIRouter(
@@ -83,30 +87,28 @@ def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
             status_code=404, detail=f"Instrument with ID {instrument_id} not found"
         )
 
-    # Get all projects
-    from routers.projects import list_all_projects
-    from config_rdr import config
-    from collections import OrderedDict
-    from pathlib import Path
-    from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-    from modern.from_legacy import backgrounds_from_legacy_project
-
-    projects = list_all_projects(config.DRIVES)
-
     # Collect all backgrounds from all projects
     all_backgrounds = OrderedDict()
-    a_project: Project
-    for a_project in projects:
-        if a_project.instrument.id != instrument_id:
-            continue
-        zoo_drive = ZooscanDrive(Path(a_project.drive.url))
-        project_folder = zoo_drive.get_project_folder(a_project.name)
-        # Get backgrounds for this project
-        project_backgrounds = backgrounds_from_legacy_project(project_folder)
-        # Add to the list
-        for a_bg in project_backgrounds:
-            if a_bg.id not in all_backgrounds:
-                all_backgrounds[a_bg.id] = a_bg
+
+    # Iterate through each drive in the config
+    for drive_path in config.DRIVES:
+        zoo_drive = ZooscanDrive(drive_path)
+
+        # Get all projects in this drive
+        for project in zoo_drive.list():
+            # Get the project folder
+            project_folder = zoo_drive.get_project_folder(project.name)
+
+            # Get backgrounds for this project
+            project_backgrounds = backgrounds_from_legacy_project(project_folder)
+
+            # Add backgrounds with matching instrument ID to the list
+            for a_bg in project_backgrounds:
+                if (
+                    a_bg.instrument.id == instrument_id
+                    and a_bg.id not in all_backgrounds
+                ):
+                    all_backgrounds[a_bg.id] = a_bg
 
     # Sort by creation date (newest first)
     ret = list(all_backgrounds.values())

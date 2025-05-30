@@ -28,7 +28,7 @@ router = APIRouter(
 )
 
 
-def list_all_projects(drives_to_check: List[Path]):
+def list_all_projects(drives_to_check: List[Path]) -> List[Project]:
     """
     List all projects from the specified drives.
 
@@ -66,7 +66,7 @@ def get_projects(
 @router.get("/{project_hash}")
 def get_project_by_hash(
     project_hash: str,
-    user=Depends(get_current_user_from_credentials),
+    _user=Depends(get_current_user_from_credentials),
 ) -> Project:
     """
     Returns a specific project identified by its hash.
@@ -112,7 +112,7 @@ def test(project: Project):
 
 @router.get("/{project_hash}/backgrounds")
 def get_backgrounds(
-    project_hash: str, user=Depends(get_current_user_from_credentials)
+    project_hash: str, _user=Depends(get_current_user_from_credentials)
 ) -> List[Background]:
     """
     Get the list of backgrounds associated with a project.
@@ -137,15 +137,14 @@ def get_backgrounds(
 
 @router.get("/{project_hash}/scans")
 def get_scans(
-    project_hash: str,
-    # user=Depends(get_current_user_from_credentials)
+    project_hash: str, _user=Depends(get_current_user_from_credentials)
 ) -> List[Scan]:
     """
     Get the list of scans associated with a project.
 
     Args:
         project_hash (str): The hash of the project to get scans for.
-        user: Security dependency to get the current user.
+        _user: Security dependency to get the current user.
 
     Returns:
         List[Scan]: A list of scans associated with the project.
@@ -166,7 +165,7 @@ def get_scans(
 async def get_background(
     project_hash: str,
     background_id: str,
-    # user=Depends(get_current_user_from_credentials), # TODO: Should be protected?
+    _user=Depends(get_current_user_from_credentials),
 ) -> StreamingResponse:
     """
     Get a specific background from a project by its ID.

@@ -1,8 +1,7 @@
 # import os
 import os
-import tempfile
 from pathlib import Path
-from typing import Union, List, OrderedDict
+from typing import Union, List
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
@@ -10,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
-from starlette.responses import StreamingResponse, Response
+from starlette.responses import Response
 
 from Models import (
     ScanIn,
@@ -19,20 +18,12 @@ from Models import (
     Background,
     User,
     LoginReq,
-    Project,
     Drive,
-    Instrument,
-    Calibration,
-    Scan,
 )
 from ZooProcess_lib.Processor import Processor, Lut
-from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
-from config_rdr import config
 from demo_get_vignettes import generate_json
 from helpers.web import (
-    raise_404,
-    get_stream,
     internal_server_error_handler,
     TimingMiddleware,
     validation_exception_handler,
@@ -40,24 +31,18 @@ from helpers.web import (
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
 from legacy.drives import validate_drives
-from legacy.files import find_background_file
-from legacy_to_remote.importe import getDat1Path, pid2json
-from legacy_to_remote.importe import listWorkFolders
 from local_DB.db_dependencies import get_db
 from logger import logger
 from modern.from_legacy import (
-    backgrounds_from_legacy_project,
     drives_from_legacy,
-    scans_from_legacy_project,
 )
-from modern.ids import drive_and_project_from_hash
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.TaskStatus import TaskStatus
-from routers.projects import router as projects_router, list_all_projects
+from routers.instruments import router as instruments_router
+from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
-from routers.instruments import router as instruments_router
 from separate import Separate
 from separate_fn import separate_images
 from static.favicon import create_plankton_favicon
@@ -80,10 +65,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from auth import create_jwt_token, get_user_from_db, SESSION_COOKIE_NAME
-from modern.instrument import get_instruments as get_all_instruments
-from modern.instrument import get_instrument_by_id
 from remote.DB import DB
-import modern.calibration as calibration_module
 
 
 @asynccontextmanager

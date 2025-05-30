@@ -5,6 +5,7 @@ from .models import (
     get_engine,
     get_session_maker,
     init_db as sqlalchemy_init_db,
+    Base,
 )
 
 
@@ -121,7 +122,6 @@ class SQLiteDB:
         Create the database tables if they don't exist.
         """
         # Using SQLAlchemy to create tables
-        from src.local_DB.models import Base
 
         Base.metadata.create_all(self.engine)
 

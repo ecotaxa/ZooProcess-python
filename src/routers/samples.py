@@ -76,7 +76,6 @@ def get_sample(
     drive_path, project_name = drive_and_project_from_hash(project_hash)
     project_path = Path(drive_path) / project_name
     zoo_drive = ZooscanDrive(drive_path)
-    drive_model = drive_from_legacy(drive_path)
 
     zoo_project = zoo_drive.get_project_folder(project_name)
 
@@ -139,14 +138,13 @@ def create_sample(
     return created_sample
 
 
-def check_sample_exists(project_hash: str, sample_id: str, user: User = None):
+def check_sample_exists(project_hash: str, sample_id: str):
     """
     Check if a sample exists in a project without retrieving all its data.
 
     Args:
         project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to check.
-        user (User, optional): The user making the request. Defaults to None.
 
     Raises:
         HTTPException: If the sample is not found.
@@ -189,7 +187,7 @@ def update_sample(
 
     # Check if the sample exists (this also checks if the project exists)
     try:
-        check_sample_exists(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id)
     except HTTPException as e:
         raise e
 
@@ -235,7 +233,7 @@ def delete_sample(
 
     # Check if the sample exists (this also checks if the project exists)
     try:
-        check_sample_exists(project_hash, sample_id, user)
+        check_sample_exists(project_hash, sample_id)
     except HTTPException as e:
         raise e
 
