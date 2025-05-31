@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
+from sqlalchemy.orm import Session
+
 from Models import (
     Project,
     Drive,
@@ -37,7 +39,7 @@ from modern.utils import (
     find_latest_modification_time,
     convert_ddm_to_decimal_degrees,
 )
-from modern.subsample import get_project_scans_metadata
+from modern.subsample import get_project_scans_metadata, get_project_scans
 
 
 def drives_from_legacy() -> list[Drive]:
@@ -63,7 +65,9 @@ def drive_from_legacy(drive_path: Path) -> Drive:
     return Drive(id=drive_path.name, name=drive_path.name, url=str(drive_path))
 
 
-def project_from_legacy(a_prj_path: Path, serial_number: str = None) -> Project:
+def project_from_legacy(
+    db: Session, a_prj_path: Path, serial_number: str = None
+) -> Project:
     project_name = a_prj_path.name
     # Extract serial number from project name if not provided
     if serial_number is None:
@@ -84,7 +88,7 @@ def project_from_legacy(a_prj_path: Path, serial_number: str = None) -> Project:
     if instrument_model is None:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
 
-    sample_models = samples_from_legacy_project(zoo_project)
+    sample_models = samples_from_legacy_project(db, zoo_project)
     project_hash = hash_from_project(a_prj_path)
 
     project = Project(
@@ -103,24 +107,27 @@ def project_from_legacy(a_prj_path: Path, serial_number: str = None) -> Project:
 
 
 def samples_from_legacy_project(
+    db: Session,
     zoo_project: ZooscanProjectFolder,
 ) -> list[Sample]:
     ret = []
     for sample_name in zoo_project.list_samples_with_state():
         # TODO maybe: Filter out samples which do not have a directory,
         #  it's possible to copy/paste a samples CSV without the corresponding directory
-        sample_to_add = sample_from_legacy(zoo_project, sample_name)
+        sample_to_add = sample_from_legacy(db, zoo_project, sample_name)
         ret.append(sample_to_add)
     return ret
 
 
 def subsamples_from_legacy_project_and_sample(
-    zoo_project: ZooscanProjectFolder, sample_name: str
+    db: Session,
+    zoo_project: ZooscanProjectFolder,
+    sample_name: str,
 ):
     ret = []
-    project_scans_metadata = get_project_scans_metadata(zoo_project)
+    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
     sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
-    for scan_name in zoo_project.list_scans_with_state():
+    for scan_name in get_project_scans(db, zoo_project):
         subsample_name = subsample_name_from_scan_name(scan_name)
         zoo_subsample_metadata = find_scan_metadata(
             sample_scans_metadata, sample_name, scan_name
@@ -157,7 +164,11 @@ def fraction_name_from_subsample(sample_name: str, a_subsample: SubSample):
     return fraction_id
 
 
-def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> Sample:
+def sample_from_legacy(
+    db: Session,
+    zoo_project: ZooscanProjectFolder,
+    sample_name: str,
+) -> Sample:
     # Parse the sample name into components
     parsed_name = parse_sample_name(sample_name)
     # Create metadata from parsed components
@@ -169,7 +180,7 @@ def sample_from_legacy(zoo_project: ZooscanProjectFolder, sample_name: str) -> S
     metadata_dict = from_legacy_meta(zoo_metadata)
     metadata = to_modern_meta(metadata_dict)
     subsample_models = subsamples_from_legacy_project_and_sample(
-        zoo_project, sample_name
+        db, zoo_project, sample_name
     )
     # Create the sample with metadata and precomputed aggregates
     nb_scans = sum(len(a_subsample.scan) for a_subsample in subsample_models)
@@ -226,7 +237,7 @@ def scans_from_legacy(
         url=config.public_url
         + f"/projects/{project_hash}/samples/{sample_name}/subsamples/{subsample_name}/scan.jpg",
         metadata=[],
-        type="MEDIUM",
+        type="SCAN",
         user=get_mock_user(),
     )
     return [the_scan]
@@ -298,6 +309,7 @@ def backgrounds_from_legacy_project(
                 user=mock_user,
                 instrument=instrument,
                 createdAt=api_date,
+                type="MEDIUM_BACKGROUND",
             )
 
             backgrounds.append(background)
@@ -325,13 +337,14 @@ def parse_legacy_date(a_date: str, separator: str = "_") -> datetime:
         return datetime(1970, 1, 1)  # Return epoch date
 
 
-def scans_from_legacy_project(project: ZooscanProjectFolder) -> list[Scan]:
+def scans_from_legacy_project(db: Session, project: ZooscanProjectFolder) -> list[Scan]:
     """
     Extract scan information from a ZooscanProjectFolder and return a list of Scan objects.
     Uses scans_from_legacy in a loop over samples and subsamples.
 
     Args:
         project (ZooscanProjectFolder): The project folder to extract scans from.
+        db (sqlalchemy.orm.Session, optional): The SQLAlchemy session to use.
 
     Returns:
         list[Scan]: A list of Scan objects representing the scans in the project.
@@ -339,14 +352,14 @@ def scans_from_legacy_project(project: ZooscanProjectFolder) -> list[Scan]:
     ret = []
 
     # Get scan metadata for the project
-    project_scans_metadata = get_project_scans_metadata(project)
+    project_scans_metadata = get_project_scans_metadata(db, project)
     # Iterate over all samples in the project
     for sample_name in project.list_samples_with_state():
         sample_scans_metadata = sub_table_for_sample(
             project_scans_metadata, sample_name
         )
         # Iterate over all scans in the project
-        for scan_name in project.list_scans_with_state():
+        for scan_name in get_project_scans(db, project):
             subsample_name = subsample_name_from_scan_name(scan_name)
             zoo_subsample_metadata = find_scan_metadata(
                 sample_scans_metadata, sample_name, scan_name

@@ -1,6 +1,6 @@
 # Models for communicating via FastAPI
 from datetime import datetime
-from typing import List, Union, Literal, Optional
+from typing import List, Union, Literal, Optional, Dict, Any
 
 from pydantic import BaseModel, Field
 
@@ -92,7 +92,7 @@ class SubSampleIn(BaseModel):
 
     name: str
     metadataModelId: str  # TODO: Hardcoded on UI side
-    # TODO: enforce fields AKA keys, e.g.
+    # TODO: enforce fields AKA keys in below data, e.g.
     #  'scanning_operator': 'Admin',
     #  'scan_id': 'd1_01',
     #  'fraction_number': 'd1',
@@ -119,6 +119,7 @@ class Background(BaseModel):
     user: User
     instrument: "Instrument"
     createdAt: datetime
+    type: str
     error: Optional[datetime] = None
     # path: str
     # bearer: str | None = None
@@ -129,6 +130,18 @@ class Background(BaseModel):
     # projectId: str
     # background: List[str]
     # instrumentId: str
+
+
+class BackgroundUrl(BaseModel):
+    instrumentId: str  # e.g.
+    projectId: str
+    subsampleId: str
+    url: str
+
+
+class ScanPostRsp(BaseModel):
+    id: str
+    image: str
 
 
 class BMProcess(BaseModel):
@@ -210,3 +223,28 @@ class MetadataTemplateModel(BaseModel):
     id: str
     name: str
     description: str
+
+
+class ImageUrl(BaseModel):
+    src: str
+    dst: Union[str, None] = None
+
+
+class VignetteFolder(BaseModel):
+    src: str
+    base: str
+    output: str
+
+
+class TaskIn(BaseModel):
+    exec: str
+    params: Dict[str, Any]
+
+
+class Task(TaskIn):
+    id: str
+    log: Optional[str]  # url to log file
+    percent: int
+    status: Literal["PENDING", "RUNNING", "FINISHED", "FAILED"]
+    createdAt: datetime
+    updatedAt: datetime

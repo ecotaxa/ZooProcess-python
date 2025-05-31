@@ -1,12 +1,11 @@
 # import os
 import os
 from pathlib import Path
-from typing import Union, List
+from typing import List
 
 import requests
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import Response
@@ -19,6 +18,8 @@ from Models import (
     User,
     LoginReq,
     Drive,
+    ImageUrl,
+    VignetteFolder,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from auth import get_current_user_from_credentials
@@ -32,6 +33,7 @@ from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
 from legacy.drives import validate_drives
 from local_DB.db_dependencies import get_db
+from local_DB.models import init_db
 from logger import logger
 from modern.from_legacy import (
     drives_from_legacy,
@@ -43,6 +45,8 @@ from routers.instruments import router as instruments_router
 from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
+from routers.images import router as images_router
+from routers.tasks import router as tasks_router
 from separate import Separate
 from separate_fn import separate_images
 from static.favicon import create_plankton_favicon
@@ -73,6 +77,11 @@ async def lifespan(_app: FastAPI):
     """Lifespan event handler for application startup and shutdown"""
     # Run validation on application startup
     validate_drives()
+
+    # Initialize database tables if they don't exist
+    logger.info("Initializing database tables")
+    init_db()
+
     yield
     # Cleanup code (if any) would go here
 
@@ -117,6 +126,8 @@ app.include_router(projects_router)
 app.include_router(samples_router)
 app.include_router(subsamples_router)
 app.include_router(instruments_router)
+app.include_router(images_router)
+app.include_router(tasks_router)
 
 
 @app.get("/favicon.ico")
@@ -237,11 +248,6 @@ def getSeparate(folder: str):
     # return {"files":"files"}
 
 
-class ImageUrl(BaseModel):
-    src: str
-    dst: Union[str, None] = None
-
-
 @app.post("/convert/")
 def convert(image: ImageUrl):
     """covert an image from tiff to jpeg format"""
@@ -259,12 +265,6 @@ def convert(image: ImageUrl):
     except:
         logger.error(f"Cannot convert {image.src}")
         raise HTTPException(status_code=500, detail="Cannot convert the image")
-
-
-class VignetteFolder(BaseModel):
-    src: str
-    base: str
-    output: str
 
 
 @app.get("/vignettes/")
@@ -574,6 +574,11 @@ def mediumBackground(back1url, back2url):
     logger.info("Processing bg_combiner done")
 
     return backurl.as_posix()
+
+
+# TODO:
+# url: '/link',
+# data: '{"scanId":"20210625_0921","subSampleId":"zooscan_lov|Zooscan_triatlas_m158_2019_mtn_200microns_sn001_undefined"}',
 
 
 @app.post("/background/")

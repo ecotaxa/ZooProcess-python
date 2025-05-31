@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 import tempfile
 from pathlib import Path
+from sqlalchemy.orm import Session
 
 from fastapi.responses import StreamingResponse
+from local_DB.db_dependencies import get_db
 from Models import Project, Drive, Background, Scan
 from auth import get_current_user_from_credentials
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
@@ -28,7 +30,7 @@ router = APIRouter(
 )
 
 
-def list_all_projects(drives_to_check: List[Path]) -> List[Project]:
+def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]:
     """
     List all projects from the specified drives.
 
@@ -45,7 +47,7 @@ def list_all_projects(drives_to_check: List[Path]) -> List[Project]:
     for drive in drives_to_check:
         zoo_drive = ZooscanDrive(drive)
         for a_prj_path in zoo_drive.list():
-            project = project_from_legacy(a_prj_path)
+            project = project_from_legacy(db, a_prj_path)
             all_projects.append(project)
 
     return all_projects
@@ -53,20 +55,22 @@ def list_all_projects(drives_to_check: List[Path]) -> List[Project]:
 
 @router.get("")
 def get_projects(
-    user=Depends(get_current_user_from_credentials),
+    _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> List[Project]:
     """
     Returns a list of subdirectories inside each element of DRIVES.
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    return list_all_projects(config.DRIVES)
+    return list_all_projects(db, config.DRIVES)
 
 
 @router.get("/{project_hash}")
 def get_project_by_hash(
     project_hash: str,
     _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> Project:
     """
     Returns a specific project identified by its hash.
@@ -79,7 +83,7 @@ def get_project_by_hash(
     # Get the specific project by hash
     drive_path, project_name = drive_and_project_from_hash(project_hash)
     project_path = Path(drive_path) / project_name
-    project = project_from_legacy(project_path)
+    project = project_from_legacy(db, project_path)
     return project
 
 
@@ -137,7 +141,9 @@ def get_backgrounds(
 
 @router.get("/{project_hash}/scans")
 def get_scans(
-    project_hash: str, _user=Depends(get_current_user_from_credentials)
+    project_hash: str,
+    _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> List[Scan]:
     """
     Get the list of scans associated with a project.
@@ -145,6 +151,7 @@ def get_scans(
     Args:
         project_hash (str): The hash of the project to get scans for.
         _user: Security dependency to get the current user.
+        db: Database dependency.
 
     Returns:
         List[Scan]: A list of scans associated with the project.
@@ -158,7 +165,7 @@ def get_scans(
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
-    return scans_from_legacy_project(project)
+    return scans_from_legacy_project(db, project)
 
 
 @router.get("/{project_hash}/background/{background_id}")
@@ -173,7 +180,7 @@ async def get_background(
     Args:
         project_hash (str): The hash of the project to get the background from.
         background_id (str): The ID of the background to retrieve from the project.
-        user: Security dependency to get the current user.
+        _user: Security dependency to get the current user.
 
     Returns:
         Background: The requested background.

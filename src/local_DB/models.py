@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import Column, Integer, String, create_engine, JSON
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -41,6 +41,26 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id='{self.id}', name='{self.name}', email='{self.email}')>"
+
+
+# Define the InFlightScan model
+class InFlightScan(Base):
+    """
+    SQLAlchemy model for the in_flight_scans table.
+
+    This table stores information about scans that are _going to_ be processed.
+    Legacy app does not allow such pattern, so we need some extra storage.
+    """
+
+    __tablename__ = "in_flight_scans"
+
+    drive_name = Column(String, primary_key=True, nullable=False)
+    project_name = Column(String, primary_key=True, nullable=False)
+    scan_id = Column(String, primary_key=True, nullable=False)
+    scan_data = Column(JSON, nullable=False)
+
+    def __repr__(self):
+        return f"<InFlightScan(scan_id='{self.scan_id}', project_name='{self.project_name}', drive_name='{self.drive_name}')>"
 
 
 # Database connection and session management

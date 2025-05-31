@@ -23,8 +23,7 @@ from modern.ids import (
     scan_name_from_subsample_name,
     THE_SCAN_PER_SUBSAMPLE,
 )
-from modern.subsample import get_project_scans_metadata
-from modern.to_legacy import add_subsample
+from modern.subsample import get_project_scans_metadata, add_subsample
 from remote.DB import DB
 from routers.samples import check_sample_exists
 
@@ -39,7 +38,8 @@ router = APIRouter(
 def get_subsamples(
     project_hash: str,
     sample_id: str,
-    user=Depends(get_current_user_from_credentials),
+    _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> List[SubSample]:
     """
     Get the list of subsamples associated with a sample.
@@ -47,6 +47,8 @@ def get_subsamples(
     Args:
         project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to get subsamples for.
+        _user: Security dependency to get the current user.
+        db: Database dependency.
 
     Returns:
         List[SubSample]: A list of subsamples associated with the sample.
@@ -67,7 +69,9 @@ def get_subsamples(
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
     # Get subsamples using the same structure as in subsamples_from_legacy_project_and_sample
-    subsamples = subsamples_from_legacy_project_and_sample(zoo_project, sample_id)
+    subsamples = subsamples_from_legacy_project_and_sample(
+        zoo_project, sample_id, session=db
+    )
 
     return subsamples
 
@@ -77,7 +81,7 @@ def create_subsample(
     project_hash: str,
     sample_id: str,
     subsample: SubSampleIn,
-    user=Depends(get_current_user_from_credentials),
+    _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> SubSample:
     """
@@ -87,7 +91,7 @@ def create_subsample(
         project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample to add the subsample to.
         subsample (SubSampleIn): The subsample data containing name, metadataModelId, and additional data.
-        user (User, optional): The authenticated user. Defaults to the current user from credentials.
+        _user (User, optional): The authenticated user. Defaults to the current user from credentials.
         db (Session, optional): Database session. Defaults to the session from dependency.
 
     Returns:
@@ -105,22 +109,15 @@ def create_subsample(
     except HTTPException as e:
         raise e
 
-    project_path = Path(drive_path) / project_name
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
-    add_subsample(
-        project_path,
-        sample_id,
-        subsample.name,
-        subsample.metadataModelId,
-        subsample.data,
-    )
+    # The provided scan_id is not really OK, it's local TODO
+    new_scan_id = add_subsample(db, zoo_project, sample_id, subsample)
     # Re-read from FS
-    project_scans_metadata = get_project_scans_metadata(zoo_project)
-    scan_name = scan_name_from_subsample_name(subsample.name)
+    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
     zoo_subsample_metadata = find_scan_metadata(
-        project_scans_metadata, sample_id, scan_name
-    )  # No concept of "subsample" in legacy"
+        project_scans_metadata, sample_id, new_scan_id
+    )  # No concept of "subsample" in legacy
     assert zoo_subsample_metadata is not None, f"Subsample {subsample} was NOT created"
     ret = subsample_from_legacy(
         zoo_project, sample_id, subsample.name, zoo_subsample_metadata
@@ -134,6 +131,7 @@ def get_subsample(
     sample_id: str,
     subsample_id: str,
     _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> SubSample:
     """
     Get a specific subsample from a sample.
@@ -142,6 +140,8 @@ def get_subsample(
         project_hash (str): The ID of the project.
         sample_id (str): The ID of the sample.
         subsample_id (str): The ID of the subsample to get.
+        _user: Security dependency to get the current user.
+        db: Database dependency.
 
     Returns:
         SubSample: The requested subsample.
@@ -164,7 +164,7 @@ def get_subsample(
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
     # Get the project scans metadata
-    project_scans_metadata = get_project_scans_metadata(zoo_project)
+    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
 
     # Filter the metadata for the specific sample
     sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_id)

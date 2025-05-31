@@ -1,23 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List
 from pathlib import Path
+from typing import List
+
+import requests
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from Models import Sample, SampleWithBackRef, User
-from auth import get_current_user_from_credentials
+from Models import Sample, SampleWithBackRef
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from modern.ids import drive_and_project_from_hash
+from auth import get_current_user_from_credentials
+from helpers.web import raise_404
+from local_DB.db_dependencies import get_db
+from logger import logger
 from modern.from_legacy import (
     project_from_legacy,
     samples_from_legacy_project,
-    drive_from_legacy,
     sample_from_legacy,
 )
-from helpers.web import raise_404
+from modern.ids import drive_and_project_from_hash
 from remote.DB import DB
-from logger import logger
-from local_DB.db_dependencies import get_db
-import requests
 
 # Create a router instance
 router = APIRouter(
@@ -30,6 +30,7 @@ router = APIRouter(
 def get_samples(
     project_hash: str,
     # user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> List[Sample]:
     """
     Get the list of samples associated with a project.
@@ -49,7 +50,7 @@ def get_samples(
     zoo_drive = ZooscanDrive(drive_path)
     project = zoo_drive.get_project_folder(project_name)
 
-    return samples_from_legacy_project(project)
+    return samples_from_legacy_project(db, project)
 
 
 @router.get("/{sample_id}")
@@ -57,6 +58,7 @@ def get_sample(
     project_hash: str,
     sample_id: str,
     user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> SampleWithBackRef:
     """
     Get a specific sample from a project.
@@ -87,8 +89,8 @@ def get_sample(
         raise_404(f"Sample with ID {sample_id} not found in project {project_hash}")
         sample_name = None  # Unreached
 
-    project = project_from_legacy(project_path)
-    reduced = sample_from_legacy(zoo_project, sample_name)
+    project = project_from_legacy(db, project_path)
+    reduced = sample_from_legacy(db, zoo_project, sample_name)
     # Return the sample, enriched with back ref
     return SampleWithBackRef(
         **reduced.model_dump(),
