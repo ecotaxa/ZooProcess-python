@@ -17,6 +17,7 @@ from Models import (
     Scan,
     MetadataModel,
     SubSample,
+    ScanTypeNum,
 )
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
@@ -30,6 +31,8 @@ from modern.ids import (
     hash_from_project,
     subsample_name_from_scan_name,
     scan_name_from_subsample_name,
+    hash_from_sample_name,
+    hash_from_subsample_name,
 )
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
 from modern.users import get_mock_user
@@ -193,7 +196,7 @@ def sample_from_legacy(
     fractions_str = ", ".join(fractions)
     created_at = parse_legacy_date(metadata_dict.get("sampling_date"), "-")
     ret = Sample(
-        id=sample_name,
+        id=hash_from_sample_name(sample_name),
         name=sample_name,
         metadata=metadata,
         subsample=subsample_models,
@@ -215,7 +218,7 @@ def subsample_from_legacy(
     # Create the sample with metadata and scans
     created_at = updated_at = datetime.now()
     ret = SubSample(
-        id=subsample_name,
+        id=hash_from_subsample_name(subsample_name),
         name=subsample_name,
         metadata=metadata,
         scan=scans,
@@ -232,12 +235,14 @@ def scans_from_legacy(
 
     # So far there is a _maximum_ of 1 scan per subsample
     project_hash = hash_from_project(zoo_project.path)
+    sample_hash = hash_from_sample_name(sample_name)
+    subsample_hash = hash_from_subsample_name(subsample_name)
     the_scan = Scan(
         id=scan_name_from_subsample_name(subsample_name),
         url=config.public_url
-        + f"/projects/{project_hash}/samples/{sample_name}/subsamples/{subsample_name}/scan.jpg",
+        + f"/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/scan.jpg",
         metadata=[],
-        type="SCAN",
+        type=ScanTypeNum.SCAN,
         user=get_mock_user(),
     )
     return [the_scan]

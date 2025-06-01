@@ -20,6 +20,7 @@ from Models import (
     Drive,
     ImageUrl,
     VignetteFolder,
+    LinkBackgroundReq,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from auth import get_current_user_from_credentials
@@ -41,11 +42,11 @@ from modern.from_legacy import (
 from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.TaskStatus import TaskStatus
+from routers.images import router as images_router
 from routers.instruments import router as instruments_router
 from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
-from routers.images import router as images_router
 from routers.tasks import router as tasks_router
 from separate import Separate
 from separate_fn import separate_images
@@ -576,9 +577,15 @@ def mediumBackground(back1url, back2url):
     return backurl.as_posix()
 
 
-# TODO:
-# url: '/link',
-# data: '{"scanId":"20210625_0921","subSampleId":"zooscan_lov|Zooscan_triatlas_m158_2019_mtn_200microns_sn001_undefined"}',
+@app.post("/link/")
+def link_subsample_to_background(bg_to_ss: LinkBackgroundReq) -> LinkBackgroundReq:
+    """
+    Link a scan to its background.
+    Note that there is no context information, e.g. project.
+    JS 'back' has some global unique IDs.
+    """
+    logger.info(f"POST /link/ {bg_to_ss}")
+    return bg_to_ss
 
 
 @app.post("/background/")

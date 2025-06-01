@@ -22,6 +22,8 @@ from modern.ids import (
     drive_and_project_from_hash,
     scan_name_from_subsample_name,
     THE_SCAN_PER_SUBSAMPLE,
+    sample_name_from_sample_hash,
+    subsample_name_from_hash,
 )
 from modern.subsample import get_project_scans_metadata, add_subsample
 from remote.DB import DB
@@ -29,7 +31,7 @@ from routers.samples import check_sample_exists
 
 # Create a router instance
 router = APIRouter(
-    prefix="/projects/{project_hash}/samples/{sample_id}/subsamples",
+    prefix="/projects/{project_hash}/samples/{sample_hash}/subsamples",
     tags=["subsamples"],
 )
 
@@ -37,7 +39,7 @@ router = APIRouter(
 @router.get("")
 def get_subsamples(
     project_hash: str,
-    sample_id: str,
+    sample_hash: str,
     _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> List[SubSample]:
@@ -46,7 +48,7 @@ def get_subsamples(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample to get subsamples for.
+        sample_hash (str): The hash of the sample to get subsamples for.
         _user: Security dependency to get the current user.
         db: Database dependency.
 
@@ -56,12 +58,17 @@ def get_subsamples(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Getting subsamples for sample {sample_id} in project {project_hash}")
+    logger.info(
+        f"Getting subsamples for sample {sample_hash} in project {project_hash}"
+    )
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exists
     try:
         drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -79,7 +86,7 @@ def get_subsamples(
 @router.post("")
 def create_subsample(
     project_hash: str,
-    sample_id: str,
+    sample_hash: str,
     subsample: SubSampleIn,
     _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
@@ -89,7 +96,7 @@ def create_subsample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample to add the subsample to.
+        sample_hash (str): The hash of the sample to add the subsample to.
         subsample (SubSampleIn): The subsample data containing name, metadataModelId, and additional data.
         _user (User, optional): The authenticated user. Defaults to the current user from credentials.
         db (Session, optional): Database session. Defaults to the session from dependency.
@@ -100,12 +107,17 @@ def create_subsample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Creating subsample for sample {sample_id} in project {project_hash}")
+    logger.info(
+        f"Creating subsample for sample {sample_hash} in project {project_hash}"
+    )
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exist
     try:
         drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -125,11 +137,11 @@ def create_subsample(
     return ret
 
 
-@router.get("/{subsample_id}")
+@router.get("/{subsample_hash}")
 def get_subsample(
     project_hash: str,
-    sample_id: str,
-    subsample_id: str,
+    sample_hash: str,
+    subsample_hash: str,
     _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> SubSample:
@@ -138,8 +150,8 @@ def get_subsample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample.
-        subsample_id (str): The ID of the subsample to get.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample to get.
         _user: Security dependency to get the current user.
         db: Database dependency.
 
@@ -149,14 +161,20 @@ def get_subsample(
     Raises:
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
+    # Decode the subsample hash to get the subsample name
+    subsample_id = subsample_name_from_hash(subsample_hash)
+
     logger.info(
-        f"Getting subsample {subsample_id} for sample {sample_id} in project {project_hash}"
+        f"Getting subsample {subsample_id} for sample {sample_hash} in project {project_hash}"
     )
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exist
     try:
         drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -183,11 +201,11 @@ def get_subsample(
     return subsample
 
 
-@router.delete("/{subsample_id}")
+@router.delete("/{subsample_hash}")
 def delete_subsample(
     project_hash: str,
-    sample_id: str,
-    subsample_id: str,
+    sample_hash: str,
+    subsample_hash: str,
     user=Depends(get_current_user_from_credentials),
 ) -> dict:
     """
@@ -195,8 +213,8 @@ def delete_subsample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample.
-        subsample_id (str): The ID of the subsample to delete.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample to delete.
 
     Returns:
         dict: A message indicating the subsample was deleted.
@@ -204,14 +222,20 @@ def delete_subsample(
     Raises:
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
+    # Decode the subsample hash to get the subsample name
+    subsample_id = subsample_name_from_hash(subsample_hash)
+
     logger.info(
-        f"Deleting subsample {subsample_id} for sample {sample_id} in project {project_hash}"
+        f"Deleting subsample {subsample_id} for sample {sample_hash} in project {project_hash}"
     )
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project exists
     try:
         drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -220,18 +244,18 @@ def delete_subsample(
 
     # Try to delete the subsample from the database
     # This is a placeholder - in a real implementation, you would delete the subsample from a database
-    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}")
+    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}")
     # For now, we'll just return a success message
     pass
 
     return {"message": f"Subsample {subsample_id} deleted successfully"}
 
 
-@router.get("/{subsample_id}/process")
+@router.get("/{subsample_hash}/process")
 def process_subsample(
     project_hash: str,
-    sample_id: str,
-    subsample_id: str,
+    sample_hash: str,
+    subsample_hash: str,
     user=Depends(get_current_user_from_credentials),
 ) -> dict:
     """
@@ -239,8 +263,8 @@ def process_subsample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample.
-        subsample_id (str): The ID of the subsample to process.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample to process.
 
     Returns:
         dict: A message indicating the subsample was processed.
@@ -248,14 +272,20 @@ def process_subsample(
     Raises:
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
+    # Decode the subsample hash to get the subsample name
+    subsample_id = subsample_name_from_hash(subsample_hash)
+
     logger.info(
-        f"Processing subsample {subsample_id} for sample {sample_id} in project {project_hash}"
+        f"Processing subsample {subsample_id} for sample {sample_hash} in project {project_hash}"
     )
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exist
     try:
         drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -264,7 +294,7 @@ def process_subsample(
 
     # Try to process the subsample
     # This is a placeholder - in a real implementation, you would process the subsample
-    # For example: result = db_instance.get(f"/projects/{project_hash}/samples/{sample_id}/subsamples/{subsample_id}/process")
+    # For example: result = db_instance.get(f"/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/process")
     # For now, we'll just return a success message
     result = {
         "status": "success",
@@ -274,20 +304,20 @@ def process_subsample(
     return result
 
 
-@router.get("/{subsample_id}/scan.jpg")
+@router.get("/{subsample_hash}/scan.jpg")
 async def get_subsample_scan(
     project_hash: str,
-    sample_id: str,
-    subsample_id: str,
-    user=Depends(get_current_user_from_credentials),
+    sample_hash: str,
+    subsample_hash: str,
+    _user=Depends(get_current_user_from_credentials),
 ) -> StreamingResponse:
     """
     Get the scan image for a specific subsample.
 
     Args:
         project_hash (str): The hash of the project.
-        sample_id (str): The ID of the sample.
-        subsample_id (str): The ID of the subsample.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample.
 
     Returns:
         StreamingResponse: The scan image as a streaming response.
@@ -295,6 +325,10 @@ async def get_subsample_scan(
     Raises:
         HTTPException: If the project, sample, or subsample is not found, or the scan image is not found.
     """
+    # Decode the sample & subsample hashes
+    sample_id = sample_name_from_sample_hash(sample_hash)
+    subsample_id = subsample_name_from_hash(subsample_hash)
+
     logger.info(
         f"Getting scan image for subsample {subsample_id} in sample {sample_id} in project {project_hash}"
     )

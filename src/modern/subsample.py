@@ -18,7 +18,8 @@ def get_project_scans_metadata(
     Get the scans metadata for a project.
 
     This function calls read_scans_table() on a ZooscanProjectFolder to retrieve
-    the scans metadata for the legacy project and amends it with deserialized data from InFlightScan.
+    the scans metadata for the legacy project and amends it with deserialized data
+    from InFlightScan DB table.
 
     Args:
         db (sqlalchemy.orm.Session): The SQLAlchemy session to use.
@@ -87,7 +88,7 @@ def add_subsample(
     sample_name: str,
     subsample: SubSampleIn,
 ):
-    """Add a subsample, in legacy filesystem, to a sample"""
+    """Add an in-flight subsample, to a sample"""
     logger.info(
         f"Adding subsample with parameters: project_path={zoo_project}, sample_name={sample_name}, subsample={subsample}"
     )

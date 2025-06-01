@@ -1,31 +1,62 @@
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 from pathlib import Path
 from typing import Tuple
 
 from fastapi import HTTPException
 
-from Models import Drive
 from legacy.drives import get_drive_path
 
+DO_HASH = False
 
-def hash_from_project(a_prj_path: Path):
+
+def name_from_hash(encoded_str: str) -> str:
+    """
+    Safely decode a base64 encoded string and convert it to a UTF-8 string.
+    Never throws an exception but returns the original string instead.
+
+    Args:
+        encoded_str: The base64 encoded string
+
+    Returns:
+        str: The decoded string or the original string if decoding fails
+    """
+    if not DO_HASH:
+        return encoded_str
+    # noinspection PyBroadException
+    try:
+        decoded_bytes = urlsafe_b64decode(encoded_str)
+        return decoded_bytes.decode()
+    except Exception:
+        # Return the original string instead of an empty string
+        return ""
+
+
+def hash_from_name(name):
+    if not DO_HASH:
+        return name
+    return urlsafe_b64encode(name.encode()).decode()
+
+
+def hash_from_project(a_prj_path: Path) -> str:
     """
     Compute some user and browser compatible IDs for URLs
     Assumes that the drive's name is _always_ the project parent directory name
     """
     drive_name = a_prj_path.parent.name
     url_hash = f"{drive_name}|{a_prj_path.name}"
-    return url_hash
+    return hash_from_name(url_hash)
 
 
 def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str]:
     """
     Extract drive and project names from a project hash generated above.
     """
+    project_hash = name_from_hash(project_hash)
     try:
         drive_name, project_name = project_hash.split("|")
     except ValueError:
         raise HTTPException(
-            status_code=500,
+            status_code=400,
             detail=f"Invalid project ID format: {project_hash}. Expected format: drive|project",
         )
 
@@ -45,7 +76,7 @@ def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str]:
 THE_SCAN_PER_SUBSAMPLE = 1
 
 
-def subsample_name_from_scan_name(scan_name: str):
+def subsample_name_from_scan_name(scan_name: str) -> str:
     """
     Extract subsample name from scan name by removing trailing "_1" if present.
 
@@ -60,7 +91,7 @@ def subsample_name_from_scan_name(scan_name: str):
     return scan_name
 
 
-def scan_name_from_subsample_name(subsample_name: str):
+def scan_name_from_subsample_name(subsample_name: str) -> str:
     """
     Create scan name from subsample name by adding trailing "_1".
     This is the reverse function of subsample_name_from_scan_name.
@@ -72,3 +103,19 @@ def scan_name_from_subsample_name(subsample_name: str):
         str: The scan name
     """
     return f"{subsample_name}_{THE_SCAN_PER_SUBSAMPLE}"
+
+
+def hash_from_sample_name(sample_name: str) -> str:
+    return hash_from_name(sample_name)
+
+
+def sample_name_from_sample_hash(sample_hash: str) -> str:
+    return name_from_hash(sample_hash)
+
+
+def hash_from_subsample_name(subsample_name: str) -> str:
+    return hash_from_name(subsample_name)
+
+
+def subsample_name_from_hash(subsample_hash: str) -> str:
+    return name_from_hash(subsample_hash)

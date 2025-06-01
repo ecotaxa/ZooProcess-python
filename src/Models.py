@@ -1,5 +1,6 @@
 # Models for communicating via FastAPI
 from datetime import datetime
+from enum import Enum
 from typing import List, Union, Literal, Optional, Dict, Any
 
 from pydantic import BaseModel, Field
@@ -132,11 +133,27 @@ class Background(BaseModel):
     # instrumentId: str
 
 
-class BackgroundUrl(BaseModel):
-    instrumentId: str  # e.g.
+class LinkBackgroundReq(BaseModel):
+    scanId: str
+    subSampleId: str
+
+
+class ScanToUrlReq(BaseModel):
+    instrumentId: str  # e.g. sn003
     projectId: str
     subsampleId: str
     url: str
+
+
+class ScanTypeNum(str, Enum):
+    SCAN = "SCAN"
+    BACKGROUND = "BACKGROUND"
+    MASK = "MASK"
+    RAW_BACKGROUND = "RAW_BACKGROUND"
+    VIS = "VIS"
+    MEDIUM_BACKGROUND = "MEDIUM_BACKGROUND"
+    CHECK_BACKGROUND = "CHECK_BACKGROUND"
+    OUT = "OUT"
 
 
 class ScanPostRsp(BaseModel):
@@ -166,7 +183,7 @@ class Scan(BaseModel):
 
     id: str
     url: str
-    type: str
+    type: ScanTypeNum
     archived: bool = False
     deleted: bool = False
     metadata: List["MetadataModel"]

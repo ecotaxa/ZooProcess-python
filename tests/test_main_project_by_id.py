@@ -2,6 +2,7 @@ from pytest_mock import MockFixture
 
 from local_DB.db_dependencies import get_db
 from main import app
+from modern.ids import hash_from_name
 
 
 def test_project_by_id_endpoint_with_valid_token(
@@ -125,9 +126,12 @@ def test_project_by_id_endpoint_with_invalid_drive(
     login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
-    # Make request to the /projects/{project_id} endpoint with the token and an invalid drive
+    # Create a valid hash for an invalid drive
+    invalid_drive_hash = hash_from_name("invalid_drive|Project1")
+
+    # Make request to the /projects/{project_id} endpoint with the token and a valid hash with an invalid drive
     response = app_client.get(
-        "/projects/invalid_drive|Project1", headers={"Authorization": f"Bearer {token}"}
+        f"/projects/{invalid_drive_hash}", headers={"Authorization": f"Bearer {token}"}
     )
 
     # Check that the response is 404 Not Found
@@ -151,9 +155,6 @@ def test_project_by_id_endpoint_with_invalid_project(
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
 
-    # Mock get_drive_path to return a valid drive path
-    mock_get_drive_path = mocker.patch("modern.ids.get_drive_path")
-
     # Create a mock drive path
     from pathlib import Path
 
@@ -161,13 +162,13 @@ def test_project_by_id_endpoint_with_invalid_project(
     mock_drive_path.name = "drive1"
     mock_drive_path.__str__.return_value = "/path/to/drive1"
 
+    # Mock get_drive_path to return our mock drive path
+    mock_get_drive_path = mocker.patch("modern.ids.get_drive_path")
     mock_get_drive_path.return_value = mock_drive_path
 
     # Mock Path.exists and Path.is_dir to simulate a non-existent project
     mock_exists = mocker.patch("pathlib.Path.exists")
     mock_is_dir = mocker.patch("pathlib.Path.is_dir")
-
-    # Project path does not exist
     mock_exists.return_value = False
     mock_is_dir.return_value = False
 
@@ -176,9 +177,12 @@ def test_project_by_id_endpoint_with_invalid_project(
     login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
-    # Make request to the /projects/{project_id} endpoint with the token and a non-existent project
+    # Create a valid hash for a valid drive but non-existent project
+    invalid_project_hash = hash_from_name("drive1|NonExistentProject")
+
+    # Make request to the /projects/{project_id} endpoint with the token and a valid hash with a non-existent project
     response = app_client.get(
-        "/projects/drive1|NonExistentProject",
+        f"/projects/{invalid_project_hash}",
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -212,8 +216,8 @@ def test_project_by_id_endpoint_with_invalid_format(app_client, local_db):
         headers={"Authorization": f"Bearer {token}"},
     )
 
-    # Check that the response is an error (500 Internal Server Error due to ValueError)
-    assert response.status_code == 500
+    # Check that the response is an error
+    assert response.status_code == 400
 
     # Clean up the dependency override
     app.dependency_overrides.clear()

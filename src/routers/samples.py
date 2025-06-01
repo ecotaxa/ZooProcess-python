@@ -16,7 +16,7 @@ from modern.from_legacy import (
     samples_from_legacy_project,
     sample_from_legacy,
 )
-from modern.ids import drive_and_project_from_hash
+from modern.ids import drive_and_project_from_hash, sample_name_from_sample_hash
 from remote.DB import DB
 
 # Create a router instance
@@ -53,11 +53,11 @@ def get_samples(
     return samples_from_legacy_project(db, project)
 
 
-@router.get("/{sample_id}")
+@router.get("/{sample_hash}")
 def get_sample(
     project_hash: str,
-    sample_id: str,
-    user=Depends(get_current_user_from_credentials),
+    sample_hash: str,
+    _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> SampleWithBackRef:
     """
@@ -65,7 +65,7 @@ def get_sample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample to get.
+        sample_hash (str): The hash of the sample to get.
 
     Returns:
         Sample: The requested sample, including its parent project.
@@ -73,7 +73,10 @@ def get_sample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Getting sample {sample_id} for project {project_hash}")
+    logger.info(f"Getting sample {sample_hash} for project {project_hash}")
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     drive_path, project_name = drive_and_project_from_hash(project_hash)
     project_path = Path(drive_path) / project_name
@@ -140,17 +143,20 @@ def create_sample(
     return created_sample
 
 
-def check_sample_exists(project_hash: str, sample_id: str):
+def check_sample_exists(project_hash: str, sample_hash: str):
     """
     Check if a sample exists in a project without retrieving all its data.
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample to check.
+        sample_hash (str): The hash of the sample to check.
 
     Raises:
         HTTPException: If the sample is not found.
     """
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
+
     drive_path, project_name = drive_and_project_from_hash(project_hash)
     zoo_drive = ZooscanDrive(drive_path)
     zoo_project = zoo_drive.get_project_folder(project_name)
@@ -163,10 +169,10 @@ def check_sample_exists(project_hash: str, sample_id: str):
     raise_404(f"Sample with ID {sample_id} not found in project {project_hash}")
 
 
-@router.put("/{sample_id}")
+@router.put("/{sample_hash}")
 def update_sample(
     project_hash: str,
-    sample_id: str,
+    sample_hash: str,
     sample: Sample,
     user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
@@ -176,7 +182,7 @@ def update_sample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample to update.
+        sample_hash (str): The hash of the sample to update.
         sample (Sample): The updated sample data.
 
     Returns:
@@ -185,11 +191,14 @@ def update_sample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Updating sample {sample_id} for project {project_hash}")
+    logger.info(f"Updating sample {sample_hash} for project {project_hash}")
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the sample exists (this also checks if the project exists)
     try:
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -205,17 +214,17 @@ def update_sample(
 
     # Try to update the sample in the database
     # This is a placeholder - in a real implementation, you would update the sample in a database
-    # For example: updated_sample = db_instance.put(f"/projects/{project_hash}/samples/{sample_id}", sample.dict())
+    # For example: updated_sample = db_instance.put(f"/projects/{project_hash}/samples/{sample_hash}", sample.dict())
     # For now, we'll just return the sample
     updated_sample = sample
 
     return updated_sample
 
 
-@router.delete("/{sample_id}")
+@router.delete("/{sample_hash}")
 def delete_sample(
     project_hash: str,
-    sample_id: str,
+    sample_hash: str,
     user=Depends(get_current_user_from_credentials),
 ) -> dict:
     """
@@ -223,7 +232,7 @@ def delete_sample(
 
     Args:
         project_hash (str): The ID of the project.
-        sample_id (str): The ID of the sample to delete.
+        sample_hash (str): The hash of the sample to delete.
 
     Returns:
         dict: A message indicating the sample was deleted.
@@ -231,11 +240,14 @@ def delete_sample(
     Raises:
         HTTPException: If the project or sample is not found, or the user is not authorized.
     """
-    logger.info(f"Deleting sample {sample_id} for project {project_hash}")
+    logger.info(f"Deleting sample {sample_hash} for project {project_hash}")
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the sample exists (this also checks if the project exists)
     try:
-        check_sample_exists(project_hash, sample_id)
+        check_sample_exists(project_hash, sample_hash)
     except HTTPException as e:
         raise e
 
@@ -244,7 +256,7 @@ def delete_sample(
 
     # Try to delete the sample from the database
     # This is a placeholder - in a real implementation, you would delete the sample from a database
-    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_id}")
+    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_hash}")
     # For now, we'll just return a success message
     return {"message": f"Sample {sample_id} deleted from project {project_hash}"}
 

@@ -1,13 +1,16 @@
 from pathlib import Path
 from unittest.mock import MagicMock
+
 from pytest_mock import MockFixture
 
+from Models import SubSample
 from local_DB.db_dependencies import get_db
 from local_DB.models import InFlightScan
 from main import app
-from Models import SubSampleIn, SubSample
-from modern.ids import scan_name_from_subsample_name
-from legacy.utils import find_scan_metadata
+from modern.ids import (
+    scan_name_from_subsample_name,
+    hash_from_sample_name,
+)
 
 
 def test_create_subsample(mocker: MockFixture, app_client, local_db):
@@ -42,6 +45,7 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
     # Prepare test data
     project_hash = "test_project_hash"
     sample_id = "test_sample_id"
+    sample_hash = hash_from_sample_name(sample_id)
     subsample_name = "test_subsample"
     subsample_data = {
         "name": subsample_name,
@@ -86,7 +90,7 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
 
     # Make request to the create_subsample endpoint
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_id}/subsamples",
+        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -102,23 +106,22 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
 
     # Verify that the necessary functions were called with the correct arguments
     mock_drive_and_project_from_hash.assert_called_once_with(project_hash)
-    mock_check_sample_exists.assert_called_once_with(project_hash, sample_id)
+    mock_check_sample_exists.assert_called_once_with(project_hash, sample_hash)
     mock_zooscan_drive.assert_called_once()
     mock_zooscan_drive.return_value.get_project_folder.assert_called_once_with(
         "test_project"
     )
     # Check that the record was added to the database
     # Note: We're not mocking add_subsample anymore, so we check the database directly
+    # The scan_id is derived from the subsample name using scan_name_from_subsample_name
+    expected_scan_id = scan_name_from_subsample_name(subsample_data["name"])
     in_flight_scan = (
         local_db.query(InFlightScan)
-        .filter_by(
-            project_name="test_project", scan_id=subsample_data["metadataModelId"]
-        )
+        .filter_by(project_name="test_project", scan_id=expected_scan_id)
         .first()
     )
     assert in_flight_scan is not None
-    assert in_flight_scan.scan_data["subsample"] == subsample_data["name"]
-    assert in_flight_scan.scan_data["sample"] == sample_id
+    assert in_flight_scan.scan_data["sampleid"] == sample_id
 
     mock_get_project_scans_metadata.assert_called_once()
     # We're using the real scan_name_from_subsample_name function now
@@ -159,6 +162,7 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
     # Prepare test data
     project_hash = "nonexistent_project_hash"
     sample_id = "test_sample_id"
+    sample_hash = hash_from_sample_name(sample_id)
     subsample_data = {
         "name": "test_subsample",
         "metadataModelId": "test_metadata_model_id",
@@ -167,7 +171,7 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
 
     # Make request to the create_subsample endpoint
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_id}/subsamples",
+        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -212,6 +216,7 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
     # Prepare test data
     project_hash = "test_project_hash"
     sample_id = "nonexistent_sample_id"
+    sample_hash = hash_from_sample_name(sample_id)
     subsample_data = {
         "name": "test_subsample",
         "metadataModelId": "test_metadata_model_id",
@@ -220,7 +225,7 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
 
     # Make request to the create_subsample endpoint
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_id}/subsamples",
+        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -231,7 +236,7 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
 
     # Verify that the necessary functions were called with the correct arguments
     mock_drive_and_project_from_hash.assert_called_once_with(project_hash)
-    mock_check_sample_exists.assert_called_once_with(project_hash, sample_id)
+    mock_check_sample_exists.assert_called_once_with(project_hash, sample_hash)
 
     # Clean up the dependency override
     app.dependency_overrides.clear()
@@ -242,6 +247,7 @@ def test_create_subsample_without_token(app_client):
     # Prepare test data
     project_hash = "test_project_hash"
     sample_id = "test_sample_id"
+    sample_hash = hash_from_sample_name(sample_id)
     subsample_data = {
         "name": "test_subsample",
         "metadataModelId": "test_metadata_model_id",
@@ -250,7 +256,8 @@ def test_create_subsample_without_token(app_client):
 
     # Make request to the create_subsample endpoint without a token
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_id}/subsamples", json=subsample_data
+        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
+        json=subsample_data,
     )
 
     # Check that the response is 401 Unauthorized
@@ -262,6 +269,7 @@ def test_create_subsample_with_invalid_token(app_client):
     # Prepare test data
     project_hash = "test_project_hash"
     sample_id = "test_sample_id"
+    sample_hash = hash_from_sample_name(sample_id)
     subsample_data = {
         "name": "test_subsample",
         "metadataModelId": "test_metadata_model_id",
@@ -270,7 +278,7 @@ def test_create_subsample_with_invalid_token(app_client):
 
     # Make request to the create_subsample endpoint with an invalid token
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_id}/subsamples",
+        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": "Bearer invalid_token"},
     )
