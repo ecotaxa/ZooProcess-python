@@ -1,5 +1,5 @@
 # A Datasource which mixes legacy scan CSV table with modern additions
-from typing import List, Dict
+from typing import List, Dict, Optional, Tuple, Union, NamedTuple
 
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,13 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from local_DB.models import InFlightScan
 from logger import logger
 from modern.ids import scan_name_from_subsample_name
+
+
+class FracIdComponents(NamedTuple):
+    primary_fraction: str
+    pattern_type: str
+    sub_fraction: Optional[str] = None
+    denominator: Optional[int] = None
 
 
 def get_project_scans_metadata(
@@ -82,6 +89,75 @@ def get_project_scans(db: Session, zoo_project: ZooscanProjectFolder) -> List[st
     return ret
 
 
+def parse_fracid(fracid: str) -> FracIdComponents:
+    """
+    Parse a 'fracid' (fraction_id) value into its components.
+
+    The function handles the following patterns:
+    1. Simple identifiers: 'd1', 'd2', 'd3'
+    2. Complex patterns: 'dx_y_sur_z' where:
+       - 'dx' is a primary fraction category (d1, d2, d3)
+       - 'y' is a sub-fraction number (typically 1-8)
+       - 'z' represents a denominator in a fraction (1, 2, 3, 4, 5, 8)
+    3. Total samples: 'tot'
+
+    Args:
+        fracid (str): The fraction ID to parse
+
+    Returns:
+        FracIdComponents: A named tuple containing the parsed components:
+            - primary_fraction: The primary fraction identifier (e.g., 'd1', 'd2', 'd3', 'tot')
+            - pattern_type: The type of pattern detected ('simple', 'complex', 'total', 'unknown')
+            - sub_fraction: The sub-fraction (e.g., 1_sur_1 or 3_sur_4) or None if not applicable
+            - denominator: The denominator in a fraction (e.g., 1, 2, 4, 8) or None if not applicable
+    """
+    # Handle 'tot' (total) case
+    if fracid.lower() == "tot":
+        return FracIdComponents(
+            primary_fraction="tot",
+            pattern_type="total",
+        )
+
+    # Handle complex pattern: 'dx_y_sur_z'
+    if "_" in fracid and "sur" in fracid.lower():
+        parts = fracid.split("_")
+        if len(parts) >= 4:
+            try:
+                sub_fraction = "_".join(parts[1:])
+                denominator = int(parts[3])
+                return FracIdComponents(
+                    primary_fraction=parts[0],
+                    pattern_type="complex",
+                    sub_fraction=sub_fraction,
+                    denominator=denominator,
+                )
+            except (ValueError, IndexError):
+                # Handle malformed values gracefully
+                return FracIdComponents(
+                    primary_fraction=fracid,
+                    pattern_type="unknown",
+                )
+        else:
+            # Handle malformed complex patterns (not enough parts)
+            return FracIdComponents(
+                primary_fraction=fracid,
+                pattern_type="unknown",
+            )
+
+    # Handle simple pattern: 'd1', 'd2', 'd3'
+    if fracid.startswith("d") and len(fracid) > 1 and fracid[1:].isdigit():
+        return FracIdComponents(
+            primary_fraction=fracid,
+            pattern_type="simple",
+        )
+
+    # If we get here, it's an unknown pattern
+    return FracIdComponents(
+        primary_fraction=fracid,
+        pattern_type="unknown",
+    )
+
+
 def add_subsample(
     db: Session,
     zoo_project: ZooscanProjectFolder,
@@ -107,7 +183,7 @@ def add_subsample(
         "fracid": data["fraction_id_suffix"],
         "fracmin": data["fraction_min_mesh"],
         "fracsup": data["fraction_max_mesh"],
-        "fracnb": data["fraction_number"],
+        "fracnb": data["spliting_ratio"],
         "observation": data["observation"],
         "code": "1",
         "submethod": "1",

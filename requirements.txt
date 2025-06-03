@@ -4,6 +4,7 @@ pydantic==2.11.4
 uvicorn==0.34.2
 requests==2.32.3
 numpy==2.2.6
+python-multipart==0.0.20
 # pandas
 # matplotlib
 opencv-python==4.11.0.86 # cv2

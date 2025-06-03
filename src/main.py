@@ -24,11 +24,13 @@ from Models import (
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from auth import get_current_user_from_credentials
+from config_rdr import config
 from demo_get_vignettes import generate_json
 from helpers.web import (
     internal_server_error_handler,
     TimingMiddleware,
     validation_exception_handler,
+    raise_500,
 )
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
@@ -36,6 +38,7 @@ from legacy.drives import validate_drives
 from local_DB.db_dependencies import get_db
 from local_DB.models import init_db
 from logger import logger
+from modern.files import UPLOAD_DIR
 from modern.from_legacy import (
     drives_from_legacy,
 )
@@ -252,20 +255,23 @@ def getSeparate(folder: str):
 @app.post("/convert/")
 def convert(image: ImageUrl):
     """covert an image from tiff to jpeg format"""
+    logger.info(f"Request to convert {image.src} to {image.dst}")
 
-    # dst = image + ".jpg"
-    # dst = /Users/sebastiengalvagno/Drives/Zooscan/Zooscan_dyfamed_wp2_2023_biotom_sn001/Zooscan_back/20230229_1219_background_large_manual.tif
-
-    # logger.info(f"converts {image.src} to {image.dst}")
+    if image.src.startswith(config.public_url + "/download/"):
+        src_image_path = UPLOAD_DIR / image.src.replace(
+            config.public_url + "/download/", ""
+        )
+    else:
+        src_image_path = Path(image.src)
+    dst_image_path = Path(image.dst)
 
     try:
-        file_out = convert_tiff_to_jpeg(image.src, image.dst)
-        # logger.info(f"file_out: {file_out}")
+        file_out = convert_tiff_to_jpeg(src_image_path, dst_image_path)
         return file_out
-        # return {"dst" : file_out }
-    except:
-        logger.error(f"Cannot convert {image.src}")
-        raise HTTPException(status_code=500, detail="Cannot convert the image")
+    except Exception as e:
+        logger.exception(e)
+        raise_500(f"Cannot convert {image.src}")
+        return None
 
 
 @app.get("/vignettes/")

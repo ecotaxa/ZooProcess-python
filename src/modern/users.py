@@ -1,6 +1,7 @@
 from typing import Optional
 
 from Models import User
+from modern.ids import hash_from_user_name
 
 # Hardcoded list of users
 USERS = [
@@ -32,3 +33,9 @@ def get_user_by_id(user_id: str) -> Optional[User]:
         if user_data["id"] == user_id:
             return User(**user_data)
     return None
+
+
+def user_with_name(user_name: str) -> User:
+    return User(
+        id=hash_from_user_name(user_name), name=user_name, email="unknown@unknown.com"
+    )

@@ -119,3 +119,7 @@ def hash_from_subsample_name(subsample_name: str) -> str:
 
 def subsample_name_from_hash(subsample_hash: str) -> str:
     return name_from_hash(subsample_hash)
+
+
+def hash_from_user_name(user_name):
+    return name_from_hash(user_name)

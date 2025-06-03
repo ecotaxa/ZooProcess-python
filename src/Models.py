@@ -86,6 +86,7 @@ class SubSample(BaseModel):
     scan: List["Scan"]
     createdAt: datetime
     updatedAt: datetime
+    user: User
 
 
 class SubSampleIn(BaseModel):
@@ -159,6 +160,10 @@ class ScanTypeNum(str, Enum):
 class ScanPostRsp(BaseModel):
     id: str
     image: str
+
+
+class UploadPostRsp(BaseModel):
+    fileUrl: str
 
 
 class BMProcess(BaseModel):

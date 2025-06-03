@@ -35,14 +35,14 @@ from modern.ids import (
     hash_from_subsample_name,
 )
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
-from modern.users import get_mock_user
+from modern.subsample import get_project_scans_metadata, get_project_scans, parse_fracid
+from modern.users import get_mock_user, user_with_name
 from modern.utils import (
     extract_serial_number,
     parse_sample_name,
     find_latest_modification_time,
     convert_ddm_to_decimal_degrees,
 )
-from modern.subsample import get_project_scans_metadata, get_project_scans
 
 
 def drives_from_legacy() -> list[Drive]:
@@ -145,7 +145,7 @@ def subsamples_from_legacy_project_and_sample(
     return ret
 
 
-def to_modern_meta(metadata_dict: Dict) -> List[MetadataModel]:
+def to_api_meta(metadata_dict: Dict) -> List[MetadataModel]:
     ret = []
     for key, value in metadata_dict.items():
         ret.append(
@@ -180,8 +180,8 @@ def sample_from_legacy(
     assert (
         zoo_metadata is not None
     ), f"Sample {sample_name} metadata not found in {zoo_project.zooscan_meta.samples_table_path}"
-    metadata_dict = from_legacy_meta(zoo_metadata)
-    metadata = to_modern_meta(metadata_dict)
+    modern_metadata = from_legacy_meta(zoo_metadata)
+    metadata = to_api_meta(modern_metadata)
     subsample_models = subsamples_from_legacy_project_and_sample(
         db, zoo_project, sample_name
     )
@@ -194,7 +194,7 @@ def sample_from_legacy(
         ]
     )
     fractions_str = ", ".join(fractions)
-    created_at = parse_legacy_date(metadata_dict.get("sampling_date"), "-")
+    created_at = parse_legacy_date(modern_metadata.get("sampling_date"), "-")
     ret = Sample(
         id=hash_from_sample_name(sample_name),
         name=sample_name,
@@ -213,10 +213,12 @@ def subsample_from_legacy(
     subsample_name: str,
     zoo_scan_metadata: Dict,
 ) -> SubSample:
-    metadata = to_modern_meta(from_legacy_meta(zoo_scan_metadata))
+    modern_metadata = from_legacy_meta(zoo_scan_metadata)
+    metadata = to_api_meta(modern_metadata)
     scans = scans_from_legacy(zoo_project, sample_name, subsample_name)
     # Create the sample with metadata and scans
     created_at = updated_at = datetime.now()
+    user = user_with_name(modern_metadata["operator"])
     ret = SubSample(
         id=hash_from_subsample_name(subsample_name),
         name=subsample_name,
@@ -224,6 +226,7 @@ def subsample_from_legacy(
         scan=scans,
         createdAt=created_at,
         updatedAt=updated_at,
+        user=user,
     )
     return ret
 
@@ -399,6 +402,7 @@ def from_legacy_meta(meta: dict) -> dict:
     Note:
         Latitude and longitude values undergo special transformations to convert from
         degrees-minutes format to decimal degrees format
+        The conversion table is inverted to allow a single CSV value to be mapped to multiple modern keys
     """
     # sample CSV structure
     #   sampleid;ship;scientificprog;stationid;date;latitude;longitude;depth;ctdref;otherref;townb;towtype;nettype;netmesh;
@@ -407,7 +411,7 @@ def from_legacy_meta(meta: dict) -> dict:
     # scan CSV structure
     #   scanid;sampleid;scanop;fracid;fracmin;fracsup;fracnb;observation;code;submethod;cellpart;
     #   replicates;volini;volprec
-    conversion_table = {
+    legacy_to_modern = {
         # Common to both CSVs
         "sampleid": "sample_id",  # 'apero2023_tha_bioness_sup2000_017_st66_d_n1',
         # In sample CSV
@@ -446,39 +450,67 @@ def from_legacy_meta(meta: dict) -> dict:
         # sample_richness
         # sample_conditioning
         # sample_content
-        # fraction_id_suffix
-        # spliting_ratio
+        #
         # quality_flag_filtered_volume
         #
         # In scan CSV
+        "scanid": None,
         "scanop": "operator",  # 'adelaide_perruchon',
-        "fracid": "fraction_id",  # 'd1_1_sur_1',
+        "fracid": [
+            "fraction_id",
+            "fraction_id_suffix",
+        ],  # 'd1_1_sur_1' -> 'd1' and '1_sur_1'
         "fracmin": "fraction_min_mesh",  # '10000',
         "fracsup": "fraction_max_mesh",  # '999999',
-        "fracnb": "fraction_number",  # '1',
+        "fracnb": "spliting_ratio",  # '1',
         "observation": "observation",  # 'no',
-        # 'SubMethod': 'motoda',
-        # 'Code': '1',
-        # 'CellPart': '1',
-        # 'Replicates': '1',
-        # 'VolIni': '1',
-        # 'VolPrec': '1',
+        "code": "code",  # '1',
+        "submethod": "submethod",  # 'motoda',
+        "cellpart": "cellpart",  # '1',
+        "replicates": "replicates",  # '1',
+        "volini": "volini",  # '1',
+        "volprec": "volprec",  # '1',
     }
+
+    # Invert the conversion table to map from modern keys to legacy keys
+    modern_to_legacy = {}
+    for legacy_key, modern_key in legacy_to_modern.items():
+        if isinstance(modern_key, list):
+            # Handle the case where a legacy key maps to multiple modern keys
+            for mk in modern_key:
+                modern_to_legacy[mk] = (legacy_key, modern_key.index(mk))
+        else:
+            modern_to_legacy[modern_key] = (legacy_key, None)
 
     ret = {}
 
     for key, value in meta.items():
-        if key in conversion_table:
-            new_key = conversion_table[key]
-            # noinspection PyUnreachableCode
-            match key:
-                case "longitude" | "longitude_end":
-                    new_value = -convert_ddm_to_decimal_degrees(value)
-                case "latitude" | "latitude_end":
-                    new_value = convert_ddm_to_decimal_degrees(value)
-                case _:
-                    new_value = value
-            ret[new_key] = new_value
-        else:
-            ret[key] = value  # Keep the key unchanged
+        modern_key = legacy_to_modern.get(key)
+        if modern_key is None:
+            continue
+        if isinstance(modern_key, list):
+            # Handle the case where a legacy key maps to multiple modern keys
+            # For now, we'll just use the first mapping and handle special cases below
+            modern_key = modern_key[0]
+
+        # Apply special transformations based on the legacy key
+        # noinspection PyUnreachableCode
+        match key:
+            case "longitude" | "longitude_end":
+                new_value = -convert_ddm_to_decimal_degrees(value)
+            case "latitude" | "latitude_end":
+                new_value = convert_ddm_to_decimal_degrees(value)
+            case "fracid":
+                parsed = parse_fracid(value)
+                ret["fraction_id"] = parsed.primary_fraction
+                if parsed.pattern_type == "complex":
+                    ret["fraction_id_suffix"] = parsed.sub_fraction
+                else:
+                    ret["fraction_id_suffix"] = ""
+                continue  # Skip the normal assignment since we've handled it specially
+            case _:
+                new_value = value
+
+        ret[modern_key] = new_value
+
     return ret
