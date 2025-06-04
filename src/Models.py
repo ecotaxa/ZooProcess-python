@@ -136,7 +136,6 @@ class Background(BaseModel):
 
 class LinkBackgroundReq(BaseModel):
     scanId: str
-    subSampleId: str
 
 
 class ScanToUrlReq(BaseModel):

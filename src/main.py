@@ -20,7 +20,6 @@ from Models import (
     Drive,
     ImageUrl,
     VignetteFolder,
-    LinkBackgroundReq,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from auth import get_current_user_from_credentials
@@ -581,17 +580,6 @@ def mediumBackground(back1url, back2url):
     logger.info("Processing bg_combiner done")
 
     return backurl.as_posix()
-
-
-@app.post("/link/")
-def link_subsample_to_background(bg_to_ss: LinkBackgroundReq) -> LinkBackgroundReq:
-    """
-    Link a scan to its background.
-    Note that there is no context information, e.g. project.
-    JS 'back' has some global unique IDs.
-    """
-    logger.info(f"POST /link/ {bg_to_ss}")
-    return bg_to_ss
 
 
 @app.post("/background/")

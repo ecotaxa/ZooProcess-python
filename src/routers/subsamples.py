@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from Models import SubSample, SubSampleIn
+from Models import SubSample, SubSampleIn, LinkBackgroundReq
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream
@@ -66,11 +66,8 @@ def get_subsamples(
     sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exists
-    try:
-        drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_hash)
-    except HTTPException as e:
-        raise e
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    check_sample_exists(project_hash, sample_hash)
 
     # Create a ZooscanProjectFolder object from the project
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
@@ -115,11 +112,8 @@ def create_subsample(
     sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exist
-    try:
-        drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_hash)
-    except HTTPException as e:
-        raise e
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    check_sample_exists(project_hash, sample_hash)
 
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
@@ -172,11 +166,8 @@ def get_subsample(
     sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exist
-    try:
-        drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_hash)
-    except HTTPException as e:
-        raise e
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    check_sample_exists(project_hash, sample_hash)
 
     # Create a ZooscanProjectFolder object from the project
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
@@ -233,11 +224,8 @@ def delete_subsample(
     sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project exists
-    try:
-        drive_path, project_name = drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_hash)
-    except HTTPException as e:
-        raise e
+    drive_path, _ = drive_and_project_from_hash(project_hash)
+    check_sample_exists(project_hash, sample_hash)
 
     # Create a DB instance
     db_instance = DB(bearer=user.id)
@@ -283,11 +271,8 @@ def process_subsample(
     sample_id = sample_name_from_sample_hash(sample_hash)
 
     # Check if the project and sample exist
-    try:
-        drive_and_project_from_hash(project_hash)
-        check_sample_exists(project_hash, sample_hash)
-    except HTTPException as e:
-        raise e
+    drive_and_project_from_hash(project_hash)
+    check_sample_exists(project_hash, sample_hash)
 
     # Create a DB instance
     db_instance = DB(bearer=user.id)
@@ -360,3 +345,68 @@ async def get_subsample_scan(
     file_like, length, media_type = get_stream(scan_file)
     headers = {"content-length": str(length)}
     return StreamingResponse(file_like, headers=headers, media_type=media_type)
+
+
+@router.post("/{subsample_hash}/link")
+def link_subsample_to_background(
+    project_hash: str,
+    sample_hash: str,
+    subsample_hash: str,
+    bg_to_ss: LinkBackgroundReq,
+    _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
+) -> LinkBackgroundReq:
+    """
+    Link a scan to its background.
+
+    Args:
+        project_hash (str): The hash of the project.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample.
+        bg_to_ss (LinkBackgroundReq): The request containing scanId.
+        _user: Security dependency to get the current user.
+        db: Database dependency.
+
+    Returns:
+        LinkBackgroundReq: The same request object.
+
+    Raises:
+        HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
+    """
+    # Decode the subsample hash to get the subsample name
+    subsample_id = subsample_name_from_hash(subsample_hash)
+
+    logger.info(
+        f"POST /{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/link {bg_to_ss}"
+    )
+
+    # Decode the sample hash to get the sample name
+    sample_id = sample_name_from_sample_hash(sample_hash)
+
+    # Check if the project and sample exist
+    drive_path, project_name = drive_and_project_from_hash(project_hash)
+    check_sample_exists(project_hash, sample_hash)
+
+    # Create a ZooscanProjectFolder object from the project
+    zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
+
+    # Get the project scans metadata
+    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
+
+    # Filter the metadata for the specific sample
+    sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_id)
+
+    # Find the metadata for the specific subsample
+    scan_id = scan_name_from_subsample_name(subsample_id)
+    zoo_metadata_sample = find_scan_metadata(sample_scans_metadata, sample_id, scan_id)
+
+    if zoo_metadata_sample is None:
+        raise_404(f"Subsample {subsample_id} not found in sample {sample_id}")
+
+    # Validate that the background scan ID exists
+    if not bg_to_ss.scanId:
+        raise HTTPException(status_code=400, detail="Background scan ID is required")
+
+    # Here you would implement the actual linking functionality
+    # For now, we just return the input object as in the original implementation
+    return bg_to_ss
