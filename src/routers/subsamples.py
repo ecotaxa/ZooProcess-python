@@ -17,6 +17,7 @@ from logger import logger
 from modern.from_legacy import (
     subsamples_from_legacy_project_and_sample,
     subsample_from_legacy,
+    backgrounds_from_legacy_project,
 )
 from modern.ids import (
     drive_and_project_from_hash,
@@ -406,6 +407,16 @@ def link_subsample_to_background(
     # Validate that the background scan ID exists
     if not bg_to_ss.scanId:
         raise HTTPException(status_code=400, detail="Background scan ID is required")
+
+    # Check if the background exists in the project
+    backgrounds = backgrounds_from_legacy_project(zoo_project)
+    background_ids = [bg.id for bg in backgrounds]
+
+    if bg_to_ss.scanId not in background_ids:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Background with ID {bg_to_ss.scanId} not found in project {project_name}",
+        )
 
     # Here you would implement the actual linking functionality
     # For now, we just return the input object as in the original implementation

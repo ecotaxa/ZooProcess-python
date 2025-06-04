@@ -271,9 +271,6 @@ def backgrounds_from_legacy_project(
     # Get the background folder from the project
     back_folder = zoo_project.zooscan_back
 
-    # Get all dates for which backgrounds exist
-    dates = back_folder.get_dates()
-
     # Get a mock user for the backgrounds
     mock_user = get_mock_user()
 
@@ -297,33 +294,36 @@ def backgrounds_from_legacy_project(
     project_hash = hash_from_project(zoo_project.path)
 
     # For each date, create a Background object. Dates are in ZooProcess format
+    dates = back_folder.get_dates()
     for a_date in dates:
         # Get the background entry for this date
         entry = back_folder.content[a_date]
 
+        if not entry["final_background"]:
+            continue
+
         # If there's a final background, add it to the list
-        if entry["final_background"]:
-            background_id = f"{a_date}"
-            background_name = f"{a_date}_background"
-            background_url = (
-                config.public_url + f"/projects/{project_hash}/background/{a_date}.jpg"
-            )
+        background_id = f"{a_date}"
+        background_name = f"{a_date}_background"
+        background_url = (
+            config.public_url + f"/projects/{project_hash}/background/{a_date}.jpg"
+        )
 
-            # Convert the date string to a datetime object for the model
-            api_date = parse_legacy_date(a_date)
+        # Convert the date string to a datetime object for the model
+        api_date = parse_legacy_date(a_date)
 
-            # Create the Background object
-            background = Background(
-                id=background_id,
-                url=background_url,
-                name=background_name,
-                user=mock_user,
-                instrument=instrument,
-                createdAt=api_date,
-                type="MEDIUM_BACKGROUND",
-            )
+        # Create the Background object
+        background = Background(
+            id=background_id,
+            url=background_url,
+            name=background_name,
+            user=mock_user,
+            instrument=instrument,
+            createdAt=api_date,
+            type="MEDIUM_BACKGROUND",
+        )
 
-            backgrounds.append(background)
+        backgrounds.append(background)
 
     return backgrounds
 

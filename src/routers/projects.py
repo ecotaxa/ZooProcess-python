@@ -1,27 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List
 import tempfile
 from pathlib import Path
+from typing import List
+
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from fastapi.responses import StreamingResponse
-from local_DB.db_dependencies import get_db
-from Models import Project, Drive, Background, Scan
-from auth import get_current_user_from_credentials
+from Models import Project, Background, Scan
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from modern.ids import drive_and_project_from_hash
+from auth import get_current_user_from_credentials
+from config_rdr import config
+from helpers.web import raise_404, get_stream
+from img_proc.convert import convert_tiff_to_jpeg
+from legacy.files import find_background_file
+from legacy_to_remote.importe import import_old_project
+from local_DB.db_dependencies import get_db
+from logger import logger
 from modern.from_legacy import (
     project_from_legacy,
     backgrounds_from_legacy_project,
     scans_from_legacy_project,
 )
-from legacy_to_remote.importe import import_old_project
-from legacy.files import find_background_file
-from helpers.web import raise_404, get_stream
-from img_proc.convert import convert_tiff_to_jpeg
+from modern.ids import drive_and_project_from_hash
 from remote.DB import DB
-from logger import logger
-from config_rdr import config
 
 # Create a routers instance
 router = APIRouter(
@@ -172,7 +173,7 @@ def get_scans(
 async def get_background(
     project_hash: str,
     background_id: str,
-    _user=Depends(get_current_user_from_credentials),
+    # _user=Depends(get_current_user_from_credentials), # TODO: Fix on client side
 ) -> StreamingResponse:
     """
     Get a specific background from a project by its ID.
