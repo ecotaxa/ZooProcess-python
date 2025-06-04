@@ -12,6 +12,7 @@ from auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream
 from img_proc.convert import convert_tiff_to_jpeg
 from legacy.utils import find_scan_metadata, sub_table_for_sample
+from local_DB.data_utils import set_background_id
 from local_DB.db_dependencies import get_db
 from logger import logger
 from modern.from_legacy import (
@@ -127,7 +128,7 @@ def create_subsample(
     )  # No concept of "subsample" in legacy
     assert zoo_subsample_metadata is not None, f"Subsample {subsample} was NOT created"
     ret = subsample_from_legacy(
-        zoo_project, sample_id, subsample.name, zoo_subsample_metadata
+        db, zoo_project, sample_id, subsample.name, zoo_subsample_metadata
     )
     return ret
 
@@ -187,7 +188,7 @@ def get_subsample(
         raise_404(f"Subsample {subsample_id} not found in sample {sample_id}")
 
     subsample = subsample_from_legacy(
-        zoo_project, sample_id, subsample_id, zoo_metadata_sample
+        db, zoo_project, sample_id, subsample_id, zoo_metadata_sample
     )
 
     return subsample
@@ -418,6 +419,12 @@ def link_subsample_to_background(
             detail=f"Background with ID {bg_to_ss.scanId} not found in project {project_name}",
         )
 
-    # Here you would implement the actual linking functionality
+    set_background_id(
+        db,
+        drive_path.name,
+        project_name,
+        scan_name_from_subsample_name(subsample_id),
+        bg_to_ss.scanId,
+    )
     # For now, we just return the input object as in the original implementation
     return bg_to_ss

@@ -43,9 +43,13 @@ def hash_from_project(a_prj_path: Path) -> str:
     Compute some user and browser compatible IDs for URLs
     Assumes that the drive's name is _always_ the project parent directory name
     """
-    drive_name = a_prj_path.parent.name
+    drive_name = drive_from_project_path(a_prj_path)
     url_hash = f"{drive_name}|{a_prj_path.name}"
     return hash_from_name(url_hash)
+
+
+def drive_from_project_path(a_prj_path: Path) -> str:
+    return a_prj_path.parent.name
 
 
 def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str]:

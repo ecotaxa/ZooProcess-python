@@ -26,6 +26,7 @@ from legacy.utils import (
     find_scan_metadata,
     sub_table_for_sample,
 )
+from local_DB.data_utils import get_background_id
 from logger import logger
 from modern.ids import (
     hash_from_project,
@@ -33,6 +34,7 @@ from modern.ids import (
     scan_name_from_subsample_name,
     hash_from_sample_name,
     hash_from_subsample_name,
+    drive_from_project_path,
 )
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
 from modern.subsample import get_project_scans_metadata, get_project_scans, parse_fracid
@@ -139,7 +141,7 @@ def subsamples_from_legacy_project_and_sample(
             # Not an error or warning, we don't have the relationship samples->subsample beforehand
             continue
         subsample_to_add = subsample_from_legacy(
-            zoo_project, sample_name, subsample_name, zoo_subsample_metadata
+            db, zoo_project, sample_name, subsample_name, zoo_subsample_metadata
         )
         ret.append(subsample_to_add)
     return ret
@@ -208,6 +210,7 @@ def sample_from_legacy(
 
 
 def subsample_from_legacy(
+    db: Session,
     zoo_project: ZooscanProjectFolder,
     sample_name: str,
     subsample_name: str,
@@ -215,7 +218,17 @@ def subsample_from_legacy(
 ) -> SubSample:
     modern_metadata = from_legacy_meta(zoo_scan_metadata)
     metadata = to_api_meta(modern_metadata)
+    # Extract scans from the legacy project folder
     scans = scans_from_legacy(zoo_project, sample_name, subsample_name)
+    # Client-side also expects _the_ chosen background to be returned as an extra "scan" with OK type
+    bg_id = get_background_id(
+        db,
+        drive_from_project_path(zoo_project.path),
+        zoo_project.project,
+        scan_name_from_subsample_name(subsample_name),
+    )
+    if bg_id is not None:
+        scans.append(background_from_legacy_as_scan(zoo_project, bg_id))
     # Create the sample with metadata and scans
     created_at = updated_at = datetime.now()
     user = user_with_name(modern_metadata["operator"])
@@ -252,6 +265,23 @@ def scans_from_legacy(
         user=get_mock_user(),
     )
     return [the_scan]
+
+
+def background_from_legacy_as_scan(
+    zoo_project: ZooscanProjectFolder,
+    background_date: str,
+) -> Scan:
+    # So far there is a _maximum_ of 1 scan per subsample
+    project_hash = hash_from_project(zoo_project.path)
+    the_scan = Scan(
+        id=background_date,
+        url=config.public_url
+        + f"/projects/{project_hash}/background/{background_date}.jpg",
+        metadata=[],
+        type=ScanTypeNum.MEDIUM_BACKGROUND,
+        user=get_mock_user(),
+    )
+    return the_scan
 
 
 def backgrounds_from_legacy_project(

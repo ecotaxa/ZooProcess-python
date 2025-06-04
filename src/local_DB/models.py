@@ -58,6 +58,7 @@ class InFlightScan(Base):
     project_name = Column(String, primary_key=True, nullable=False)
     scan_id = Column(String, primary_key=True, nullable=False)
     scan_data = Column(JSON, nullable=False)
+    background_id = Column(String, nullable=True)
 
     def __repr__(self):
         return f"<InFlightScan(scan_id='{self.scan_id}', project_name='{self.project_name}', drive_name='{self.drive_name}')>"
