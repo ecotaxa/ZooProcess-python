@@ -23,6 +23,8 @@ if zooprocess_lib_path.exists():
 from local_DB.models import Base, User
 from main import app
 
+DATA_DIR = Path(__file__).parent / "data"
+
 
 @pytest.fixture
 def project_python_path():

@@ -56,7 +56,7 @@ def drives_from_legacy() -> list[Drive]:
         list[Drive]: A list of Drive objects representing the drives configured in the app.
     """
     ret = []
-    for drive in config.DRIVES:
+    for drive in config.get_drives():
         ret.append(drive_from_legacy(drive))
     return ret
 
@@ -234,7 +234,10 @@ def subsample_from_legacy(
 def scans_from_legacy(
     zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
 ) -> List[Scan]:
-    # What is presented as a "scan" is in fact several files
+    # What is presented as a "scan" is in fact several files, but the lib knows
+    scan_name = scan_name_from_subsample_name(subsample_name)
+    if scan_name not in zoo_project.list_scans_with_state():
+        return []
 
     # So far there is a _maximum_ of 1 scan per subsample
     project_hash = hash_from_project(zoo_project.path)
@@ -345,13 +348,15 @@ def parse_legacy_date(a_date: str, separator: str = "_") -> datetime:
         return datetime(1970, 1, 1)  # Return epoch date
 
 
-def scans_from_legacy_project(db: Session, project: ZooscanProjectFolder) -> list[Scan]:
+def scans_from_legacy_project(
+    db: Session, zoo_project: ZooscanProjectFolder
+) -> list[Scan]:
     """
     Extract scan information from a ZooscanProjectFolder and return a list of Scan objects.
     Uses scans_from_legacy in a loop over samples and subsamples.
 
     Args:
-        project (ZooscanProjectFolder): The project folder to extract scans from.
+        zoo_project (ZooscanProjectFolder): The project folder to extract scans from.
         db (sqlalchemy.orm.Session, optional): The SQLAlchemy session to use.
 
     Returns:
@@ -360,14 +365,14 @@ def scans_from_legacy_project(db: Session, project: ZooscanProjectFolder) -> lis
     ret = []
 
     # Get scan metadata for the project
-    project_scans_metadata = get_project_scans_metadata(db, project)
+    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
     # Iterate over all samples in the project
-    for sample_name in project.list_samples_with_state():
+    for sample_name in zoo_project.list_samples_with_state():
         sample_scans_metadata = sub_table_for_sample(
             project_scans_metadata, sample_name
         )
         # Iterate over all scans in the project
-        for scan_name in get_project_scans(db, project):
+        for scan_name in get_project_scans(db, zoo_project):
             subsample_name = subsample_name_from_scan_name(scan_name)
             zoo_subsample_metadata = find_scan_metadata(
                 sample_scans_metadata, sample_name, scan_name
@@ -378,7 +383,9 @@ def scans_from_legacy_project(db: Session, project: ZooscanProjectFolder) -> lis
                 continue
 
             # Get scans for this subsample and add them to the result list
-            subsample_scans = scans_from_legacy(project, sample_name, subsample_name)
+            subsample_scans = scans_from_legacy(
+                zoo_project, sample_name, subsample_name
+            )
             ret.extend(subsample_scans)
 
     return ret

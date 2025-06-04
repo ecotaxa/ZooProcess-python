@@ -20,7 +20,7 @@ print(sys.path)
 # Unset DRIVES environment variable
 if "DRIVES" in os.environ:
     del os.environ["DRIVES"]
-# Import config.py first to set up config.DRIVES
+# Import config.py first to set up config._DRIVES
 from config_rdr import config
 # Import main.py, which should fail
 try:
@@ -64,7 +64,7 @@ for path in [{paths_str}]:
     sys.path.append(path)
 # Set DRIVES environment variable with invalid paths
 os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
-# Import config.py first to set up config.DRIVES
+# Import config.py first to set up config._DRIVES
 from config_rdr import config
 # Import main.py, which should fail
 try:
@@ -113,13 +113,13 @@ for path in [{paths_str}]:
     sys.path.append(path)
 # Set DRIVES environment variable with valid paths
 os.environ["DRIVES"] = "{temp_dir1},{temp_dir2}"
-# Import config.py first to set up config.DRIVES
+# Import config.py first to set up config._DRIVES
 from config_rdr import config
-print(f"DEBUG: config.DRIVES = {{config.DRIVES}}")
+print(f"DEBUG: config._DRIVES = {{config.get_drives()}}")
 # Import main.py, which should succeed
 import main
 # Check that DRIVES is correctly loaded
-if config.DRIVES == [Path("{temp_dir1}"), Path("{temp_dir2}")]:
+if config.get_drives() == [Path("{temp_dir1}"), Path("{temp_dir2}")]:
     print("SUCCESS: Import succeeded and DRIVES is correctly loaded")
 else:
     print(f"ERROR: DRIVES not correctly loaded. Expected [{temp_dir1}, {temp_dir2}], got {{config.DRIVES}}")

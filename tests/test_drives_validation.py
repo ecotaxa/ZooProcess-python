@@ -145,7 +145,7 @@ def test_config_validation_empty(mocker: MockFixture):
         if "DRIVES" in os.environ:
             del os.environ["DRIVES"]
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
         from config_rdr import config
         import importlib
@@ -179,7 +179,7 @@ def test_config_validation_invalid_paths(mocker: MockFixture):
         # Set the DRIVES environment variable with non-existent paths
         os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
         from config_rdr import config
         import importlib
@@ -217,7 +217,7 @@ def test_config_validation_valid_paths():
         # Set the DRIVES environment variable with the temporary directories
         os.environ["DRIVES"] = f"{temp_dir1},{temp_dir2}"
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
         from config_rdr import config
         import importlib
@@ -226,7 +226,7 @@ def test_config_validation_valid_paths():
         from config_rdr import config
 
         # Check that DRIVES is correctly loaded
-        assert config.DRIVES == [Path(temp_dir1), Path(temp_dir2)]
+        assert config.get_drives() == [Path(temp_dir1), Path(temp_dir2)]
     finally:
         # Restore the original DRIVES value
         if original_drives is not None:
@@ -254,7 +254,7 @@ def test_config_validation_not_directories(mocker: MockFixture):
         # Set the DRIVES environment variable with the temporary directory and file
         os.environ["DRIVES"] = f"{temp_dir},{temp_file.name}"
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
         from config_rdr import config
         import importlib
@@ -295,7 +295,7 @@ def test_config_validation_duplicates(mocker: MockFixture):
         # Set the DRIVES environment variable with duplicate paths
         os.environ["DRIVES"] = f"{temp_dir},{temp_dir}"
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
         from config_rdr import config
         import importlib

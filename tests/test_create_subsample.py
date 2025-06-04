@@ -1,15 +1,13 @@
-from pathlib import Path
-from unittest.mock import MagicMock
-
 from pytest_mock import MockFixture
 
-from Models import SubSample
+from conftest import DATA_DIR
 from local_DB.db_dependencies import get_db
 from local_DB.models import InFlightScan
 from main import app
 from modern.ids import (
     scan_name_from_subsample_name,
     hash_from_sample_name,
+    hash_from_project,
 )
 
 
@@ -17,35 +15,17 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
     """Test that the create_subsample endpoint creates a subsample and returns it"""
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
-
-    # Mock only the necessary dependencies that interact with external systems
-    mock_drive_and_project_from_hash = mocker.patch(
-        "routers.subsamples.drive_and_project_from_hash"
-    )
-    mock_check_sample_exists = mocker.patch("routers.subsamples.check_sample_exists")
-    mock_zooscan_drive = mocker.patch("routers.subsamples.ZooscanDrive")
-    # Note: We're not mocking add_subsample anymore as per the issue description
-    mock_get_project_scans_metadata = mocker.patch(
-        "routers.subsamples.get_project_scans_metadata"
-    )
-    mock_subsample_from_legacy = mocker.patch(
-        "routers.subsamples.subsample_from_legacy"
-    )
-
-    # Set up the mocks
-    mock_drive_and_project_from_hash.return_value = ("/path/to/drive", "test_project")
-    # Create a mock ZooscanProjectFolder object
-    mock_project_folder = MagicMock()
-    mock_project_folder.project = "test_project"
-    mock_project_folder.path = Path("/path/to/drive/test_project")
-    mock_zooscan_drive.return_value.get_project_folder.return_value = (
-        mock_project_folder
-    )
+    # Point drives config to test data
+    mock_drives_config = mocker.patch("config_rdr.config.get_drives")
 
     # Prepare test data
-    project_hash = "test_project_hash"
-    sample_id = "test_sample_id"
+    drive = DATA_DIR / "test_drive"
+    mock_drives_config.return_value = [drive]
+    project = drive / "test_project"
+    project_hash = hash_from_project(project)
+    sample_id = "jb19740123"
     sample_hash = hash_from_sample_name(sample_id)
+
     subsample_name = "test_subsample"
     subsample_data = {
         "name": subsample_name,
@@ -62,33 +42,12 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
         },
     }
 
-    # Create test metadata for find_scan_metadata to use
-    # Use the real scan_name_from_subsample_name function to get the scan_id
-    scan_id = scan_name_from_subsample_name(subsample_name)
-    test_metadata = {
-        "sampleid": sample_id,
-        "scanid": scan_id,
-        "metadata": "test_metadata",
-    }
-    mock_get_project_scans_metadata.return_value = [test_metadata]
-
-    # Mock the subsample_from_legacy to return a SubSample object
-    mock_subsample = SubSample(
-        id="test_subsample_id",
-        name=subsample_name,
-        metadata=[],
-        scan=[],
-        createdAt="2023-01-01T00:00:00",
-        updatedAt="2023-01-01T00:00:00",
-    )
-    mock_subsample_from_legacy.return_value = mock_subsample
-
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
     login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
-    # Make request to the create_subsample endpoint
+    # Make a request to the create_subsample endpoint
     response = app_client.post(
         f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
@@ -96,24 +55,16 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
     )
 
     # Check that the response is successful
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
 
     # Check that the response contains the created subsample
     created_subsample = response.json()
     assert created_subsample is not None
-    assert created_subsample["id"] == mock_subsample.id
-    assert created_subsample["name"] == mock_subsample.name
+    assert created_subsample["name"] == subsample_name
+    # There should be no attached scans yet
+    assert created_subsample["scan"] == []
 
-    # Verify that the necessary functions were called with the correct arguments
-    mock_drive_and_project_from_hash.assert_called_once_with(project_hash)
-    mock_check_sample_exists.assert_called_once_with(project_hash, sample_hash)
-    mock_zooscan_drive.assert_called_once()
-    mock_zooscan_drive.return_value.get_project_folder.assert_called_once_with(
-        "test_project"
-    )
     # Check that the record was added to the database
-    # Note: We're not mocking add_subsample anymore, so we check the database directly
-    # The scan_id is derived from the subsample name using scan_name_from_subsample_name
     expected_scan_id = scan_name_from_subsample_name(subsample_data["name"])
     in_flight_scan = (
         local_db.query(InFlightScan)
@@ -122,16 +73,6 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
     )
     assert in_flight_scan is not None
     assert in_flight_scan.scan_data["sampleid"] == sample_id
-
-    mock_get_project_scans_metadata.assert_called_once()
-    # We're using the real scan_name_from_subsample_name function now
-    # We're using the real find_scan_metadata function now
-    mock_subsample_from_legacy.assert_called_once_with(
-        mock_project_folder,
-        sample_id,
-        subsample_data["name"],
-        test_metadata,
-    )
 
     # Clean up the dependency override
     app.dependency_overrides.clear()

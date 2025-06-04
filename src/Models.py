@@ -80,7 +80,7 @@ class SampleWithBackRef(Sample):
 class SubSample(BaseModel):
     """SubSample model as defined in the OpenAPI specification"""
 
-    id: str
+    id: str  # The technical id
     name: str
     metadata: List["MetadataModel"]
     scan: List["Scan"]

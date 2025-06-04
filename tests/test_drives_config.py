@@ -22,7 +22,7 @@ def test_drives_empty_fails(mocker: MockFixture):
         if "DRIVES" in os.environ:
             del os.environ["DRIVES"]
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
 
         # Reload the module to pick up the new environment variable
@@ -64,7 +64,7 @@ def test_drives_with_invalid_paths_fails(mocker: MockFixture):
         # Set the DRIVES environment variable with non-existent paths
         os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
 
         # Reload the module to pick up the new environment variable
@@ -107,7 +107,7 @@ def test_drives_with_valid_paths(mocker: MockFixture):
         # Set the DRIVES environment variable with the temporary directories
         os.environ["DRIVES"] = f"{temp_dir1},{temp_dir2}"
 
-        # Import the config module first to set up config.DRIVES
+        # Import the config module first to set up config._DRIVES
         import config_rdr
 
         # Reload the module to pick up the new environment variable
@@ -115,7 +115,7 @@ def test_drives_with_valid_paths(mocker: MockFixture):
         from config_rdr import config
 
         # Check that DRIVES is correctly loaded
-        assert config.DRIVES == [Path(temp_dir1), Path(temp_dir2)]
+        assert config.get_drives() == [Path(temp_dir1), Path(temp_dir2)]
     finally:
         # Restore the original DRIVES value
         if original_drives is not None:

@@ -4,6 +4,7 @@ from typing import Tuple
 
 from fastapi import HTTPException
 
+from helpers.cached_ids import CachedIds
 from legacy.drives import get_drive_path
 
 DO_HASH = False
@@ -113,13 +114,16 @@ def sample_name_from_sample_hash(sample_hash: str) -> str:
     return name_from_hash(sample_hash)
 
 
+def hash_from_user_name(user_name):
+    return name_from_hash(user_name)
+
+
+subsamples_cache = CachedIds("subsamples")
+
+
 def hash_from_subsample_name(subsample_name: str) -> str:
-    return hash_from_name(subsample_name)
+    return subsamples_cache.id_from_name(subsample_name)
 
 
 def subsample_name_from_hash(subsample_hash: str) -> str:
-    return name_from_hash(subsample_hash)
-
-
-def hash_from_user_name(user_name):
-    return name_from_hash(user_name)
+    return subsamples_cache.name_from_id(subsample_hash)

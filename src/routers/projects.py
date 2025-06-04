@@ -35,7 +35,7 @@ def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]
     List all projects from the specified drives.
 
     Args:
-        drives_to_check: Optional list of drive paths to check. If None, uses config.DRIVES.
+        drives_to_check: Optional list of drive paths to check. If None, uses config.get_drives().
         serial_number: Optional serial number to use for projects. Default is "PROD123".
 
     Returns:
@@ -63,7 +63,7 @@ def get_projects(
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    return list_all_projects(db, config.DRIVES)
+    return list_all_projects(db, config.get_drives())
 
 
 @router.get("/{project_hash}")

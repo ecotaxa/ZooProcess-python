@@ -1,5 +1,5 @@
 # A Datasource which mixes legacy scan CSV table with modern additions
-from typing import List, Dict, Optional, Tuple, Union, NamedTuple
+from typing import List, Dict, Optional, NamedTuple
 
 from sqlalchemy.orm import Session
 
@@ -171,11 +171,8 @@ def add_subsample(
 
     # Create scan data dictionary
     data = subsample.data
-    # "spliting_ratio": 4,  from data, TODO, where?
-    scan_id = scan_name_from_subsample_name(sample_name + "_" + data["scan_id"])
-    scan_id = scan_name_from_subsample_name(
-        subsample.name
-    )  # Looks like it's not following conventions intentionally
+    # scan_id = scan_name_from_subsample_name(sample_name + "_" + data["scan_id"])
+    scan_id = scan_name_from_subsample_name(subsample.name)
     scan_data = {
         "scanid": scan_id,
         "sampleid": sample_name,

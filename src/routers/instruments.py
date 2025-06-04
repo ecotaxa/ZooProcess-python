@@ -91,7 +91,7 @@ def get_backgrounds_by_instrument(instrument_id: str) -> List[Background]:
     all_backgrounds = OrderedDict()
 
     # Iterate through each drive in the config
-    for drive_path in config.DRIVES:
+    for drive_path in config.get_drives():
         zoo_drive = ZooscanDrive(drive_path)
 
         # Get all projects in this drive

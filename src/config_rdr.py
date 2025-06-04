@@ -53,10 +53,13 @@ class Config:
         """
         self.WORKING_DIR: str = WORKING_DIR
         self.DB_NAME: str = DB_NAME
-        self.DRIVES: List[Path] = [Path(a_drive) for a_drive in DRIVES]
+        self._DRIVES: List[Path] = [Path(a_drive) for a_drive in DRIVES]
         self.dbserver: str = dbserver
         self.public_url: str = public_url
         self.SECRET_KEY: str = SECRET_KEY
+
+    def get_drives(self) -> List[Path]:
+        return self._DRIVES
 
 
 # Create the config instance with all required attributes
