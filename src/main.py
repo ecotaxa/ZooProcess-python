@@ -1,5 +1,6 @@
 # import os
 import os
+import typing
 from pathlib import Path
 from typing import List
 
@@ -97,7 +98,10 @@ app.add_exception_handler(
 )
 
 # Add exception handler for 422 validation errors
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(
+    RequestValidationError, validation_exception_handler  # type:ignore
+)
+# https://github.com/encode/starlette/pull/2403
 
 # Security scheme for JWT bearer token authentication is imported from auth.py
 
@@ -180,7 +184,7 @@ def read_root():
 
 
 @app.post("/separator/scan")
-def separate(scan: ScanIn) -> None:
+def separate_scan(scan: ScanIn) -> None:
     # import os
 
     logger.info(f"POST /separator/scan: {scan}")
@@ -189,6 +193,7 @@ def separate(scan: ScanIn) -> None:
 
 
 @app.put("/separate/")
+@typing.no_type_check
 def separate(folder: Folder):
     logger.info(f"PUT /separate/: {folder}")
 
@@ -425,7 +430,7 @@ def sendImageProcessed(taskId, db, bearer, type, path):
 
 
 @app.post("/process/")
-# def process(folder:Folder):
+@typing.no_type_check
 def process(folder: BMProcess):
     """
     Process a scan
@@ -583,6 +588,7 @@ def mediumBackground(back1url, back2url):
 
 
 @app.post("/background/")
+@typing.no_type_check
 def add_background(background: Background):
     """
     Process the background scans

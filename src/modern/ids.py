@@ -32,7 +32,7 @@ def name_from_hash(encoded_str: str) -> str:
         return ""
 
 
-def hash_from_name(name):
+def hash_from_name(name: str) -> str:
     if not DO_HASH:
         return name
     return urlsafe_b64encode(name.encode()).decode()

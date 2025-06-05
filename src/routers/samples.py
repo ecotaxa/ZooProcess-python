@@ -90,7 +90,7 @@ def get_sample(
             break
     else:
         raise_404(f"Sample with ID {sample_id} not found in project {project_hash}")
-        sample_name = None  # Unreached
+        sample_name = None  # type:ignore # Unreached
 
     project = project_from_legacy(db, project_path)
     reduced = sample_from_legacy(db, zoo_project, sample_name)

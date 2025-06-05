@@ -75,9 +75,7 @@ def get_subsamples(
     zoo_project = ZooscanDrive(drive_path).get_project_folder(project_name)
 
     # Get subsamples using the same structure as in subsamples_from_legacy_project_and_sample
-    subsamples = subsamples_from_legacy_project_and_sample(
-        zoo_project, sample_id, session=db
-    )
+    subsamples = subsamples_from_legacy_project_and_sample(db, zoo_project, sample_id)
 
     return subsamples
 

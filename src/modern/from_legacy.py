@@ -4,7 +4,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple, Any
 
 from sqlalchemy.orm import Session
 
@@ -41,7 +41,6 @@ from modern.subsample import get_project_scans_metadata, get_project_scans, pars
 from modern.users import get_mock_user, user_with_name
 from modern.utils import (
     extract_serial_number,
-    parse_sample_name,
     find_latest_modification_time,
     convert_ddm_to_decimal_degrees,
 )
@@ -71,7 +70,7 @@ def drive_from_legacy(drive_path: Path) -> Drive:
 
 
 def project_from_legacy(
-    db: Session, a_prj_path: Path, serial_number: str = None
+    db: Session, a_prj_path: Path, serial_number: Optional[str] = None
 ) -> Project:
     project_name = a_prj_path.name
     # Extract serial number from project name if not provided
@@ -128,7 +127,7 @@ def subsamples_from_legacy_project_and_sample(
     db: Session,
     zoo_project: ZooscanProjectFolder,
     sample_name: str,
-):
+) -> List[SubSample]:
     ret = []
     project_scans_metadata = get_project_scans_metadata(db, zoo_project)
     sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
@@ -174,9 +173,7 @@ def sample_from_legacy(
     zoo_project: ZooscanProjectFolder,
     sample_name: str,
 ) -> Sample:
-    # Parse the sample name into components
-    parsed_name = parse_sample_name(sample_name)
-    # Create metadata from parsed components
+    # Read metadata
     all_sample_metadata = zoo_project.zooscan_meta.read_samples_table()
     zoo_metadata = find_sample_metadata(all_sample_metadata, sample_name)
     assert (
@@ -196,7 +193,7 @@ def sample_from_legacy(
         ]
     )
     fractions_str = ", ".join(fractions)
-    created_at = parse_legacy_date(modern_metadata.get("sampling_date"), "-")
+    created_at = parse_legacy_date(modern_metadata["sampling_date"], "-")
     ret = Sample(
         id=hash_from_sample_name(sample_name),
         name=sample_name,
@@ -510,8 +507,10 @@ def from_legacy_meta(meta: dict) -> dict:
     }
 
     # Invert the conversion table to map from modern keys to legacy keys
-    modern_to_legacy = {}
+    modern_to_legacy: Dict[str, Tuple[str, Any]] = {}
     for legacy_key, modern_key in legacy_to_modern.items():
+        if modern_key is None:
+            continue
         if isinstance(modern_key, list):
             # Handle the case where a legacy key maps to multiple modern keys
             for mk in modern_key:
@@ -541,6 +540,7 @@ def from_legacy_meta(meta: dict) -> dict:
                 parsed = parse_fracid(value)
                 ret["fraction_id"] = parsed.primary_fraction
                 if parsed.pattern_type == "complex":
+                    assert parsed.sub_fraction
                     ret["fraction_id_suffix"] = parsed.sub_fraction
                 else:
                     ret["fraction_id_suffix"] = ""

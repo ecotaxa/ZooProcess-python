@@ -1,12 +1,14 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict
 
+
 class ContactModel(BaseModel):
     name: str
     email: EmailStr
     organisation: Optional[str]
     address: Optional[str]
     phone: Optional[str]
+
 
 class ProjectModel(BaseModel):
     projid: int

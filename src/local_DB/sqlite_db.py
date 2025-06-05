@@ -1,11 +1,13 @@
 import os
 import sqlite3
+
+from sqlalchemy.orm import DeclarativeBase
+
 from config_rdr import config
 from .models import (
     get_engine,
     get_session_maker,
     init_db as sqlalchemy_init_db,
-    Base,
 )
 
 
@@ -100,6 +102,7 @@ class SQLiteDB:
         if not self.connection:
             self.connect()
 
+        assert self.connection is not None
         cursor = self.connection.cursor()
         if params:
             cursor.execute(query, params)
@@ -123,7 +126,7 @@ class SQLiteDB:
         """
         # Using SQLAlchemy to create tables
 
-        Base.metadata.create_all(self.engine)
+        DeclarativeBase.metadata.create_all(self.engine)
 
 
 class SQLAlchemyDB:

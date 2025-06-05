@@ -56,7 +56,8 @@ class CustomHTTPBearer(HTTPBearer):
                 return None
         return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
 
-    def get_authorization_scheme_param(self, authorization_header: str):
+    @staticmethod
+    def get_authorization_scheme_param(authorization_header: Optional[str]):
         if not authorization_header:
             return "", ""
         scheme, _, param = authorization_header.partition(" ")
@@ -88,6 +89,7 @@ def decode_jwt_token(token: str) -> Dict:
     try:
         # Decode the JWT token
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
+        assert isinstance(payload, dict)
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -166,7 +168,7 @@ def get_user_from_db(email: str, db):
 
 
 async def get_current_user_from_credentials(
-    request: Request = None,
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ):

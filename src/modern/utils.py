@@ -14,7 +14,7 @@ def find_latest_modification_time(directory_path: Path) -> datetime:
     Returns:
         The most recent modification time as a datetime object
     """
-    latest_time = 0
+    latest_time = 0.0
 
     # Walk through all directories and files
     join, getmtime = os.path.join, os.path.getmtime
@@ -171,5 +171,3 @@ def convert_ddm_to_decimal_degrees(a_value):
     decimal = (val - degrees) * 100
     decimal = round(decimal / 30 * 50, 4)
     return degrees + decimal / 100
-
-

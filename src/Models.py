@@ -17,7 +17,7 @@ class Drive(BaseModel):
 
     id: str
     name: str
-    url: Union[str, None] = None
+    url: str
 
 
 class Project(BaseModel):
@@ -248,7 +248,7 @@ class MetadataTemplateModel(BaseModel):
 
 class ImageUrl(BaseModel):
     src: str
-    dst: Union[str, None] = None
+    dst: str
 
 
 class VignetteFolder(BaseModel):

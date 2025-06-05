@@ -199,6 +199,45 @@ Run only one test function
 pytest tests/test_file.py::test_function_name
 ```
 
+# Type Checking with Mypy
+
+The project uses [mypy](https://mypy.readthedocs.io/) for static type checking. Mypy helps catch type-related errors before runtime by analyzing type annotations in the code.
+
+## Running Mypy
+
+To run mypy on the project:
+
+```bash
+# Install mypy if not already installed
+pip install -r requirements.txt
+
+# Run mypy on the entire src directory
+mypy src
+
+# Run mypy on a specific file
+mypy src/path/to/file.py
+```
+
+## Configuration
+
+Mypy is configured using the `mypy.ini` file in the project root. The configuration includes:
+
+- Python version set to 3.9
+- Warning settings for returning Any types and unused configs
+- Type checking for untyped definitions
+- Ignoring missing imports for common libraries (numpy, pandas, matplotlib, etc.)
+
+## Adding Type Annotations
+
+When adding new code to the project, consider adding type annotations to improve code quality and maintainability. For example:
+
+```python
+def add_numbers(a: int, b: int) -> int:
+    return a + b
+```
+
+For more information on Python type annotations, see the [mypy documentation](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html).
+
 # Database with SQLAlchemy
 
 The application uses SQLAlchemy as an ORM (Object-Relational Mapping) to interact with the SQLite database. This provides a more Pythonic way to work with the database and makes it easier to maintain and extend the database schema.

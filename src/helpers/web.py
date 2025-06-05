@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, JSONResponse
+from starlette.responses import PlainTextResponse, JSONResponse, Response
 
 from logger import logger
 
@@ -79,13 +79,13 @@ class AutoCloseBinaryIO(object):
             return self.fd.__next__()
         except StopIteration:
             self.fd.close()
-            self.fd = None
+            self.fd = None  # type:ignore
             raise StopIteration()
 
     def __del__(self):
-        if hasattr(self, "fd") and self.fd is not None:
+        if self.fd is not None:
             self.fd.close()
-            self.fd = None
+            self.fd = None  # type:ignore
 
 
 def get_stream(
@@ -135,7 +135,9 @@ class TimingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     # Get the request body
     body = await request.body()
 

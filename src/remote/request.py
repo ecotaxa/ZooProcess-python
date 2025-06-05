@@ -1,3 +1,4 @@
+from modern.instrument import get_instruments
 from .DB import DB
 
 
@@ -25,8 +26,6 @@ from .DB import DB
 
 
 def getInstrumentFromSN(db, instrumentSN):
-    from modern.instrument import get_instruments
-
     instruments = get_instruments()
     for instrument in instruments:
         if instrument.sn == instrumentSN:
@@ -35,30 +34,6 @@ def getInstrumentFromSN(db, instrumentSN):
 
 
 def getDriveId(db: DB, driveName) -> str:
-    # url = f"{db}drives"
-    # print("url: ", url)
-
-    # headers = {
-    #     "Authorization": f"Bearer {bearer}",
-    #     "Content-Type": "application/json",
-    # }
-    # print("headers: ", headers)
-    # response = requests.get(url, headers=headers)
-    # print("response: ", response)
-    # if response.status_code == 200:
-    #     drives = response
-    #     print("drives: ", drives)
-    #     for drive in drives:
-    #         if drive["name"] == driveName:
-    #             return drive["id"]
-    #         return drive["id"]
-    #     return None
-    # if response.status_code == 401:
-    #     raise HTTPException(status_code=401, detail="Unauthorized - Please, update your bearer")
-    # if response.status_code == 403:
-    #     raise HTTPException(status_code=401, detail="Unauthorized")
-    # return None
-
     drives = db.get("drives")
     print("response: ", drives)
     for drive in drives:

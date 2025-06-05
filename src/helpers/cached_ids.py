@@ -50,10 +50,10 @@ class CachedIds:
     def id_from_name(self, name: str) -> str:
         if name not in self.name_to_id:
             self._add_entry(name)
-        return self.name_to_id.get(name)
+        return self.name_to_id[name]
 
     def name_from_id(self, id_: str) -> str:
-        return self.id_to_name.get(id_)
+        return self.id_to_name[id_]
 
     def _add_entry(self, name: str):
         id_ = str(ObjectId())
