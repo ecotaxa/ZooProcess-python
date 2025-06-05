@@ -1,5 +1,8 @@
+import importlib
+
 from pytest_mock import MockFixture
 
+import config_rdr
 from conftest import DATA_DIR
 from local_DB.db_dependencies import get_db
 from local_DB.models import InFlightScan
@@ -16,7 +19,7 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
     # Point drives config to test data
-    mock_drives_config = mocker.patch("config_rdr.config.get_drives")
+    mock_drives_config = mocker.patch("legacy.drives.config.get_drives")
 
     # Prepare test data
     drive = DATA_DIR / "test_drive"

@@ -36,8 +36,8 @@ def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]
     List all projects from the specified drives.
 
     Args:
+        db: Database session
         drives_to_check: Optional list of drive paths to check. If None, uses config.get_drives().
-        serial_number: Optional serial number to use for projects. Default is "PROD123".
 
     Returns:
         List of Project objects.
