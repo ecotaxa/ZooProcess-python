@@ -21,8 +21,8 @@ from modern.from_legacy import (
     backgrounds_from_legacy_project,
     scans_from_legacy_project,
 )
-from modern.ids import drive_and_project_from_hash
 from remote.DB import DB
+from .utils import validate_path_components
 
 # Create a routers instance
 router = APIRouter(
@@ -45,8 +45,8 @@ def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]
     # Create a list to store all projects
     all_projects = []
     # Iterate through each drive in the list
-    for drive in drives_to_check:
-        zoo_drive = ZooscanDrive(drive)
+    for drive_path in drives_to_check:
+        zoo_drive = ZooscanDrive(drive_path)
         for a_prj_path in zoo_drive.list():
             project = project_from_legacy(db, a_prj_path)
             all_projects.append(project)
@@ -81,10 +81,9 @@ def get_project_by_hash(
     Args:
         project_hash: The hash of the project to retrieve.
     """
-    # Get the specific project by hash
-    drive_path, project_name = drive_and_project_from_hash(project_hash)
-    project_path = Path(drive_path) / project_name
-    project = project_from_legacy(db, project_path)
+    # Validate the project hash and get the drive path and project folder
+    zoo_drive, zoo_project, _, _ = validate_path_components(db, project_hash)
+    project = project_from_legacy(db, zoo_project.path)
     return project
 
 
@@ -117,7 +116,9 @@ def test(project: Project):
 
 @router.get("/{project_hash}/backgrounds")
 def get_backgrounds(
-    project_hash: str, _user=Depends(get_current_user_from_credentials)
+    project_hash: str,
+    _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> List[Background]:
     """
     Get the list of backgrounds associated with a project.
@@ -132,12 +133,9 @@ def get_backgrounds(
     Raises:
         HTTPException: If the project is not found or the user is not authorized.
     """
-    logger.info(f"Getting backgrounds for project {project_hash}")
-
-    drive_path, project_name = drive_and_project_from_hash(project_hash)
-    zoo_drive = ZooscanDrive(drive_path)
-    project = zoo_drive.get_project_folder(project_name)
-    return backgrounds_from_legacy_project(project)
+    zoo_drive, zoo_project, _, _ = validate_path_components(db, project_hash)
+    logger.info(f"Getting backgrounds for project {zoo_project.name}")
+    return backgrounds_from_legacy_project(zoo_project)
 
 
 @router.get("/{project_hash}/scans")
@@ -160,13 +158,10 @@ def get_scans(
     Raises:
         HTTPException: If the project is not found or the user is not authorized.
     """
-    logger.info(f"Getting scans for project {project_hash}")
+    zoo_drive, zoo_project, _, _ = validate_path_components(db, project_hash)
+    logger.info(f"Getting scans for project {zoo_project.name}")
 
-    drive_path, project_name = drive_and_project_from_hash(project_hash)
-    zoo_drive = ZooscanDrive(drive_path)
-    project = zoo_drive.get_project_folder(project_name)
-
-    return scans_from_legacy_project(db, project)
+    return scans_from_legacy_project(db, zoo_project)
 
 
 @router.get("/{project_hash}/background/{background_id}")
@@ -174,6 +169,7 @@ async def get_background(
     project_hash: str,
     background_id: str,
     # _user=Depends(get_current_user_from_credentials), # TODO: Fix on client side
+    db: Session = Depends(get_db),
 ) -> StreamingResponse:
     """
     Get a specific background from a project by its ID.
@@ -189,21 +185,18 @@ async def get_background(
     Raises:
         HTTPException: If the project or background is not found
     """
-    logger.info(f"Getting background {background_id} for project {project_hash}")
-
-    drive_path, project_name = drive_and_project_from_hash(project_hash)
-    zoo_drive = ZooscanDrive(drive_path)
-    project = zoo_drive.get_project_folder(project_name)
+    zoo_drive, zoo_project, _, _ = validate_path_components(db, project_hash)
+    logger.info(f"Getting background {background_id} for project {zoo_project.name}")
 
     assert background_id.endswith(
         ".jpg"
     )  # This comes from @see:backgrounds_from_legacy_project
     background_name = background_id[:-4]
 
-    background_file = find_background_file(project, background_name)
+    background_file = find_background_file(zoo_project, background_name)
     if background_file is None:
         raise_404(
-            f"Background with ID {background_id} not found in project {project_hash}"
+            f"Background with ID {background_id} not found in project {zoo_project.name}"
         )
 
     tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
