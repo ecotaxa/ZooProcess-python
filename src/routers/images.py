@@ -17,17 +17,6 @@ router = APIRouter(
 )
 
 
-@router.post("/scan/{scan_id}/url")
-def post_scan_url(
-    scan_id: str,
-    scan_url: ScanToUrlReq,
-    _user: User = Depends(get_current_user_from_credentials),
-    db: Session = Depends(get_db),
-) -> ScanPostRsp:
-    logger.info(f"Received scan URL: {scan_url} for scan {scan_id}")
-    return ScanPostRsp(id=scan_id + "XXXX", image="toto")
-
-
 @router.post("/upload")
 async def upload_image(
     file: UploadFile = File(...),
@@ -46,12 +35,16 @@ async def upload_image(
         ScanPostRsp: Response containing the ID and image information.
     """
     logger.info(
-        f"Received file upload: {file.filename}, content_type: {file.content_type}"
+        f"Receiving file upload: {file.filename}, content_type: {file.content_type}"
     )
 
     # Generate an ID for the uploaded file
     file_id = f"upload_{file.filename}"
     await add_file(file_id, file)
+
+    logger.info(
+        f"Received file upload: {file.filename}, content_type: {file.content_type}"
+    )
 
     file_url = config.public_url + "/download/" + file_id
     return UploadPostRsp(fileUrl=file_url)

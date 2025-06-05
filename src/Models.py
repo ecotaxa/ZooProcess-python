@@ -152,8 +152,6 @@ class LinkBackgroundReq(BaseModel):
 
 class ScanToUrlReq(BaseModel):
     instrumentId: str  # e.g. sn003
-    projectId: str
-    subsampleId: str
     url: str
 
 

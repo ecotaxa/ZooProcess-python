@@ -9,6 +9,7 @@ from modern.ids import (
     drive_and_project_from_hash,
     sample_name_from_sample_hash,
     subsample_name_from_hash,
+    scan_name_from_subsample_name,
 )
 from modern.subsample import get_project_scans_metadata
 
@@ -87,7 +88,11 @@ def validate_path_components(
             scans_metadata = get_project_scans_metadata(db, zoo_project)
 
             # Check if the subsample exists in the sample
-            if not find_scan_metadata(scans_metadata, sample_name, subsample_name):
+            if not find_scan_metadata(
+                scans_metadata,
+                sample_name,
+                scan_name_from_subsample_name(subsample_name),
+            ):
                 raise HTTPException(
                     status_code=404,
                     detail=f"Subsample with ID {subsample_name} not found in sample {sample_name}",

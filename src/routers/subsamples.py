@@ -6,7 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from Models import SubSample, SubSampleIn, LinkBackgroundReq
+from Models import (
+    SubSample,
+    SubSampleIn,
+    LinkBackgroundReq,
+    ScanToUrlReq,
+    User,
+    ScanPostRsp,
+)
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream
@@ -268,7 +275,7 @@ async def get_subsample_scan(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
-    _user=Depends(get_current_user_from_credentials),
+    # _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> StreamingResponse:
     """
@@ -318,6 +325,26 @@ async def get_subsample_scan(
     file_like, length, media_type = get_stream(scan_file)
     headers = {"content-length": str(length)}
     return StreamingResponse(file_like, headers=headers, media_type=media_type)
+
+
+@router.post("/{subsample_hash}/scan_url")
+def post_scan_url(
+    project_hash: str,
+    sample_hash: str,
+    subsample_hash: str,
+    scan_url: ScanToUrlReq,
+    _user: User = Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
+) -> ScanPostRsp:
+    # Validate the project, sample, and subsample hashes
+    zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
+        db, project_hash, sample_hash, subsample_hash
+    )
+
+    logger.info(
+        f"Received scan URL: {scan_url} for subsample {subsample_name} in sample {sample_name} in project {zoo_project.name}"
+    )
+    return ScanPostRsp(id=subsample_name + "XXXX", image="toto")
 
 
 @router.post("/{subsample_hash}/link")
