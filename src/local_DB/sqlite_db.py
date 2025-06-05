@@ -1,14 +1,8 @@
 import os
 import sqlite3
 
-from sqlalchemy.orm import DeclarativeBase
-
 from config_rdr import config
-from .models import (
-    get_engine,
-    get_session_maker,
-    init_db as sqlalchemy_init_db,
-)
+from .models import get_engine, get_session_maker, init_db as sqlalchemy_init_db, Base
 
 
 class SQLiteDB:
@@ -126,7 +120,7 @@ class SQLiteDB:
         """
         # Using SQLAlchemy to create tables
 
-        DeclarativeBase.metadata.create_all(self.engine)
+        Base.metadata.create_all(self.engine)
 
 
 class SQLAlchemyDB:

@@ -7,8 +7,12 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, Mapped
 from config_rdr import config
 
 
+class Base(DeclarativeBase):
+    pass
+
+
 # Define the Example model based on the existing example table
-class Example(DeclarativeBase):
+class Example(Base):
     """
     SQLAlchemy model for the example table.
     """
@@ -24,7 +28,7 @@ class Example(DeclarativeBase):
 
 
 # Define the User model
-class User(DeclarativeBase):
+class User(Base):
     """
     SQLAlchemy model for the user table.
     """
@@ -41,7 +45,7 @@ class User(DeclarativeBase):
 
 
 # Define the InFlightScan model
-class InFlightScan(DeclarativeBase):
+class InFlightScan(Base):
     """
     SQLAlchemy model for the in_flight_scans table.
 
@@ -126,5 +130,5 @@ def init_db():
         str: The path to the SQLite database file.
     """
     engine = get_engine()
-    DeclarativeBase.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     return os.path.join(config.WORKING_DIR, config.DB_NAME)
