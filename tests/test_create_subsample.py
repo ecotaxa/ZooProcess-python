@@ -110,7 +110,16 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
     subsample_data = {
         "name": "test_subsample",
         "metadataModelId": "test_metadata_model_id",
-        "data": {},
+        "data": {
+            "scanning_operator": "Test Operator",
+            "scan_id": "test_scan_id",
+            "fraction_number": "d1",
+            "fraction_id_suffix": "01",
+            "fraction_min_mesh": 200,
+            "fraction_max_mesh": 300,
+            "spliting_ratio": 4,
+            "observation": "Test observation",
+        },
     }
 
     # Make request to the create_subsample endpoint
@@ -164,7 +173,16 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
     subsample_data = {
         "name": "test_subsample",
         "metadataModelId": "test_metadata_model_id",
-        "data": {},
+        "data": {
+            "scanning_operator": "Test Operator",
+            "scan_id": "test_scan_id",
+            "fraction_number": "d1",
+            "fraction_id_suffix": "01",
+            "fraction_min_mesh": 200,
+            "fraction_max_mesh": 300,
+            "spliting_ratio": 4,
+            "observation": "Test observation",
+        },
     }
 
     # Make request to the create_subsample endpoint

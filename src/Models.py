@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Union, Literal, Optional, Dict, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class User(BaseModel):
@@ -89,21 +89,33 @@ class SubSample(BaseModel):
     user: User
 
 
+class SubSampleData(BaseModel):
+    """Data model for subsample information"""
+
+    scanning_operator: str
+    scan_id: str
+    fraction_number: str
+    fraction_id_suffix: str
+    fraction_min_mesh: int
+    fraction_max_mesh: int
+    spliting_ratio: int
+    observation: str
+
+    @field_validator("fraction_max_mesh")
+    def validate_fraction_max_mesh(cls, v, info):
+        """Validate that fraction_max_mesh is larger than fraction_min_mesh"""
+        values = info.data
+        if "fraction_min_mesh" in values and v <= values["fraction_min_mesh"]:
+            raise ValueError("fraction_max_mesh must be larger than fraction_min_mesh")
+        return v
+
+
 class SubSampleIn(BaseModel):
     """A POST-ed subsample"""
 
     name: str
     metadataModelId: str  # TODO: Hardcoded on UI side
-    # TODO: enforce fields AKA keys in below data, e.g.
-    #  'scanning_operator': 'Admin',
-    #  'scan_id': 'd1_01',
-    #  'fraction_number': 'd1',
-    #  'fraction_id_suffix': '01',
-    #  'fraction_min_mesh': 200,
-    #  'fraction_max_mesh': 300,
-    #  'spliting_ratio': 4,
-    #  'observation': 'sss'
-    data: dict
+    data: SubSampleData
 
 
 class Folder(BaseModel):

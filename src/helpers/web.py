@@ -147,5 +147,5 @@ async def validation_exception_handler(
     # Return the standard validation error response
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors()},
+        content={"detail": str(exc.errors())},
     )

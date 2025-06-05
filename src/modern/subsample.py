@@ -171,17 +171,17 @@ def add_subsample(
 
     # Create scan data dictionary
     data = subsample.data
-    # scan_id = scan_name_from_subsample_name(sample_name + "_" + data["scan_id"])
+    # scan_id = scan_name_from_subsample_name(sample_name + "_" + data.scan_id)
     scan_id = scan_name_from_subsample_name(subsample.name)
     scan_data = {
         "scanid": scan_id,
         "sampleid": sample_name,
-        "scanop": data["scanning_operator"],
-        "fracid": data["fraction_id_suffix"],
-        "fracmin": data["fraction_min_mesh"],
-        "fracsup": data["fraction_max_mesh"],
-        "fracnb": data["spliting_ratio"],
-        "observation": data["observation"],
+        "scanop": data.scanning_operator,
+        "fracid": data.fraction_id_suffix,
+        "fracmin": data.fraction_min_mesh,
+        "fracsup": data.fraction_max_mesh,
+        "fracnb": data.spliting_ratio,
+        "observation": data.observation,
         "code": "1",
         "submethod": "1",
         "cellpart": "1",
