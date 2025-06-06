@@ -88,7 +88,7 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
 
     # Mock the necessary dependencies
     mock_drive_and_project_from_hash = mocker.patch(
-        "routers.subsamples.drive_and_project_from_hash"
+        "routers.utils.drive_and_project_from_hash"
     )
 
     # Set up the mock to raise an HTTPException
@@ -145,21 +145,24 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
 
-    # Mock the necessary dependencies
-    mock_drive_and_project_from_hash = mocker.patch(
-        "routers.subsamples.drive_and_project_from_hash"
+    # Point drives config to test data
+    mock_drives_config = mocker.patch("legacy.drives.config.get_drives")
+
+    # Prepare test data
+    drive = DATA_DIR / "test_drive"
+    mock_drives_config.return_value = [drive]
+    project = drive / "test_project"
+    project_hash = hash_from_project(project)
+
+    # Mock list_samples_with_state to return an empty list
+    # This will cause the sample validation to fail
+    mock_list_samples = mocker.patch(
+        "ZooProcess_lib.ZooscanFolder.ZooscanProjectFolder.list_samples_with_state"
     )
-    mock_check_sample_exists = mocker.patch("routers.subsamples.check_sample_exists")
+    mock_list_samples.return_value = []  # No samples in the project
 
-    # Set up the mocks
-    mock_drive_and_project_from_hash.return_value = ("/path/to/drive", "test_project")
-
-    # Set up the mock to raise an HTTPException
-    from fastapi import HTTPException
-
-    mock_check_sample_exists.side_effect = HTTPException(
-        status_code=404, detail="Sample not found"
-    )
+    # We don't need to explicitly raise an HTTPException here, as the validate_path_components
+    # function will raise it when it can't find the sample
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
@@ -167,7 +170,6 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
     token = login_response.json()
 
     # Prepare test data
-    project_hash = "test_project_hash"
     sample_id = "nonexistent_sample_id"
     sample_hash = hash_from_sample_name(sample_id)
     subsample_data = {
@@ -194,11 +196,13 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
 
     # Check that the response is 404 Not Found
     assert response.status_code == 404
-    assert "Sample not found" in response.json()["detail"]
+    assert (
+        f"Sample with ID {sample_id} not found in project {project_hash}"
+        in response.json()["detail"]
+    )
 
     # Verify that the necessary functions were called with the correct arguments
-    mock_drive_and_project_from_hash.assert_called_once_with(project_hash)
-    mock_check_sample_exists.assert_called_once_with(project_hash, sample_hash)
+    mock_list_samples.assert_called_once()
 
     # Clean up the dependency override
     app.dependency_overrides.clear()

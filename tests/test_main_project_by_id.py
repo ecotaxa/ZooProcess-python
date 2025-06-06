@@ -16,16 +16,10 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_exists = mocker.patch("pathlib.Path.exists")
     mock_is_dir = mocker.patch("pathlib.Path.is_dir")
 
-    # Mock the drive_and_project_from_hash function
-    mock_extract = mocker.patch("routers.projects.drive_and_project_from_hash")
-
-    # Set up the mocks for Path methods
-    mock_exists.return_value = True
-    mock_is_dir.return_value = True
-
     # Create mock Path objects
     from pathlib import Path
     from Models import Project, Drive, Instrument
+    from ZooProcess_lib.ZooscanFolder import ZooscanDrive, ZooscanProjectFolder
 
     mock_drive_path = mocker.MagicMock(spec=Path)
     mock_drive_path.name = "drive1"
@@ -35,8 +29,19 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_project_path.name = "Project1"
     mock_project_path.__str__.return_value = "/path/to/drive1/Project1"
 
-    # Set up mock for drive_and_project_from_hash to return our mock paths
-    mock_extract.return_value = (mock_drive_path, "Project1")
+    # Set up the mocks for Path methods
+    mock_exists.return_value = True
+    mock_is_dir.return_value = True
+
+    # Create mock ZooscanDrive and ZooscanProjectFolder objects
+    mock_zoo_drive = mocker.MagicMock(spec=ZooscanDrive)
+    mock_zoo_project = mocker.MagicMock(spec=ZooscanProjectFolder)
+    mock_zoo_project.path = mock_project_path
+    mock_zoo_project.name = "Project1"
+
+    # Mock validate_path_components to return our mock objects
+    mock_validate = mocker.patch("routers.projects.validate_path_components")
+    mock_validate.return_value = (mock_zoo_drive, mock_zoo_project, "", "")
 
     # Create a test project
     drive_model = Drive(id="drive1", name="drive1", url="/path/to/drive1")
@@ -100,8 +105,8 @@ def test_project_by_id_endpoint_with_valid_token(
     assert project_data["id"] == "drive1|Project1"
     assert project_data["instrumentSerialNumber"] == "TEST123"
 
-    # Verify that drive_and_project_from_hash was called with the correct project_id
-    mock_extract.assert_called_once_with("drive1|Project1")
+    # Verify that validate_path_components was called with the correct project_id
+    mock_validate.assert_called_once_with(local_db, "drive1|Project1")
 
     # Verify that project_from_legacy was called with the correct arguments
     mock_project_from_legacy.assert_called_once()
