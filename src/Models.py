@@ -156,12 +156,14 @@ class ScanToUrlReq(BaseModel):
 
 
 class ScanTypeNum(str, Enum):
+    RAW_BACKGROUND = "RAW_BACKGROUND"  # From scanner, up to 2 of them with names "back_large_raw_1.tif" and "back_large_raw_2.tif"
+    BACKGROUND = (
+        "BACKGROUND"  # 8-bit version of the raw backgrounds, same name without "_raw"
+    )
+    MEDIUM_BACKGROUND = "MEDIUM_BACKGROUND"  # Addition of the 2
     SCAN = "SCAN"
-    BACKGROUND = "BACKGROUND"
     MASK = "MASK"
-    RAW_BACKGROUND = "RAW_BACKGROUND"
     VIS = "VIS"
-    MEDIUM_BACKGROUND = "MEDIUM_BACKGROUND"
     CHECK_BACKGROUND = "CHECK_BACKGROUND"
     OUT = "OUT"
 

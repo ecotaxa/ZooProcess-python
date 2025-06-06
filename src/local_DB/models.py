@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from sqlalchemy import Integer, String, create_engine, JSON
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, Mapped
@@ -58,7 +58,7 @@ class InFlightScan(Base):
     drive_name = mapped_column(String, primary_key=True, nullable=False)
     project_name = mapped_column(String, primary_key=True, nullable=False)
     scan_id = mapped_column(String, primary_key=True, nullable=False)
-    scan_data = mapped_column(JSON, nullable=False)
+    scan_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
     background_id: Mapped[Optional[str]]
 
     def __repr__(self):

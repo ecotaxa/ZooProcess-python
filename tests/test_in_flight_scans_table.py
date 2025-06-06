@@ -57,15 +57,15 @@ def test_get_project_scans_metadata(local_db):
     # Create sample scan data for existing scan in InFlightScan
     existing_scan_data = {
         "scanid": "test_scan_001",
-        "sample": "test_sample",
+        "sampleid": "test_sample",
         "additional_key": "additional_value",
     }
 
     # Create sample scan data for new scan in InFlightScan
     new_scan_data = {
         "scanid": "test_scan_003",
-        "sample": "new_sample",
-        "operator": "new_operator",
+        "sampleid": "new_sample",
+        "scanop": "new_operator",
     }
 
     # Create in-flight scans
@@ -104,13 +104,35 @@ def test_get_project_scans_metadata(local_db):
     mock_project.zooscan_meta.read_scans_table.return_value = [
         {
             "scanid": "test_scan_001",
-            "sample": "test_sample_from_table",
-            "operator": "table_operator",
+            "sampleid": "test_sample_from_table",
+            "scanop": "table_operator",
+            "fracid": "d1",
+            "fracmin": "100",
+            "fracsup": "200",
+            "fracnb": "1",
+            "observation": "test observation",
+            "code": "1",
+            "submethod": "test method",
+            "cellpart": "1",
+            "replicates": "1",
+            "volini": "100",
+            "volprec": "10",
         },
         {
             "scanid": "test_scan_002",  # This scan is not in InFlightScan
-            "sample": "another_sample",
-            "operator": "another_operator",
+            "sampleid": "another_sample",
+            "scanop": "another_operator",
+            "fracid": "d2",
+            "fracmin": "200",
+            "fracsup": "300",
+            "fracnb": "2",
+            "observation": "another observation",
+            "code": "2",
+            "submethod": "another method",
+            "cellpart": "2",
+            "replicates": "2",
+            "volini": "200",
+            "volprec": "20",
         },
     ]
 
@@ -120,19 +142,53 @@ def test_get_project_scans_metadata(local_db):
     # Check that the result includes the expected number of scans (2 original + 1 new from in-flight)
     assert len(result) == 3
 
-    # Check that the existing scans are unchanged
+    # Check that the existing scans are unchanged and have all required fields
     assert result[0]["scanid"] == "test_scan_001"
-    assert result[0]["sample"] == "test_sample_from_table"
-    assert result[0]["operator"] == "table_operator"
+    assert result[0]["sampleid"] == "test_sample_from_table"
+    assert result[0]["scanop"] == "table_operator"
+    assert result[0]["fracid"] == "d1"
+    assert result[0]["fracmin"] == "100"
+    assert result[0]["fracsup"] == "200"
+    assert result[0]["fracnb"] == "1"
+    assert result[0]["observation"] == "test observation"
+    assert result[0]["code"] == "1"
+    assert result[0]["submethod"] == "test method"
+    assert result[0]["cellpart"] == "1"
+    assert result[0]["replicates"] == "1"
+    assert result[0]["volini"] == "100"
+    assert result[0]["volprec"] == "10"
     assert (
         "additional_key" not in result[0]
     )  # No additional keys added to existing scan
 
     assert result[1]["scanid"] == "test_scan_002"
-    assert result[1]["sample"] == "another_sample"
-    assert result[1]["operator"] == "another_operator"
+    assert result[1]["sampleid"] == "another_sample"
+    assert result[1]["scanop"] == "another_operator"
+    assert result[1]["fracid"] == "d2"
+    assert result[1]["fracmin"] == "200"
+    assert result[1]["fracsup"] == "300"
+    assert result[1]["fracnb"] == "2"
+    assert result[1]["observation"] == "another observation"
+    assert result[1]["code"] == "2"
+    assert result[1]["submethod"] == "another method"
+    assert result[1]["cellpart"] == "2"
+    assert result[1]["replicates"] == "2"
+    assert result[1]["volini"] == "200"
+    assert result[1]["volprec"] == "20"
 
-    # Check that the new in-flight scan is appended to the result
+    # Check that the new in-flight scan is appended to the result and has all required fields
     assert result[2]["scanid"] == "test_scan_003"
-    assert result[2]["sample"] == "new_sample"
-    assert result[2]["operator"] == "new_operator"
+    assert result[2]["sampleid"] == "new_sample"
+    assert result[2]["scanop"] == "new_operator"
+    # Check that all required fields are present with default values
+    assert result[2]["fracid"] == ""
+    assert result[2]["fracmin"] == ""
+    assert result[2]["fracsup"] == ""
+    assert result[2]["fracnb"] == ""
+    assert result[2]["observation"] == ""
+    assert result[2]["code"] == ""
+    assert result[2]["submethod"] == ""
+    assert result[2]["cellpart"] == ""
+    assert result[2]["replicates"] == ""
+    assert result[2]["volini"] == ""
+    assert result[2]["volprec"] == ""

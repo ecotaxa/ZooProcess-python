@@ -2,13 +2,12 @@ from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from Models import ScanToUrlReq, ScanPostRsp, UploadPostRsp
-from auth import get_current_user_from_credentials
-from config_rdr import config
+from Models import ScanPostRsp, UploadPostRsp
 from helpers.web import get_stream
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
 from logger import logger
+from modern.app_urls import get_download_url
 from modern.files import add_file, UPLOAD_DIR
 
 # Create a router instance without a prefix
@@ -46,7 +45,7 @@ async def upload_image(
         f"Received file upload: {file.filename}, content_type: {file.content_type}"
     )
 
-    file_url = config.public_url + "/download/" + file_id
+    file_url = get_download_url(file_id)
     return UploadPostRsp(fileUrl=file_url)
 
 

@@ -14,14 +14,15 @@ from Models import (
     User,
     ScanPostRsp,
 )
-from ZooProcess_lib.ZooscanFolder import ZooscanDrive
 from auth import get_current_user_from_credentials
-from helpers.web import raise_404, get_stream
+from helpers.web import raise_404, get_stream, raise_501
 from img_proc.convert import convert_tiff_to_jpeg
-from legacy.utils import find_scan_metadata, sub_table_for_sample
+from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
 from local_DB.data_utils import set_background_id
 from local_DB.db_dependencies import get_db
 from logger import logger
+from modern.app_urls import is_download_url, extract_file_id_from_download_url
+from modern.files import UPLOAD_DIR
 from modern.from_legacy import (
     subsamples_from_legacy_project_and_sample,
     subsample_from_legacy,
@@ -163,7 +164,9 @@ def get_subsample(
     project_scans_metadata = get_project_scans_metadata(db, zoo_project)
 
     # Filter the metadata for the specific sample
-    sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
+    sample_scans_metadata = sub_scans_metadata_table_for_sample(
+        project_scans_metadata, sample_name
+    )
 
     # Find the metadata for the specific subsample
     scan_id = scan_name_from_subsample_name(subsample_name)
@@ -173,6 +176,7 @@ def get_subsample(
 
     if zoo_metadata_sample is None:
         raise_404(f"Subsample {subsample_name} not found in sample {sample_name}")
+        assert False  # mypy
 
     subsample = subsample_from_legacy(
         db, zoo_project, sample_name, subsample_name, zoo_metadata_sample
@@ -236,6 +240,8 @@ def process_subsample(
     Process a specific subsample.
 
     Args:
+        user: User from authentication.
+        db: Database dependency.
         project_hash (str): The ID of the project.
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample to process.
@@ -328,7 +334,7 @@ async def get_subsample_scan(
 
 
 @router.post("/{subsample_hash}/scan_url")
-def post_scan_url(
+def link_subsample_to_scan(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
@@ -340,10 +346,20 @@ def post_scan_url(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-
     logger.info(
         f"Received scan URL: {scan_url} for subsample {subsample_name} in sample {sample_name} in project {zoo_project.name}"
     )
+    # In 'modern' world, the scan might be the first one for the subsample,
+    # in which case the in-flight subsample becomes 'real' by materializing as files.
+    # http://localhost:5000/download/upload_apero2023_tha_bioness_sup2000_017_st66_d_n1_d2_3_sur_4_raw_1.tif
+    # Validate more
+    if not is_download_url(scan_url.url):
+        raise_501("Invalid scan URL, not produced here")
+    src_image_path = UPLOAD_DIR / extract_file_id_from_download_url(scan_url.url)
+    if not src_image_path.exists():
+        raise_404(f"Scan URL {scan_url} not found")
+
+    # Then we can work directly on legacy filesystem
     return ScanPostRsp(id=subsample_name + "XXXX", image="toto")
 
 
@@ -403,5 +419,4 @@ def link_subsample_to_background(
         scan_name_from_subsample_name(subsample_name),
         bg_to_ss.scanId,
     )
-    # For now, we just return the input object as in the original implementation
     return bg_to_ss

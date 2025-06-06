@@ -4,7 +4,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, Union
 
 from sqlalchemy.orm import Session
 
@@ -21,13 +21,15 @@ from Models import (
 )
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
-from legacy.utils import (
-    find_sample_metadata,
+from legacy.samples import find_sample_metadata, SampleCSVLine
+from legacy.scans import (
     find_scan_metadata,
-    sub_table_for_sample,
+    ScanCSVLine,
+    sub_scans_metadata_table_for_sample,
 )
 from local_DB.data_utils import get_background_id
 from logger import logger
+from modern.app_urls import get_scan_url, get_background_url
 from modern.ids import (
     hash_from_project,
     subsample_name_from_scan_name,
@@ -130,7 +132,9 @@ def subsamples_from_legacy_project_and_sample(
 ) -> List[SubSample]:
     ret = []
     project_scans_metadata = get_project_scans_metadata(db, zoo_project)
-    sample_scans_metadata = sub_table_for_sample(project_scans_metadata, sample_name)
+    sample_scans_metadata = sub_scans_metadata_table_for_sample(
+        project_scans_metadata, sample_name
+    )
     for scan_name in get_project_scans(db, zoo_project):
         subsample_name = subsample_name_from_scan_name(scan_name)
         zoo_subsample_metadata = find_scan_metadata(
@@ -179,7 +183,7 @@ def sample_from_legacy(
     assert (
         zoo_metadata is not None
     ), f"Sample {sample_name} metadata not found in {zoo_project.zooscan_meta.samples_table_path}"
-    modern_metadata = from_legacy_meta(zoo_metadata)
+    modern_metadata = sample_from_legacy_meta(zoo_metadata)
     metadata = to_api_meta(modern_metadata)
     subsample_models = subsamples_from_legacy_project_and_sample(
         db, zoo_project, sample_name
@@ -211,9 +215,9 @@ def subsample_from_legacy(
     zoo_project: ZooscanProjectFolder,
     sample_name: str,
     subsample_name: str,
-    zoo_scan_metadata: Dict,
+    zoo_scan_metadata: ScanCSVLine,
 ) -> SubSample:
-    modern_metadata = from_legacy_meta(zoo_scan_metadata)
+    modern_metadata = scan_from_legacy_meta(zoo_scan_metadata)
     metadata = to_api_meta(modern_metadata)
     # Extract scans from the legacy project folder
     scans = scans_from_legacy(zoo_project, sample_name, subsample_name)
@@ -255,8 +259,7 @@ def scans_from_legacy(
     subsample_hash = hash_from_subsample_name(subsample_name)
     the_scan = Scan(
         id=scan_name_from_subsample_name(subsample_name),
-        url=config.public_url
-        + f"/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/scan.jpg",
+        url=get_scan_url(project_hash, sample_hash, subsample_hash),
         metadata=[],
         type=ScanTypeNum.SCAN,
         user=get_mock_user(),
@@ -272,8 +275,7 @@ def background_from_legacy_as_scan(
     project_hash = hash_from_project(zoo_project.path)
     the_scan = Scan(
         id=background_date,
-        url=config.public_url
-        + f"/projects/{project_hash}/background/{background_date}.jpg",
+        url=get_background_url(project_hash, background_date),
         metadata=[],
         type=ScanTypeNum.MEDIUM_BACKGROUND,
         user=get_mock_user(),
@@ -332,9 +334,7 @@ def backgrounds_from_legacy_project(
         # If there's a final background, add it to the list
         background_id = f"{a_date}"
         background_name = f"{a_date}_background"
-        background_url = (
-            config.public_url + f"/projects/{project_hash}/background/{a_date}.jpg"
-        )
+        background_url = get_background_url(project_hash, a_date)
 
         # Convert the date string to a datetime object for the model
         api_date = parse_legacy_date(a_date)
@@ -395,7 +395,7 @@ def scans_from_legacy_project(
     project_scans_metadata = get_project_scans_metadata(db, zoo_project)
     # Iterate over all samples in the project
     for sample_name in zoo_project.list_samples_with_state():
-        sample_scans_metadata = sub_table_for_sample(
+        sample_scans_metadata = sub_scans_metadata_table_for_sample(
             project_scans_metadata, sample_name
         )
         # Iterate over all scans in the project
@@ -418,9 +418,11 @@ def scans_from_legacy_project(
     return ret
 
 
-def from_legacy_meta(meta: dict) -> dict:
+def _process_legacy_meta(
+    meta: Union[ScanCSVLine, SampleCSVLine], legacy_to_modern: dict
+) -> dict:
     """
-    Convert legacy metadata dictionary, from CSV data source, to modern format.
+    Helper function to process legacy metadata using a mapping dictionary.
 
     This function transforms a dictionary containing metadata with legacy keys into a new dictionary
     with standardized modern keys. It also performs special transformations on latitude and longitude
@@ -428,6 +430,69 @@ def from_legacy_meta(meta: dict) -> dict:
 
     Parameters:
         meta (dict): A dictionary containing metadata with legacy keys
+        legacy_to_modern (dict): A dictionary mapping legacy keys to modern keys
+
+    Returns:
+        dict: A new dictionary with transformed keys and values according to the conversion mapping
+              Keys not found in the conversion mapping are kept unchanged
+    """
+    # Invert the conversion table to map from modern keys to legacy keys
+    modern_to_legacy: Dict[str, Tuple[str, Any]] = {}
+    for legacy_key, modern_key in legacy_to_modern.items():
+        if modern_key is None:
+            continue
+        if isinstance(modern_key, list):
+            # Handle the case where a legacy key maps to multiple modern keys
+            for mk in modern_key:
+                modern_to_legacy[mk] = (legacy_key, modern_key.index(mk))
+        else:
+            modern_to_legacy[modern_key] = (legacy_key, None)
+
+    ret = {}
+
+    for key, value in meta.items():
+        modern_key = legacy_to_modern.get(key)
+        if modern_key is None:
+            continue
+        if isinstance(modern_key, list):
+            # Handle the case where a legacy key maps to multiple modern keys
+            # For now, we'll just use the first mapping and handle special cases below
+            modern_key = modern_key[0]
+
+        # Apply special transformations based on the legacy key
+        # noinspection PyUnreachableCode
+        match key:
+            case "longitude" | "longitude_end":
+                new_value = -convert_ddm_to_decimal_degrees(value)
+            case "latitude" | "latitude_end":
+                new_value = convert_ddm_to_decimal_degrees(value)
+            case "fracid":
+                parsed = parse_fracid(str(value))
+                ret["fraction_id"] = parsed.primary_fraction
+                if parsed.pattern_type == "complex":
+                    assert parsed.sub_fraction
+                    ret["fraction_id_suffix"] = parsed.sub_fraction
+                else:
+                    ret["fraction_id_suffix"] = ""
+                continue  # Skip the normal assignment since we've handled it specially
+            case _:
+                new_value = value
+
+        ret[modern_key] = new_value
+
+    return ret
+
+
+def sample_from_legacy_meta(meta: SampleCSVLine) -> dict:
+    """
+    Convert legacy sample metadata dictionary, from CSV data source, to modern format.
+
+    This function transforms a dictionary containing sample metadata with legacy keys into a new dictionary
+    with standardized modern keys. It also performs special transformations on latitude and longitude
+    values to correct their format.
+
+    Parameters:
+        meta (SampleCSVLine): A dictionary containing sample metadata with legacy keys
 
     Returns:
         dict: A new dictionary with transformed keys and values according to the conversion mapping
@@ -436,15 +501,7 @@ def from_legacy_meta(meta: dict) -> dict:
     Note:
         Latitude and longitude values undergo special transformations to convert from
         degrees-minutes format to decimal degrees format
-        The conversion table is inverted to allow a single CSV value to be mapped to multiple modern keys
     """
-    # sample CSV structure
-    #   sampleid;ship;scientificprog;stationid;date;latitude;longitude;depth;ctdref;otherref;townb;towtype;nettype;netmesh;
-    #   netsurf;zmax;zmin;vol;sample_comment;vol_qc;depth_qc;sample_qc;barcode;latitude_end;longitude_end;net_duration;
-    #   ship_speed_knots;cable_length;cable_angle;cable_speed;nb_jar
-    # scan CSV structure
-    #   scanid;sampleid;scanop;fracid;fracmin;fracsup;fracnb;observation;code;submethod;cellpart;
-    #   replicates;volini;volprec
     legacy_to_modern = {
         # Common to both CSVs
         "sampleid": "sample_id",  # 'apero2023_tha_bioness_sup2000_017_st66_d_n1',
@@ -486,7 +543,27 @@ def from_legacy_meta(meta: dict) -> dict:
         # sample_content
         #
         # quality_flag_filtered_volume
-        #
+    }
+
+    return _process_legacy_meta(meta, legacy_to_modern)
+
+
+def scan_from_legacy_meta(meta: ScanCSVLine) -> dict:
+    """
+    Convert legacy scan metadata dictionary, from CSV data source, to modern format.
+
+    This function transforms a dictionary containing scan metadata with legacy keys into a new dictionary
+    with standardized modern keys.
+
+    Parameters:
+        meta (ScanCSVLine): A dictionary containing scan metadata with legacy keys
+
+    Returns:
+        dict: A new dictionary with transformed keys and values according to the conversion mapping
+              Keys not found in the conversion mapping are kept unchanged
+    """
+    legacy_to_modern = {
+        "sampleid": "sample_id",  # 'apero2023_tha_bioness_sup2000_017_st66_d_n1',
         # In scan CSV
         "scanid": None,
         "scanop": "operator",  # 'adelaide_perruchon',
@@ -506,48 +583,4 @@ def from_legacy_meta(meta: dict) -> dict:
         "volprec": "volprec",  # '1',
     }
 
-    # Invert the conversion table to map from modern keys to legacy keys
-    modern_to_legacy: Dict[str, Tuple[str, Any]] = {}
-    for legacy_key, modern_key in legacy_to_modern.items():
-        if modern_key is None:
-            continue
-        if isinstance(modern_key, list):
-            # Handle the case where a legacy key maps to multiple modern keys
-            for mk in modern_key:
-                modern_to_legacy[mk] = (legacy_key, modern_key.index(mk))
-        else:
-            modern_to_legacy[modern_key] = (legacy_key, None)
-
-    ret = {}
-
-    for key, value in meta.items():
-        modern_key = legacy_to_modern.get(key)
-        if modern_key is None:
-            continue
-        if isinstance(modern_key, list):
-            # Handle the case where a legacy key maps to multiple modern keys
-            # For now, we'll just use the first mapping and handle special cases below
-            modern_key = modern_key[0]
-
-        # Apply special transformations based on the legacy key
-        # noinspection PyUnreachableCode
-        match key:
-            case "longitude" | "longitude_end":
-                new_value = -convert_ddm_to_decimal_degrees(value)
-            case "latitude" | "latitude_end":
-                new_value = convert_ddm_to_decimal_degrees(value)
-            case "fracid":
-                parsed = parse_fracid(value)
-                ret["fraction_id"] = parsed.primary_fraction
-                if parsed.pattern_type == "complex":
-                    assert parsed.sub_fraction
-                    ret["fraction_id_suffix"] = parsed.sub_fraction
-                else:
-                    ret["fraction_id_suffix"] = ""
-                continue  # Skip the normal assignment since we've handled it specially
-            case _:
-                new_value = value
-
-        ret[modern_key] = new_value
-
-    return ret
+    return _process_legacy_meta(meta, legacy_to_modern)

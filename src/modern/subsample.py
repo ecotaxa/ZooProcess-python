@@ -1,10 +1,11 @@
 # A Datasource which mixes legacy scan CSV table with modern additions
-from typing import List, Dict, Optional, NamedTuple
+from typing import List, Optional, NamedTuple, cast, Dict
 
 from sqlalchemy.orm import Session
 
 from Models import SubSampleIn
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from legacy.scans import ScanCSVLine, read_scans_metadata_table
 from local_DB.models import InFlightScan
 from logger import logger
 from modern.ids import scan_name_from_subsample_name
@@ -20,7 +21,7 @@ class FracIdComponents(NamedTuple):
 def get_project_scans_metadata(
     db: Session,
     zoo_project: ZooscanProjectFolder,
-) -> List[Dict[str, str]]:
+) -> List[ScanCSVLine]:
     """
     Get the scans metadata for a project.
 
@@ -33,10 +34,10 @@ def get_project_scans_metadata(
         zoo_project (ZooscanProjectFolder): The project folder to get scans metadata from.
 
     Returns:
-        List[Dict[str, str]]: A list of dictionaries containing the scans metadata.
+        List[ScanCSVLine]: A list of ScanCSVLine objects containing the scans metadata.
     """
     # Get the scans metadata from the project
-    lgcy_scans_metadata = zoo_project.zooscan_meta.read_scans_table()
+    lgcy_scans_metadata = read_scans_metadata_table(zoo_project)
 
     # Extract drive name from the project path
     drive_path = zoo_project.path.parent
@@ -54,21 +55,25 @@ def get_project_scans_metadata(
 
     # Create a set of scan IDs that are already in the scans metadata
     existing_scan_ids = {
-        scan_metadata["scanid"]
-        for scan_metadata in lgcy_scans_metadata
-        if "scanid" in scan_metadata
+        scan_metadata["scanid"] for scan_metadata in lgcy_scans_metadata
     }
 
     # Append in-flight scans to the result
     for scan_id, in_flight_scan in in_flight_scans_dict.items():
         if scan_id not in existing_scan_ids:
             # Create a new scan metadata entry from the in-flight scan data
-            new_scan_metadata = {"scanid": scan_id}
+            new_scan_metadata = ScanCSVLine(
+                {"scanid": scan_id}  # type:ignore [typeddict-item]
+            )
             # noinspection PyTypeChecker
             new_scan_metadata.update(in_flight_scan.scan_data)
             lgcy_scans_metadata.append(new_scan_metadata)
 
-    return lgcy_scans_metadata
+    result: List[ScanCSVLine] = []
+    for scan_metadata in lgcy_scans_metadata:
+        result.append(scan_metadata)
+
+    return result
 
 
 def get_project_scans(db: Session, zoo_project: ZooscanProjectFolder) -> List[str]:
@@ -173,22 +178,22 @@ def add_subsample(
     data = subsample.data
     # scan_id = scan_name_from_subsample_name(sample_name + "_" + data.scan_id)
     scan_id = scan_name_from_subsample_name(subsample.name)
-    scan_data = {
-        "scanid": scan_id,
-        "sampleid": sample_name,
-        "scanop": data.scanning_operator,
-        "fracid": data.fraction_id_suffix,
-        "fracmin": data.fraction_min_mesh,
-        "fracsup": data.fraction_max_mesh,
-        "fracnb": data.spliting_ratio,
-        "observation": data.observation,
-        "code": "1",
-        "submethod": "1",
-        "cellpart": "1",
-        "replicates": "1",
-        "volini": "1",
-        "volprec": "1",
-    }
+    scan_data = ScanCSVLine(
+        scanid=scan_id,
+        sampleid=sample_name,
+        scanop=data.scanning_operator,
+        fracid=data.fraction_id_suffix,
+        fracmin=str(data.fraction_min_mesh),
+        fracsup=str(data.fraction_max_mesh),
+        fracnb=str(data.spliting_ratio),
+        observation=data.observation,
+        code="1",
+        submethod="1",
+        cellpart="1",
+        replicates="1",
+        volini="1",
+        volprec="1",
+    )
 
     # Delete any pre-existing InFlightScan record with the same identifiers
     drive_name = zoo_project.path.parent.name
@@ -201,7 +206,7 @@ def add_subsample(
         drive_name=drive_name,
         project_name=zoo_project.project,
         scan_id=scan_id,
-        scan_data=scan_data,
+        scan_data=cast(Dict[str, str], scan_data),
     )
     db.add(in_flight_scan)
     db.commit()

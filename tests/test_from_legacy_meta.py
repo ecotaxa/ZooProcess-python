@@ -1,5 +1,5 @@
 import pytest
-from modern.from_legacy import from_legacy_meta
+from modern.from_legacy import sample_from_legacy_meta, scan_from_legacy_meta
 from modern.utils import convert_ddm_to_decimal_degrees
 
 
@@ -17,7 +17,7 @@ def test_basic_key_conversion():
     }
 
     # Convert to modern format
-    modern_meta = from_legacy_meta(legacy_meta)
+    modern_meta = sample_from_legacy_meta(legacy_meta)
 
     # Verify the conversion
     assert modern_meta["sample_id"] == "apero2023_tha_bioness_sup2000_017_st66_d_n1"
@@ -40,7 +40,7 @@ def test_latitude_longitude_transformation():
     }
 
     # Convert to modern format
-    modern_meta = from_legacy_meta(legacy_meta)
+    modern_meta = sample_from_legacy_meta(legacy_meta)
 
     # Verify the conversion
     # Latitude should be converted to decimal degrees
@@ -64,9 +64,10 @@ def test_fracid_special_case():
     # Test with fracid containing an underscore
     legacy_meta = {
         "fracid": "d1_1_sur_1",
+        "scanid": "some_scan_id",  # Adding scanid to ensure it's treated as scan metadata
     }
 
-    modern_meta = from_legacy_meta(legacy_meta)
+    modern_meta = scan_from_legacy_meta(legacy_meta)
 
     # Verify the conversion
     assert modern_meta["fraction_id"] == "d1"
@@ -75,9 +76,10 @@ def test_fracid_special_case():
     # Test with fracid not containing an underscore
     legacy_meta = {
         "fracid": "d1",
+        "scanid": "some_scan_id",  # Adding scanid to ensure it's treated as scan metadata
     }
 
-    modern_meta = from_legacy_meta(legacy_meta)
+    modern_meta = scan_from_legacy_meta(legacy_meta)
 
     # Verify the conversion
     assert modern_meta["fraction_id"] == "d1"
@@ -95,7 +97,7 @@ def test_missing_keys():
     }
 
     # Convert to modern format
-    modern_meta = from_legacy_meta(legacy_meta)
+    modern_meta = sample_from_legacy_meta(legacy_meta)
 
     # Verify the conversion
     assert modern_meta["sample_id"] == "apero2023_tha_bioness_sup2000_017_st66_d_n1"
@@ -116,7 +118,7 @@ def test_keys_not_in_mapping():
     }
 
     # Convert to modern format
-    modern_meta = from_legacy_meta(legacy_meta)
+    modern_meta = sample_from_legacy_meta(legacy_meta)
 
     # Verify the conversion
     assert modern_meta["sample_id"] == "apero2023_tha_bioness_sup2000_017_st66_d_n1"
@@ -129,7 +131,7 @@ def test_keys_not_in_mapping():
 def test_empty_input():
     """Test with an empty input dictionary."""
     # Convert an empty dictionary
-    modern_meta = from_legacy_meta({})
+    modern_meta = sample_from_legacy_meta({})
 
     # Verify the result is an empty dictionary
     assert modern_meta == {}
@@ -139,4 +141,4 @@ def test_none_input():
     """Test with None input."""
     # This should raise an AttributeError since None doesn't have an items attribute
     with pytest.raises(AttributeError):
-        from_legacy_meta(None)
+        sample_from_legacy_meta(None)

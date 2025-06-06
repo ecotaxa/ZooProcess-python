@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive, ZooscanProjectFolder
-from legacy.utils import find_scan_metadata
+from legacy.scans import find_scan_metadata
 from modern.ids import (
     drive_and_project_from_hash,
     sample_name_from_sample_hash,

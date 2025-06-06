@@ -12,7 +12,7 @@ from auth import get_current_user_from_credentials
 from config_rdr import config
 from helpers.web import raise_404, get_stream
 from img_proc.convert import convert_tiff_to_jpeg
-from legacy.files import find_background_file
+from legacy.backgrounds import find_background_file
 from legacy_to_remote.importe import import_old_project
 from local_DB.db_dependencies import get_db
 from logger import logger
@@ -172,7 +172,7 @@ async def get_background(
     db: Session = Depends(get_db),
 ) -> StreamingResponse:
     """
-    Get a specific background from a project by its ID.
+    Get a specific background from a project by its ID, in a browser-compatible format.
 
     Args:
         project_hash (str): The hash of the project to get the background from.

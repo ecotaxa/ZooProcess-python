@@ -1,4 +1,4 @@
-# import os
+# Main
 import os
 import typing
 from pathlib import Path
@@ -24,7 +24,6 @@ from Models import (
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from auth import get_current_user_from_credentials
-from config_rdr import config
 from demo_get_vignettes import generate_json
 from helpers.web import (
     internal_server_error_handler,
@@ -38,6 +37,7 @@ from legacy.drives import validate_drives
 from local_DB.db_dependencies import get_db
 from local_DB.models import init_db
 from logger import logger
+from modern.app_urls import is_download_url, extract_file_id_from_download_url
 from modern.files import UPLOAD_DIR
 from modern.from_legacy import (
     drives_from_legacy,
@@ -55,10 +55,6 @@ from separate import Separate
 from separate_fn import separate_images
 from static.favicon import create_plankton_favicon
 
-# import csv
-# import requests
-# from separate import separate_multiple
-
 params = {"server": "http://localhost:8081", "dbserver": "http://localhost:8000"}
 
 dbserver = Server("http://zooprocess.imev-mer.fr:8081/v1", "/ping")
@@ -66,7 +62,6 @@ server = Server("http://seb:5000", "/")
 tunnelserver = Server("http://localhost:5001", "/")
 nikoserver = Server("http://niko.obs-vlfr.fr:5000", "/")
 
-# separateServer = SeparateServer(server,dbserver)
 separateServer = SeparateServer(tunnelserver, dbserver)
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -258,13 +253,11 @@ def getSeparate(folder: str):
 
 @app.post("/convert/")
 def convert(image: ImageUrl):
-    """covert an image from tiff to jpeg format"""
+    """Convert an image from tiff to jpeg format"""
     logger.info(f"Request to convert {image.src} to {image.dst}")
 
-    if image.src.startswith(config.public_url + "/download/"):
-        src_image_path = UPLOAD_DIR / image.src.replace(
-            config.public_url + "/download/", ""
-        )
+    if is_download_url(image.src):
+        src_image_path = UPLOAD_DIR / extract_file_id_from_download_url(image.src)
     else:
         src_image_path = Path(image.src)
     dst_image_path = Path(image.dst)
