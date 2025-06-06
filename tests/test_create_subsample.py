@@ -1,8 +1,5 @@
-import importlib
-
 from pytest_mock import MockFixture
 
-import config_rdr
 from conftest import DATA_DIR
 from local_DB.db_dependencies import get_db
 from local_DB.models import InFlightScan
@@ -36,12 +33,13 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
         "data": {
             "scanning_operator": "Test Operator",
             "scan_id": "test_scan_id",
-            "fraction_number": "d1",
+            "fraction_id": "d1",
             "fraction_id_suffix": "01",
             "fraction_min_mesh": 200,
             "fraction_max_mesh": 300,
             "spliting_ratio": 4,
             "observation": "Test observation",
+            "submethod": "Test submethod",
         },
     }
 
@@ -113,12 +111,13 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
         "data": {
             "scanning_operator": "Test Operator",
             "scan_id": "test_scan_id",
-            "fraction_number": "d1",
+            "fraction_id": "d1",
             "fraction_id_suffix": "01",
             "fraction_min_mesh": 200,
             "fraction_max_mesh": 300,
             "spliting_ratio": 4,
             "observation": "Test observation",
+            "submethod": "Test submethod",
         },
     }
 
@@ -178,12 +177,13 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
         "data": {
             "scanning_operator": "Test Operator",
             "scan_id": "test_scan_id",
-            "fraction_number": "d1",
+            "fraction_id": "d1",
             "fraction_id_suffix": "01",
             "fraction_min_mesh": 200,
             "fraction_max_mesh": 300,
             "spliting_ratio": 4,
             "observation": "Test observation",
+            "submethod": "Test submethod",
         },
     }
 

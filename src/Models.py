@@ -94,12 +94,27 @@ class SubSampleData(BaseModel):
 
     scanning_operator: str
     scan_id: str
-    fraction_number: str
-    fraction_id_suffix: str
+    fraction_id: str  # tot, d1, d2, ...
+    fraction_id_suffix: str  # 1_sur_3
     fraction_min_mesh: int
     fraction_max_mesh: int
     spliting_ratio: int
     observation: str
+    submethod: str
+
+    @field_validator(
+        "scanning_operator",
+        "scan_id",
+        "fraction_id",
+        "fraction_id_suffix",
+        "observation",
+        "submethod",
+    )
+    def validate_non_empty_string(cls, v):
+        """Validate that string fields are not empty"""
+        if not v or not v.strip():
+            raise ValueError("String fields cannot be empty")
+        return v
 
     @field_validator("fraction_max_mesh")
     def validate_fraction_max_mesh(cls, v, info):

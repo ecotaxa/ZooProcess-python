@@ -6,9 +6,6 @@ from pathlib import Path
 import pytest
 from bson import ObjectId
 
-# Add the parent directory to the path so we can import from src
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from helpers.cached_ids import CachedIds
 
 

@@ -40,14 +40,15 @@ def test_add_legacy_scan_with_add_subsample(local_db):
 
     # Create a SubSampleIn object
     subsample_data = SubSampleData(
-        scan_id="d1",
+        scan_id="1",
         scanning_operator="test_operator",
-        fraction_id_suffix="d1",
+        fraction_id_suffix="1_sur_3",
         fraction_min_mesh=100,
         fraction_max_mesh=200,
         spliting_ratio=1,
-        fraction_number="1",
+        fraction_id="d1",
         observation="Test observation",
+        submethod="Test submethod",
     )
     subsample = SubSampleIn(
         name=subsample_name,
@@ -70,7 +71,7 @@ def test_add_legacy_scan_with_add_subsample(local_db):
     assert in_flight_scan.scan_data["scanid"] == scan_id
     assert in_flight_scan.scan_data["sampleid"] == sample_name
     assert in_flight_scan.scan_data["scanop"] == "test_operator"
-    assert in_flight_scan.scan_data["fracid"] == "d1"
+    assert in_flight_scan.scan_data["fracid"] == "d1_1_sur_3"
 
     # Now use add_legacy_scan to process the InFlightScan record
     # Create a mock for csv.DictReader
@@ -95,7 +96,7 @@ def test_add_legacy_scan_with_add_subsample(local_db):
     # Mock open, csv.DictReader, and ScanCSVLine
     with patch("builtins.open", create=True) as mock_open, patch(
         "csv.DictReader", return_value=mock_reader
-    ), patch("legacy.writers.scan.ScanCSVLine") as mock_scan_csv_line, patch(
+    ), patch("legacy.scans.ScanCSVLine") as mock_scan_csv_line, patch(
         "legacy.writers.scan.SCAN_CSV_COLUMNS", SCAN_CSV_COLUMNS
     ):
 

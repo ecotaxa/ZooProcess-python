@@ -4,7 +4,7 @@ import pytest
 def parse_sample_name(sample_name: str) -> dict:
     """
     Parse a sample name into its components.
-    Sample names follow the structure: [program]_[ship]_[net_type]_[optional_mesh_size]_[cruise_number]_st[station_id]_[day_night]_n[net_number]_d[fraction_type]_[fraction_number]_sur_[total_fractions]_[scan_number]
+    Sample names follow the structure: [program]_[ship]_[net_type]_[optional_mesh_size]_[cruise_number]_st[station_id]_[day_night]_n[net_number]_d[fraction_type]_[fraction_id]_sur_[total_fractions]_[scan_number]
     Example: apero2023_tha_bioness_sup2000_017_st66_d_n1_d3_1_sur_4_1
 
     Components Breakdown:
@@ -17,9 +17,8 @@ def parse_sample_name(sample_name: str) -> dict:
     7. Day/Night: Sampling time - `d` (day) or `n` (night)
     8. Net Number: Specific net used with prefix (e.g., `n1`, `n2`, `n9`)
     9. Fraction Type: Type of fraction with prefix (e.g., `d1`, `d2`, `d3`)
-    10. Fraction Number: Sequential number of this fraction (e.g., `1`, `2`, `8`)
-    11. Total Fractions: Total number of fractions with prefix (e.g., `sur_1`, `sur_4`, `sur_8`)
-    12. Scan Number: Sequential scan number (typically `1`)
+    10. Fraction: Information about the fraction, including ID and total count (e.g., `1_sur_4`)
+    11. Scan Number: Sequential scan number (typically `1`)
 
     Args:
         sample_name: The name of the sample
@@ -71,16 +70,25 @@ def parse_sample_name(sample_name: str) -> dict:
         parsed["fraction_type"] = components[idx]
         idx += 1
 
+    # Group fraction_id, total_fractions_prefix, and total_fractions into a single component
     if idx < len(components):
-        parsed["fraction_number"] = components[idx]
+        fraction_id = components[idx]
         idx += 1
 
-    # Check for "sur_X" pattern for total fractions
-    if idx + 1 < len(components) and components[idx] == "sur":
-        parsed["total_fractions_prefix"] = components[idx]
-        idx += 1
-        parsed["total_fractions"] = components[idx]
-        idx += 1
+        # Check for "sur_X" pattern for total fractions
+        if idx + 1 < len(components) and components[idx] == "sur":
+            total_fractions_prefix = components[idx]
+            idx += 1
+            total_fractions = components[idx]
+            idx += 1
+
+            # Combine the components into a single fraction component
+            parsed["fraction"] = (
+                f"{fraction_id}_{total_fractions_prefix}_{total_fractions}"
+            )
+        else:
+            # If no total fractions information, just use the fraction_id
+            parsed["fraction"] = fraction_id
 
     if idx < len(components):
         parsed["scan_number"] = components[idx]
@@ -93,7 +101,7 @@ def test_parse_sample_name_full():
     sample_name = "apero2023_tha_bioness_sup2000_017_st66_d_n1_d3_1_sur_4_1"
     parsed = parse_sample_name(sample_name)
 
-    assert len(parsed) == 13
+    assert len(parsed) == 11
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
     assert parsed["net_type"] == "bioness"
@@ -103,9 +111,7 @@ def test_parse_sample_name_full():
     assert parsed["day_night"] == "d"
     assert parsed["net_number"] == "n1"
     assert parsed["fraction_type"] == "d3"
-    assert parsed["fraction_number"] == "1"
-    assert parsed["total_fractions_prefix"] == "sur"
-    assert parsed["total_fractions"] == "4"
+    assert parsed["fraction"] == "1_sur_4"
     assert parsed["scan_number"] == "1"
 
 
@@ -114,7 +120,7 @@ def test_parse_sample_name_without_mesh_size():
     sample_name = "apero2023_tha_bioness_017_st66_d_n1_d3_1_sur_4_1"
     parsed = parse_sample_name(sample_name)
 
-    assert len(parsed) == 12
+    assert len(parsed) == 10
     assert parsed["program"] == "apero2023"
     assert parsed["ship"] == "tha"
     assert parsed["net_type"] == "bioness"
@@ -124,9 +130,7 @@ def test_parse_sample_name_without_mesh_size():
     assert parsed["day_night"] == "d"
     assert parsed["net_number"] == "n1"
     assert parsed["fraction_type"] == "d3"
-    assert parsed["fraction_number"] == "1"
-    assert parsed["total_fractions_prefix"] == "sur"
-    assert parsed["total_fractions"] == "4"
+    assert parsed["fraction"] == "1_sur_4"
     assert parsed["scan_number"] == "1"
 
 
@@ -145,9 +149,7 @@ def test_parse_sample_name_partial():
     assert "day_night" not in parsed
     assert "net_number" not in parsed
     assert "fraction_type" not in parsed
-    assert "fraction_number" not in parsed
-    assert "total_fractions_prefix" not in parsed
-    assert "total_fractions" not in parsed
+    assert "fraction" not in parsed
     assert "scan_number" not in parsed
 
 
@@ -166,9 +168,7 @@ def test_parse_sample_name_single():
     assert "day_night" not in parsed
     assert "net_number" not in parsed
     assert "fraction_type" not in parsed
-    assert "fraction_number" not in parsed
-    assert "total_fractions_prefix" not in parsed
-    assert "total_fractions" not in parsed
+    assert "fraction" not in parsed
     assert "scan_number" not in parsed
 
 

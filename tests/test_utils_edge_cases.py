@@ -1,11 +1,6 @@
-import sys
-import os
-import tempfile
-import pytest
 from pathlib import Path
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import pytest
 
 from modern.utils import (
     find_latest_modification_time,

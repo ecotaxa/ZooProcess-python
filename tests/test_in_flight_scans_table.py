@@ -1,12 +1,10 @@
-import os
-import json
-import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import cast, Dict
+from unittest.mock import MagicMock
 
-from local_DB.models import InFlightScan, Base
-from modern.subsample import get_project_scans_metadata
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from legacy.scans import ScanCSVLine
+from local_DB.models import InFlightScan
+from modern.subsample import get_project_scans_metadata
 
 
 def test_create_in_flight_scan(local_db):
@@ -55,32 +53,55 @@ def test_create_in_flight_scan(local_db):
 def test_get_project_scans_metadata(local_db):
     """Test that get_project_scans_metadata appends in-flight scans to the result from read_scans_table."""
     # Create sample scan data for existing scan in InFlightScan
-    existing_scan_data = {
-        "scanid": "test_scan_001",
-        "sampleid": "test_sample",
-        "additional_key": "additional_value",
-    }
+    existing_scan_data = ScanCSVLine(
+        scanid="test_scan_001",
+        sampleid="test_sample",
+        scanop="",
+        fracid="",
+        fracmin="",
+        fracsup="",
+        fracnb="",
+        observation="",
+        code="",
+        submethod="",
+        cellpart="",
+        replicates="",
+        volini="",
+        volprec="",
+    )
+    existing_scan_data["additional_key"] = "additional_value"  # Add non-standard field
 
     # Create sample scan data for new scan in InFlightScan
-    new_scan_data = {
-        "scanid": "test_scan_003",
-        "sampleid": "new_sample",
-        "scanop": "new_operator",
-    }
+    new_scan_data = ScanCSVLine(
+        scanid="test_scan_003",
+        sampleid="new_sample",
+        scanop="new_operator",
+        fracid="",
+        fracmin="",
+        fracsup="",
+        fracnb="",
+        observation="",
+        code="",
+        submethod="",
+        cellpart="",
+        replicates="",
+        volini="",
+        volprec="",
+    )
 
     # Create in-flight scans
     existing_in_flight_scan = InFlightScan(
         scan_id="test_scan_001",
         project_name="test_project",
         drive_name="test_drive",
-        scan_data=existing_scan_data,
+        scan_data=cast(Dict[str, str], existing_scan_data),
     )
 
     new_in_flight_scan = InFlightScan(
         scan_id="test_scan_003",
         project_name="test_project",
         drive_name="test_drive",
-        scan_data=new_scan_data,
+        scan_data=cast(Dict[str, str], new_scan_data),
     )
 
     # Add the in-flight scans to the session

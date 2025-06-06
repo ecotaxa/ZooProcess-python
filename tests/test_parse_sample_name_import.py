@@ -1,10 +1,3 @@
-import sys
-import os
-import pytest
-
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from modern.utils import parse_sample_name
 
 
@@ -22,9 +15,7 @@ def test_parse_sample_name_full():
     assert parsed["day_night"] == "d"
     assert parsed["net_number"] == "n1"
     assert parsed["fraction_type"] == "d3"
-    assert parsed["fraction_number"] == "1"
-    assert parsed["total_fractions_prefix"] == "sur"
-    assert parsed["total_fractions"] == "4"
+    assert parsed["fraction"] == "1_sur_4"
     assert parsed["scan_number"] == "1"
 
 
@@ -42,9 +33,7 @@ def test_parse_sample_name_without_mesh_size():
     assert parsed["day_night"] == "d"
     assert parsed["net_number"] == "n1"
     assert parsed["fraction_type"] == "d3"
-    assert parsed["fraction_number"] == "1"
-    assert parsed["total_fractions_prefix"] == "sur"
-    assert parsed["total_fractions"] == "4"
+    assert parsed["fraction"] == "1_sur_4"
     assert parsed["scan_number"] == "1"
 
 
@@ -62,9 +51,7 @@ def test_parse_sample_name_partial():
     assert "day_night" not in parsed
     assert "net_number" not in parsed
     assert "fraction_type" not in parsed
-    assert "fraction_number" not in parsed
-    assert "total_fractions_prefix" not in parsed
-    assert "total_fractions" not in parsed
+    assert "fraction" not in parsed
     assert "scan_number" not in parsed
 
 
@@ -82,9 +69,7 @@ def test_parse_sample_name_single():
     assert "day_night" not in parsed
     assert "net_number" not in parsed
     assert "fraction_type" not in parsed
-    assert "fraction_number" not in parsed
-    assert "total_fractions_prefix" not in parsed
-    assert "total_fractions" not in parsed
+    assert "fraction" not in parsed
     assert "scan_number" not in parsed
 
 

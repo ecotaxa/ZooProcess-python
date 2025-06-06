@@ -9,6 +9,7 @@ from legacy.scans import ScanCSVLine, read_scans_metadata_table
 from local_DB.models import InFlightScan
 from logger import logger
 from modern.ids import scan_name_from_subsample_name
+from modern.to_legacy import reconstitute_csv_line, reconstitute_fracid
 
 
 class FracIdComponents(NamedTuple):
@@ -62,11 +63,7 @@ def get_project_scans_metadata(
     for scan_id, in_flight_scan in in_flight_scans_dict.items():
         if scan_id not in existing_scan_ids:
             # Create a new scan metadata entry from the in-flight scan data
-            new_scan_metadata = ScanCSVLine(
-                {"scanid": scan_id}  # type:ignore [typeddict-item]
-            )
-            # noinspection PyTypeChecker
-            new_scan_metadata.update(in_flight_scan.scan_data)
+            new_scan_metadata = reconstitute_csv_line(in_flight_scan.scan_data)
             lgcy_scans_metadata.append(new_scan_metadata)
 
     result: List[ScanCSVLine] = []
@@ -182,13 +179,13 @@ def add_subsample(
         scanid=scan_id,
         sampleid=sample_name,
         scanop=data.scanning_operator,
-        fracid=data.fraction_id_suffix,
+        fracid=reconstitute_fracid(data.fraction_id, data.fraction_id_suffix),
         fracmin=str(data.fraction_min_mesh),
         fracsup=str(data.fraction_max_mesh),
         fracnb=str(data.spliting_ratio),
         observation=data.observation,
         code="1",
-        submethod="1",
+        submethod=data.submethod,
         cellpart="1",
         replicates="1",
         volini="1",

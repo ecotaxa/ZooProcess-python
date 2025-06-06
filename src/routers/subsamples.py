@@ -18,6 +18,7 @@ from auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream, raise_501
 from img_proc.convert import convert_tiff_to_jpeg
 from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
+from legacy.writers.scan import add_legacy_scan
 from local_DB.data_utils import set_background_id
 from local_DB.db_dependencies import get_db
 from logger import logger
@@ -358,6 +359,8 @@ def link_subsample_to_scan(
     src_image_path = UPLOAD_DIR / extract_file_id_from_download_url(scan_url.url)
     if not src_image_path.exists():
         raise_404(f"Scan URL {scan_url} not found")
+
+    add_legacy_scan(db, zoo_project, scan_name_from_subsample_name(subsample_name))
 
     # Then we can work directly on legacy filesystem
     return ScanPostRsp(id=subsample_name + "XXXX", image="toto")

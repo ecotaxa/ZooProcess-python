@@ -6,7 +6,7 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 class ScanCSVLine(TypedDict):
     """TypedDict representing the structure of a scan CSV record."""
 
-    scanid: str  # Unique identifier for the scan
+    scanid: str  # Per Project unique identifier for the scan
     sampleid: str  # Reference to the sample ID (e.g., 'apero2023_tha_bioness_sup2000_017_st66_d_n1')
     scanop: str  # Operator who performed the scan (e.g., 'adelaide_perruchon')
     fracid: str  # Fraction ID (e.g., 'd1_1_sur_1'), parsed into fraction_id and fraction_id_suffix

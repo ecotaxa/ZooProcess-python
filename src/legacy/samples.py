@@ -1,4 +1,6 @@
-from typing import List, TypedDict
+from typing import List, TypedDict, cast
+
+from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 
 
 class SampleCSVLine(TypedDict):
@@ -41,6 +43,17 @@ class SampleCSVLine(TypedDict):
     cable_angle: str  # Cable angle from vertical in degrees (e.g., '99999')
     cable_speed: str  # Cable speed (e.g., '0')
     nb_jar: str  # Number of jars (e.g., '1')
+
+
+SCAN_CSV_COLUMNS = list(SampleCSVLine.__annotations__.keys())
+
+
+def read_samples_metadata_table(
+    zoo_project: ZooscanProjectFolder,
+) -> List[SampleCSVLine]:
+    ret = zoo_project.zooscan_meta.read_samples_table()
+    assert list(ret[0].keys()) == SCAN_CSV_COLUMNS
+    return cast(List[SampleCSVLine], ret)
 
 
 def find_sample_metadata(all_sample_metadata: List[SampleCSVLine], sample_name: str):

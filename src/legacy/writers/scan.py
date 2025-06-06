@@ -3,8 +3,9 @@ import csv
 from sqlalchemy.orm import Session
 
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
-from legacy.scans import ScanCSVLine, SCAN_CSV_COLUMNS
+from legacy.scans import SCAN_CSV_COLUMNS
 from local_DB.models import InFlightScan
+from modern.to_legacy import reconstitute_csv_line
 
 
 def add_legacy_scan(
@@ -13,7 +14,7 @@ def add_legacy_scan(
     scan_id: str,
 ):
     """
-    Add a legacy scan to the system.
+    Add a legacy scan to the system, i.e. persist in CSV an in-flight one.
 
     Args:
         db (Session): The database session
@@ -50,8 +51,8 @@ def add_legacy_scan(
                 fieldnames = reader.fieldnames
                 assert fieldnames is not None
         except FileNotFoundError:
-            # If file doesn't exist, use keys from scan_data
-            fieldnames = list(scan_data.keys())
+            # If file doesn't exist, use Line structure
+            fieldnames = SCAN_CSV_COLUMNS
 
         # Append the scan_data to the CSV file
         with open(scans_table_path, "a", newline="", encoding="ISO-8859-1") as csvfile:
@@ -61,11 +62,11 @@ def add_legacy_scan(
             if csvfile.tell() == 0:
                 writer.writeheader()
 
-            csv_line = ScanCSVLine(**scan_data)
-            assert csv_line.keys() == SCAN_CSV_COLUMNS
+            csv_line = reconstitute_csv_line(scan_data)
+            assert list(csv_line.keys()) == SCAN_CSV_COLUMNS
 
             # Write the scan_data row
-            writer.writerow(scan_data)
+            writer.writerow(csv_line)
 
         # Delete the record from the database
         db.query(InFlightScan).filter_by(

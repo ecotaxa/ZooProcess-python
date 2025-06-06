@@ -21,7 +21,11 @@ from Models import (
 )
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
-from legacy.samples import find_sample_metadata, SampleCSVLine
+from legacy.samples import (
+    find_sample_metadata,
+    SampleCSVLine,
+    read_samples_metadata_table,
+)
 from legacy.scans import (
     find_scan_metadata,
     ScanCSVLine,
@@ -178,7 +182,7 @@ def sample_from_legacy(
     sample_name: str,
 ) -> Sample:
     # Read metadata
-    all_sample_metadata = zoo_project.zooscan_meta.read_samples_table()
+    all_sample_metadata = read_samples_metadata_table(zoo_project)
     zoo_metadata = find_sample_metadata(all_sample_metadata, sample_name)
     assert (
         zoo_metadata is not None
