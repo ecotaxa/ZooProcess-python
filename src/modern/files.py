@@ -2,7 +2,10 @@ from pathlib import Path
 
 from fastapi import UploadFile
 
+import aiofiles as aiof
+
 UPLOAD_DIR = Path("/tmp")
+BUFFER_SIZE = 1024 * 1024
 
 
 async def add_file(name: str, stream: UploadFile) -> str:
@@ -14,9 +17,9 @@ async def add_file(name: str, stream: UploadFile) -> str:
     dest_path = UPLOAD_DIR.joinpath(name)
 
     # Copy data from the stream into dest_path
-    with open(dest_path, "wb") as fout:
-        buff = await stream.read(1024)
+    async with aiof.open(dest_path, "wb") as fout:
+        buff = await stream.read(BUFFER_SIZE)
         while len(buff) != 0:
-            fout.write(buff)  # type:ignore # Mypy is unaware of async read result
-            buff = await stream.read(1024)
+            await fout.write(buff)
+            buff = await stream.read(BUFFER_SIZE)
     return str(dest_path)

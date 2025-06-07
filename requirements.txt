@@ -5,6 +5,7 @@ uvicorn==0.34.2
 requests==2.32.3
 numpy==2.2.6
 python-multipart==0.0.20
+aiofiles==24.1.0
 # For ObjectId generation
 pymongo==4.13.0
 # pandas
