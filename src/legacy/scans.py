@@ -4,7 +4,8 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 
 
 class ScanCSVLine(TypedDict):
-    """TypedDict representing the structure of a scan CSV record."""
+    """TypedDict representing the structure of a scan CSV record.
+    It's a text line so every field is a string"""
 
     scanid: str  # Per Project unique identifier for the scan
     sampleid: str  # Reference to the sample ID (e.g., 'apero2023_tha_bioness_sup2000_017_st66_d_n1')

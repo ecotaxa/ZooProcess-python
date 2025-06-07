@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 from pathlib import Path
 from typing import List
@@ -17,6 +18,7 @@ from Models import (
 from auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream, raise_501
 from img_proc.convert import convert_tiff_to_jpeg
+from legacy.ids import raw_file_name
 from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
 from legacy.writers.scan import add_legacy_scan
 from local_DB.data_utils import set_background_id
@@ -171,16 +173,16 @@ def get_subsample(
 
     # Find the metadata for the specific subsample
     scan_id = scan_name_from_subsample_name(subsample_name)
-    zoo_metadata_sample = find_scan_metadata(
+    zoo_scan_metadata_for_sample = find_scan_metadata(
         sample_scans_metadata, sample_name, scan_id
     )
 
-    if zoo_metadata_sample is None:
+    if zoo_scan_metadata_for_sample is None:
         raise_404(f"Subsample {subsample_name} not found in sample {sample_name}")
         assert False  # mypy
 
     subsample = subsample_from_legacy(
-        db, zoo_project, sample_name, subsample_name, zoo_metadata_sample
+        db, zoo_project, sample_name, subsample_name, zoo_scan_metadata_for_sample
     )
 
     return subsample
@@ -198,6 +200,8 @@ def delete_subsample(
     Delete a specific subsample from a sample.
 
     Args:
+        user: Security dependency to get the current user.
+        db: Database dependency.
         project_hash (str): The ID of the project.
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample to delete.
@@ -359,10 +363,21 @@ def link_subsample_to_scan(
     src_image_path = UPLOAD_DIR / extract_file_id_from_download_url(scan_url.url)
     if not src_image_path.exists():
         raise_404(f"Scan URL {scan_url} not found")
+    if not src_image_path.is_file():
+        raise_501("Invalid scan URL, not a file")
+    if not src_image_path.suffix.lower() == ".tif":
+        raise_501("Invalid scan URL, not a .tif file")
 
-    add_legacy_scan(db, zoo_project, scan_name_from_subsample_name(subsample_name))
+    scan_name = scan_name_from_subsample_name(subsample_name)
+    # TODO: Log a bit, we're _writing_ into legacy
+    add_legacy_scan(db, zoo_project, scan_name)
+    work_dir = zoo_project.zooscan_scan.work.path / scan_name
+    if not work_dir.exists():
+        logger.info(f"Creating work directory {work_dir}")
+        work_dir.mkdir()
+    dst_path = zoo_project.zooscan_scan.raw.path / raw_file_name(scan_name)
+    shutil.copy(src_image_path, dst_path)
 
-    # Then we can work directly on legacy filesystem
     return ScanPostRsp(id=subsample_name + "XXXX", image="toto")
 
 

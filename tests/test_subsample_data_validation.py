@@ -63,16 +63,16 @@ def test_subsample_data_validation_failure_mesh():
 def test_subsample_data_validation_failure_empty_strings():
     """Test that SubSampleData validation fails when string fields are empty"""
     # Test each string field with empty string
-    string_fields = [
+    non_empty_string_fields = [
         "scanning_operator",
         "scan_id",
         "fraction_id",
-        "fraction_id_suffix",
+        # "fraction_id_suffix",
         "observation",
         "submethod",
     ]
 
-    for field in string_fields:
+    for field in non_empty_string_fields:
         with pytest.raises(ValueError, match="String fields cannot be empty"):
             # Create a dictionary with valid values for all fields
             valid_data = {
@@ -92,7 +92,7 @@ def test_subsample_data_validation_failure_empty_strings():
             SubSampleData(**valid_data)
 
     # Test with whitespace-only strings
-    for field in string_fields:
+    for field in non_empty_string_fields:
         with pytest.raises(ValueError, match="String fields cannot be empty"):
             valid_data = {
                 "scanning_operator": "Test Operator",

@@ -81,13 +81,11 @@ def get_project_scans(db: Session, zoo_project: ZooscanProjectFolder) -> List[st
     drive_name = drive_path.name
 
     # Get the in-flight scans for this project and drive
-    in_flight_scans = (
-        db.query(InFlightScan)
-        .filter_by(drive_name=drive_name, project_name=zoo_project.project)
-        .all()
+    in_flight_qry = db.query(InFlightScan).filter_by(
+        drive_name=drive_name, project_name=zoo_project.project
     )
     # noinspection PyTypeChecker
-    ret.extend([scan.scan_id for scan in in_flight_scans])
+    ret.extend([scan.scan_id for scan in in_flight_qry])
     return ret
 
 
@@ -173,7 +171,6 @@ def add_subsample(
 
     # Create scan data dictionary
     data = subsample.data
-    # scan_id = scan_name_from_subsample_name(sample_name + "_" + data.scan_id)
     scan_id = scan_name_from_subsample_name(subsample.name)
     scan_data = ScanCSVLine(
         scanid=scan_id,

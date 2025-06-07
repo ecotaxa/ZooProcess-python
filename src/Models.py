@@ -106,7 +106,7 @@ class SubSampleData(BaseModel):
         "scanning_operator",
         "scan_id",
         "fraction_id",
-        "fraction_id_suffix",
+        # "fraction_id_suffix", # It's OK to have no suffix, e.g. with 'tot'
         "observation",
         "submethod",
     )

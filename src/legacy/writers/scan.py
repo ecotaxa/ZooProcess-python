@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.scans import SCAN_CSV_COLUMNS
 from local_DB.models import InFlightScan
+from logger import logger
 from modern.to_legacy import reconstitute_csv_line
 
 
@@ -14,7 +15,7 @@ def add_legacy_scan(
     scan_id: str,
 ):
     """
-    Add a legacy scan to the system, i.e. persist in CSV an in-flight one.
+    Add a legacy scan to the filesystem, i.e. persist into CSV an in-flight one.
 
     Args:
         db (Session): The database session
@@ -35,43 +36,44 @@ def add_legacy_scan(
         .first()
     )
 
-    if in_flight_scan:
-        # Extract scan_data from the record
-        scan_data = in_flight_scan.scan_data
+    assert in_flight_scan is not None, f"Not found in DB: {scan_id}"
 
-        # Write scan_data to the scan header table CSV file
-        scans_table_path = zoo_project.zooscan_meta.scans_table_path
+    # Extract scan_data from the record
+    scan_data = in_flight_scan.scan_data
 
-        # Read existing headers from the CSV file
-        try:
-            with open(
-                scans_table_path, "r", newline="", encoding="ISO-8859-1"
-            ) as csvfile:
-                reader = csv.DictReader(csvfile, delimiter=";")
-                fieldnames = reader.fieldnames
-                assert fieldnames is not None
-        except FileNotFoundError:
-            # If file doesn't exist, use Line structure
-            fieldnames = SCAN_CSV_COLUMNS
+    logger.info(f"Added legacy scan {scan_id} with {scan_data}")
 
-        # Append the scan_data to the CSV file
-        with open(scans_table_path, "a", newline="", encoding="ISO-8859-1") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=";")
+    # Write scan_data to the scan header table CSV file
+    scans_table_path = zoo_project.zooscan_meta.scans_table_path
 
-            # If file is new, write the header
-            if csvfile.tell() == 0:
-                writer.writeheader()
+    # Read existing headers from the CSV file
+    try:
+        with open(scans_table_path, "r", newline="", encoding="ISO-8859-1") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=";")
+            fieldnames = reader.fieldnames
+            assert fieldnames is not None
+    except FileNotFoundError:
+        # If file doesn't exist, use Line structure
+        fieldnames = SCAN_CSV_COLUMNS
 
-            csv_line = reconstitute_csv_line(scan_data)
-            assert list(csv_line.keys()) == SCAN_CSV_COLUMNS
+    # Append the scan_data to the CSV file
+    with open(scans_table_path, "a", newline="", encoding="ISO-8859-1") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=";")
 
-            # Write the scan_data row
-            writer.writerow(csv_line)
+        # If file is new, write the header
+        if csvfile.tell() == 0:
+            writer.writeheader()
 
-        # Delete the record from the database
-        db.query(InFlightScan).filter_by(
-            drive_name=drive_name, project_name=zoo_project.project, scan_id=scan_id
-        ).delete()
-        db.commit()
+        csv_line = reconstitute_csv_line(scan_data)
+        assert list(csv_line.keys()) == SCAN_CSV_COLUMNS
+
+        # Write the scan_data row
+        writer.writerow(csv_line)
+
+    # Delete the record from the database
+    db.query(InFlightScan).filter_by(
+        drive_name=drive_name, project_name=zoo_project.project, scan_id=scan_id
+    ).delete()
+    db.commit()
 
     return scan_id
