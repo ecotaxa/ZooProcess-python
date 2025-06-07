@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from .models import InFlightScan
+from .models import ScanBackground
 
 
 def get_background_id(
@@ -24,15 +24,14 @@ def get_background_id(
     Returns:
         str: The background_id if found, None otherwise.
     """
-    scan = (
-        db.query(InFlightScan)
+    scan_background = (
+        db.query(ScanBackground)
         .filter_by(drive_name=drive_name, project_name=project_name, scan_id=scan_id)
         .first()
     )
 
-    if scan:
-        # noinspection PyTypeChecker
-        return scan.background_id
+    if scan_background:
+        return scan_background.background_id
     return None
 
 
@@ -52,12 +51,24 @@ def set_background_id(
     Returns:
         bool: True if the update was successful, False otherwise.
     """
-    scan = (
-        db.query(InFlightScan)
+    # Check if a ScanBackground record already exists
+    scan_background = (
+        db.query(ScanBackground)
         .filter_by(drive_name=drive_name, project_name=project_name, scan_id=scan_id)
         .first()
     )
 
-    assert scan is not None, f"Cannot update {drive_name}/{project_name}/{scan_id}"
-    scan.background_id = background_id
+    if scan_background:
+        # Update existing record
+        scan_background.background_id = background_id
+    else:
+        # Create new record
+        scan_background = ScanBackground(
+            drive_name=drive_name,
+            project_name=project_name,
+            scan_id=scan_id,
+            background_id=background_id,
+        )
+        db.add(scan_background)
+
     db.commit()

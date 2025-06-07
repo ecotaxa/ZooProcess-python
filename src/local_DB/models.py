@@ -59,10 +59,29 @@ class InFlightScan(Base):
     project_name = mapped_column(String, primary_key=True, nullable=False)
     scan_id = mapped_column(String, primary_key=True, nullable=False)
     scan_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
-    background_id: Mapped[Optional[str]]
 
     def __repr__(self):
         return f"<InFlightScan(scan_id='{self.scan_id}', project_name='{self.project_name}', drive_name='{self.drive_name}')>"
+
+
+# Define the ScanBackground model
+class ScanBackground(Base):
+    """
+    SQLAlchemy model for the scan_backgrounds table.
+
+    This table has the same structure as InFlightScan but without scan_data.
+    It stores information about scan backgrounds.
+    """
+
+    __tablename__ = "scan_backgrounds"
+
+    drive_name = mapped_column(String, primary_key=True, nullable=False)
+    project_name = mapped_column(String, primary_key=True, nullable=False)
+    scan_id = mapped_column(String, primary_key=True, nullable=False)
+    background_id: Mapped[str]
+
+    def __repr__(self):
+        return f"<ScanBackground(scan_id='{self.scan_id}', project_name='{self.project_name}', drive_name='{self.drive_name}')>"
 
 
 # Database connection and session management
