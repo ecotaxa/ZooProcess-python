@@ -54,6 +54,9 @@ def create_task(
     return ret
 
 
+COUNTER = 0
+
+
 @router.get("/{task_id}")
 def get_task(
     task_id: str,
@@ -72,12 +75,19 @@ def get_task(
         Task: A hardcoded task with the provided ID.
     """
     logger.info(f"Received request to get task with ID: {task_id}")
+    global COUNTER
+    COUNTER += 1
+    if COUNTER > 10:
+        status = "FINISHED"
+        COUNTER = 0
+    else:
+        status = "RUNNING"
     return Task(
         id=task_id,
         exec="process_images",
         params={"project_id": "123", "sample_id": "456"},
         percent=75,
-        status="RUNNING",
+        status=status,
         log="task_log_url",
         createdAt=datetime.now(),
         updatedAt=datetime.now(),

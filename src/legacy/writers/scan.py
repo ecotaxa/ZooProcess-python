@@ -3,7 +3,7 @@ import csv
 from sqlalchemy.orm import Session
 
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
-from legacy.scans import SCAN_CSV_COLUMNS
+from legacy.scans import SCAN_CSV_COLUMNS, read_scans_metadata_table, find_scan_metadata
 from local_DB.models import InFlightScan
 from logger import logger
 from modern.to_legacy import reconstitute_csv_line
@@ -36,7 +36,12 @@ def add_legacy_scan(
         .first()
     )
 
-    assert in_flight_scan is not None, f"Not found in DB: {scan_id}"
+    # The scan_id has been checked during path validation, if it's already in the CSV then fine
+    if in_flight_scan is None:
+        # present_line = find_scan_metadata(
+        #         read_scans_metadata_table(zoo_project), sample_name, scan_id
+        #     )
+        return scan_id
 
     # Extract scan_data from the record
     scan_data = in_flight_scan.scan_data

@@ -318,8 +318,9 @@ async def get_subsample_scan(
             subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
     except Exception as e:
-        logger.error(f"Error getting files for subsample {subsample_name}: {str(e)}")
-        raise_404(f"Scan image not found for subsample {subsample_name}")
+        raise_404(
+            f"Scan image not found (error getting files) for subsample {subsample_name}"
+        )
 
     scan_file = zoo_project.zooscan_scan.get_8bit_file(
         subsample_name, THE_SCAN_PER_SUBSAMPLE
@@ -376,6 +377,7 @@ def link_subsample_to_scan(
         logger.info(f"Creating work directory {work_dir}")
         work_dir.mkdir()
     dst_path = zoo_project.zooscan_scan.raw.path / raw_file_name(scan_name)
+    logger.info(f"Copying tif to {dst_path}")
     shutil.copy(src_image_path, dst_path)
 
     return ScanPostRsp(id=subsample_name + "XXXX", image="toto")
