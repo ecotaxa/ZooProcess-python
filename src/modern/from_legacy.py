@@ -18,6 +18,8 @@ from Models import (
     MetadataModel,
     SubSample,
     ScanTypeNum,
+    ScanSubsample,
+    User,
 )
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
 from config_rdr import config
@@ -223,8 +225,25 @@ def subsample_from_legacy(
 ) -> SubSample:
     modern_metadata = scan_from_legacy_meta(zoo_scan_metadata)
     metadata = to_api_meta(modern_metadata)
+    created_at = updated_at = datetime.now()
+    user = user_with_name(modern_metadata["operator"])
     # Extract scans from the legacy project folder
-    scans = scans_from_legacy(zoo_project, sample_name, subsample_name)
+    parent = [
+        ScanSubsample(
+            subsample=SubSample(
+                id=hash_from_subsample_name(subsample_name),
+                name=subsample_name,
+                metadata=metadata,
+                scan=[],
+                createdAt=created_at,
+                updatedAt=updated_at,
+                user=user,
+            )
+        )
+    ]
+    scans = scans_from_legacy_subsample(
+        zoo_project, sample_name, subsample_name, user, parent
+    )
     # Client-side also expects _the_ chosen background to be returned as an extra "scan" with OK type
     bg_id = get_background_id(
         db,
@@ -233,10 +252,8 @@ def subsample_from_legacy(
         scan_name_from_subsample_name(subsample_name),
     )
     if bg_id is not None:
-        scans.append(background_from_legacy_as_scan(zoo_project, bg_id))
+        scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user, parent))
     # Create the sample with metadata and scans
-    created_at = updated_at = datetime.now()
-    user = user_with_name(modern_metadata["operator"])
     ret = SubSample(
         id=hash_from_subsample_name(subsample_name),
         name=subsample_name,
@@ -249,15 +266,19 @@ def subsample_from_legacy(
     return ret
 
 
-def scans_from_legacy(
-    zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
+def scans_from_legacy_subsample(
+    zoo_project: ZooscanProjectFolder,
+    sample_name: str,
+    subsample_name: str,
+    user: User,
+    back_link: List[ScanSubsample],
 ) -> List[Scan]:
     # What is presented as a "scan" is in fact several files, but the lib knows
     scan_name = scan_name_from_subsample_name(subsample_name)
     if scan_name not in zoo_project.list_scans_with_state():
         return []
 
-    # So far there is a _maximum_ of 1 scan per subsample
+    # So far, there is a _maximum_ of 1 scan per subsample
     project_hash = hash_from_project(zoo_project.path)
     sample_hash = hash_from_sample_name(sample_name)
     subsample_hash = hash_from_subsample_name(subsample_name)
@@ -266,7 +287,8 @@ def scans_from_legacy(
         url=get_scan_url(project_hash, sample_hash, subsample_hash),
         metadata=[],
         type=ScanTypeNum.SCAN,
-        user=get_mock_user(),
+        user=user,
+        scanSubsamples=back_link,
     )
     return [the_scan]
 
@@ -274,6 +296,8 @@ def scans_from_legacy(
 def background_from_legacy_as_scan(
     zoo_project: ZooscanProjectFolder,
     background_date: str,
+    user: User,
+    back_link: List[ScanSubsample],
 ) -> Scan:
     # So far there is a _maximum_ of 1 scan per subsample
     project_hash = hash_from_project(zoo_project.path)
@@ -282,7 +306,8 @@ def background_from_legacy_as_scan(
         url=get_background_url(project_hash, background_date),
         metadata=[],
         type=ScanTypeNum.MEDIUM_BACKGROUND,
-        user=get_mock_user(),
+        user=user,
+        scanSubsamples=back_link,
     )
     return the_scan
 
@@ -413,11 +438,10 @@ def scans_from_legacy_project(
             if zoo_subsample_metadata is None:
                 continue
 
-            # Get scans for this subsample and add them to the result list
-            subsample_scans = scans_from_legacy(
-                zoo_project, sample_name, subsample_name
+            subsample = subsample_from_legacy(
+                db, zoo_project, sample_name, subsample_name, zoo_subsample_metadata
             )
-            ret.extend(subsample_scans)
+            ret.extend(subsample.scan)
 
     return ret
 

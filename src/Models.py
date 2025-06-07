@@ -209,6 +209,12 @@ class ScanIn(BaseModel):
     bearer: str
 
 
+class ScanSubsample(BaseModel):
+    """Link b/w scan and subsample. TODO: Clean on front side"""
+
+    subsample: SubSample  # A scan belongs to a subsample
+
+
 class Scan(BaseModel):
     """As GET returns"""
 
@@ -218,6 +224,7 @@ class Scan(BaseModel):
     archived: bool = False
     deleted: bool = False
     metadata: List["MetadataModel"]
+    scanSubsamples: List[ScanSubsample]
     user: User
 
 
