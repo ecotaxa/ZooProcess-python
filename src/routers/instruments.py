@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import modern.calibration as calibration_module
 from Models import Instrument, Calibration, Background
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from auth import get_current_user_from_credentials
+from helpers.auth import get_current_user_from_credentials
 from config_rdr import config
 from local_DB.db_dependencies import get_db
 from modern.from_legacy import backgrounds_from_legacy_project

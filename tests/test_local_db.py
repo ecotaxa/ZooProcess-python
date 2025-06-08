@@ -1,4 +1,3 @@
-import pytest
 from local_DB.models import User
 
 
@@ -21,7 +20,7 @@ def test_local_db_authentication(local_db):
     Test that the local_db fixture can be used for authentication.
     """
     # Import the authentication function
-    from auth import get_user_from_db
+    from helpers.auth import get_user_from_db
 
     # Get the user from the database using the authentication function
     user = get_user_from_db("test@example.com", local_db)

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from Models import Project, Background, Scan
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from auth import get_current_user_from_credentials
+from helpers.auth import get_current_user_from_credentials
 from config_rdr import config
 from helpers.web import raise_404, get_stream
 from img_proc.convert import convert_tiff_to_jpeg

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from Models import Task, TaskIn
-from auth import get_current_user_from_credentials
+from helpers.auth import get_current_user_from_credentials
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
 from logger import logger

@@ -1,4 +1,4 @@
-from auth import decode_jwt_token, SESSION_COOKIE_NAME
+from helpers.auth import decode_jwt_token, SESSION_COOKIE_NAME
 from local_DB.db_dependencies import get_db
 from main import app
 

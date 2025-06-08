@@ -15,7 +15,7 @@ from Models import (
     User,
     ScanPostRsp,
 )
-from auth import get_current_user_from_credentials
+from helpers.auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream, raise_501
 from img_proc.convert import convert_tiff_to_jpeg
 from legacy.ids import raw_file_name

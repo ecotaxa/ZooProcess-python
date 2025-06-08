@@ -5,7 +5,7 @@ import jwt
 import pytest
 from fastapi import HTTPException
 
-from auth import (
+from helpers.auth import (
     create_jwt_token,
     decode_jwt_token,
     get_user_from_token,
@@ -127,7 +127,7 @@ def test_secret_environment_variable():
         # Import the modules again to get the updated SECRET_KEY
         import importlib
         import config_rdr
-        import auth
+        from helpers import auth
 
         importlib.reload(config_rdr)
         importlib.reload(auth)
@@ -153,7 +153,7 @@ def test_secret_environment_variable():
 
         # Reload the modules to restore the original SECRET_KEY
         import config_rdr
-        import auth
+        from helpers import auth
 
         importlib.reload(config_rdr)
         importlib.reload(auth)

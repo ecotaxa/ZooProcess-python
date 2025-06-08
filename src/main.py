@@ -24,7 +24,7 @@ from Models import (
     ForInstrumentBackgroundIn,
 )
 from ZooProcess_lib.Processor import Processor, Lut
-from auth import get_current_user_from_credentials
+from helpers.auth import get_current_user_from_credentials
 from demo_get_vignettes import generate_json
 from helpers.web import (
     internal_server_error_handler,
@@ -55,8 +55,7 @@ from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
 from routers.tasks import router as tasks_router
-from separate import Separate
-from separate_fn import separate_images
+from providers.separate_fn import separate_images
 from static.favicon import create_plankton_favicon
 
 params = {"server": "http://localhost:8081", "dbserver": "http://localhost:8000"}
@@ -71,7 +70,7 @@ separateServer = SeparateServer(tunnelserver, dbserver)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from auth import create_jwt_token, get_user_from_db, SESSION_COOKIE_NAME
+from helpers.auth import create_jwt_token, get_user_from_db, SESSION_COOKIE_NAME
 from remote.DB import DB
 
 
@@ -188,7 +187,8 @@ def separate_scan(scan: ScanIn) -> None:
 
     logger.info(f"POST /separator/scan: {scan}")
 
-    Separate(scan.scanId, scan.bearer, separateServer)
+    # Separate(scan.scanId, scan.bearer, separateServer)
+    raise_500("Not Implemented")
 
 
 @app.put("/separate/")

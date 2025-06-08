@@ -1,6 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-
 from local_DB.db_dependencies import get_db
 from main import app
 
@@ -58,7 +55,7 @@ def test_users_me_endpoint_with_cookie(app_client, local_db):
     token = login_response.json()
 
     # Make request to the /users/me endpoint with the token in a cookie
-    from auth import SESSION_COOKIE_NAME
+    from helpers.auth import SESSION_COOKIE_NAME
 
     cookies = {SESSION_COOKIE_NAME: token}
     response = app_client.get("/users/me", cookies=cookies)

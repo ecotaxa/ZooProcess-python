@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List
 
 import requests
@@ -6,8 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from Models import Sample, SampleWithBackRef
-from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from auth import get_current_user_from_credentials
+from helpers.auth import get_current_user_from_credentials
 from local_DB.db_dependencies import get_db
 from logger import logger
 from modern.from_legacy import (
