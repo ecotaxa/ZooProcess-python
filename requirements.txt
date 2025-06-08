@@ -31,3 +31,4 @@ httpx==0.28.1 # Required for FastAPI TestClient
 mypy==1.10.1 # Static type checking
 types-PyYAML==6.0.12.2
 types-requests==2.32.0.20250602
+types-aiofiles==24.1.0.20250606

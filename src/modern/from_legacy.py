@@ -17,7 +17,7 @@ from Models import (
     Scan,
     MetadataModel,
     SubSample,
-    ScanTypeNum,
+    ScanTypeEnum,
     ScanSubsample,
     User,
 )
@@ -286,7 +286,7 @@ def scans_from_legacy_subsample(
         id=scan_name_from_subsample_name(subsample_name),
         url=get_scan_url(project_hash, sample_hash, subsample_hash),
         metadata=[],
-        type=ScanTypeNum.SCAN,
+        type=ScanTypeEnum.SCAN,
         user=user,
         scanSubsamples=back_link,
     )
@@ -305,7 +305,7 @@ def background_from_legacy_as_scan(
         id=background_date,
         url=get_background_url(project_hash, background_date),
         metadata=[],
-        type=ScanTypeNum.MEDIUM_BACKGROUND,
+        type=ScanTypeEnum.MEDIUM_BACKGROUND,
         user=user,
         scanSubsamples=back_link,
     )
@@ -357,13 +357,22 @@ def backgrounds_from_legacy_project(
         # Get the background entry for this date
         entry = back_folder.content[a_date]
 
-        if not entry["final_background"]:
+        if entry["final_background"] is not None:
+            scan_type = ScanTypeEnum.MEDIUM_BACKGROUND
+            background_id = f"{a_date}_fnl"
+            background_name = f"{a_date}_final"
+        elif entry["raw_background_1"] is not None:
+            scan_type = ScanTypeEnum.RAW_BACKGROUND
+            background_id = f"{a_date}_bg1"
+            background_name = f"{a_date}_background_2"
+        elif entry["raw_background_2"] is not None:
+            scan_type = ScanTypeEnum.RAW_BACKGROUND
+            background_id = f"{a_date}_bg2"
+            background_name = f"{a_date}_background_2"
+        else:
             continue
 
-        # If there's a final background, add it to the list
-        background_id = f"{a_date}"
-        background_name = f"{a_date}_background"
-        background_url = get_background_url(project_hash, a_date)
+        background_url = get_background_url(project_hash, background_id)
 
         # Convert the date string to a datetime object for the model
         api_date = parse_legacy_date(a_date)
@@ -376,7 +385,7 @@ def backgrounds_from_legacy_project(
             user=mock_user,
             instrument=instrument,
             createdAt=api_date,
-            type="MEDIUM_BACKGROUND",
+            type=scan_type,
         )
 
         backgrounds.append(background)

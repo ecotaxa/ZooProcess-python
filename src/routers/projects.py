@@ -12,7 +12,7 @@ from auth import get_current_user_from_credentials
 from config_rdr import config
 from helpers.web import raise_404, get_stream
 from img_proc.convert import convert_tiff_to_jpeg
-from legacy.backgrounds import find_background_file
+from legacy.backgrounds import find_final_background_file, find_raw_background_file
 from legacy_to_remote.importe import import_old_project
 from local_DB.db_dependencies import get_db
 from logger import logger
@@ -192,8 +192,14 @@ async def get_background(
         ".jpg"
     )  # This comes from @see:backgrounds_from_legacy_project
     background_name = background_id[:-4]
+    bg_date, bg_type = background_name.rsplit(
+        "_", 1
+    )  # e.g. 20201009_1412_fnl or _bg1 or _bg2
 
-    background_file = find_background_file(zoo_project, background_name)
+    if bg_type == "fnl":
+        background_file = find_final_background_file(zoo_project, bg_date)
+    else:
+        background_file = find_raw_background_file(zoo_project, bg_date, bg_type[-1])
     if background_file is None:
         raise_404(
             f"Background with ID {background_id} not found in project {zoo_project.name}"

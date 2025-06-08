@@ -21,6 +21,7 @@ from Models import (
     Drive,
     ImageUrl,
     VignetteFolder,
+    ForInstrumentBackgroundIn,
 )
 from ZooProcess_lib.Processor import Processor, Lut
 from auth import get_current_user_from_credentials
@@ -46,7 +47,10 @@ from providers.SeparateServer import SeparateServer
 from providers.server import Server
 from remote.TaskStatus import TaskStatus
 from routers.images import router as images_router
-from routers.instruments import router as instruments_router
+from routers.instruments import (
+    router as instruments_router,
+    get_backgrounds_by_instrument,
+)
 from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
@@ -580,6 +584,18 @@ def mediumBackground(back1url, back2url):
     return backurl.as_posix()
 
 
+@app.post("/background/{instrument_id}/url")
+@typing.no_type_check
+def add_background_for_instrument(
+    instrument_id: str, projectId: str, background: ForInstrumentBackgroundIn
+) -> Background:
+    logger.info(
+        f"add_background_for_instrument instrument_id: {instrument_id}, projectId: {projectId}, background: {background}"
+    )
+    for_all = get_backgrounds_by_instrument(instrument_id)
+    return for_all[0]
+
+
 @app.post("/background/")
 @typing.no_type_check
 def add_background(background: Background):
@@ -677,30 +693,6 @@ def add_background(background: Background):
 # from importe import importe
 
 # importe(app)
-
-
-def getProjectDataFromDB(name: str, db: DB):
-    logger.info(f"getProjectDataFromDB name: {name}")
-    # logger.info(f"getProjectDataFromDB db: {db}")
-
-    # url = db.makeUrl(f'/projects/{name}')
-    # logger.info(f"url: {url}")
-    # response = db.get(url)
-
-    # response = db.get(f'/projects/{name}')
-    # logger.info(f"get projectData: {response}")
-    # if response["status"] != "success":
-    #     logger.error("Failed to retrieve project data")
-    #     return HTTPException(status_code=404, detail="Project not found")
-
-    # logger.info("Project data retrieved successfully")
-    # if not response["data"]:
-    #     logger.error("Failed to retrieve project data")
-    #     return HTTPException(status_code=404, detail="Project not found")
-
-    # projectData = response["data"]
-    projectData = db.get(f"/projects/{name}")
-    return projectData
 
 
 @app.post("/login")

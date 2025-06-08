@@ -41,6 +41,12 @@ def create_task(
     #     sample: 'm158_mn03_n1',
     #     subsample: 'zooscan_lov|Zooscan_triatlas_m158_2019_mtn_200microns_sn001_undefined',
     #     scanId: 'zooscan_lov|Zooscan_triatlas_m158_2019_mtn_200microns_sn001_undefined_1'
+    # e.g.: exec='BACKGROUND'
+    #   params:
+    #     'project': 'zooscan_lov|Zooscan_triatlas_m158_2019_mtn_200microns_sn001',
+    #     'instrumentId': 'sn001',
+    #     'background': ['http://localhost:5000/projects/zooscan_lov|Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/background/20240527_0759_fnl.jpg',
+    #     'http://localhost:5000/projects/zooscan_lov|Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/background/20240527_0759_fnl.jpg']
 
     ret = Task(
         **task.model_dump(),

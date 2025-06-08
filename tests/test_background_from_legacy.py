@@ -65,22 +65,22 @@ def test_background_from_legacy_project(mocker: MockFixture):
     assert len(backgrounds) == 2
 
     # Check the first background
-    assert backgrounds[0].id == "20230101_1200"
-    assert backgrounds[0].name == "20230101_1200_background"
+    assert backgrounds[0].id == "20230101_1200_fnl"
+    assert backgrounds[0].name == "20230101_1200_final"
     assert (
         backgrounds[0].url
-        == "http://localhost:5000/projects/test_drive|test_project/background/20230101_1200.jpg"
+        == "http://localhost:5000/projects/test_drive|test_project/background/20230101_1200_fnl.jpg"
     )
     assert backgrounds[0].createdAt.strftime("%Y%m%d_%H%M") == "20230101_1200"
     assert backgrounds[0].user.id == "user1"
     assert backgrounds[0].instrument.sn == "TEST123"
 
     # Check the second background
-    assert backgrounds[1].id == "20230102_1300"
-    assert backgrounds[1].name == "20230102_1300_background"
+    assert backgrounds[1].id == "20230102_1300_fnl"
+    assert backgrounds[1].name == "20230102_1300_final"
     assert (
         backgrounds[1].url
-        == "http://localhost:5000/projects/test_drive|test_project/background/20230102_1300.jpg"
+        == "http://localhost:5000/projects/test_drive|test_project/background/20230102_1300_fnl.jpg"
     )
     assert backgrounds[1].createdAt.strftime("%Y%m%d_%H%M") == "20230102_1300"
     assert backgrounds[1].user.id == "user1"
@@ -163,6 +163,8 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
     mock_back_folder.content = {
         "20230101_1200": {
             "final_background": None,
+            "raw_background_1": None,
+            "raw_background_2": None,
         }
     }
 

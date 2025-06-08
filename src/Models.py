@@ -148,7 +148,7 @@ class Background(BaseModel):
     user: User
     instrument: "Instrument"
     createdAt: datetime
-    type: str
+    type: "ScanTypeEnum"
     error: Optional[datetime] = None
     # path: str
     # bearer: str | None = None
@@ -161,6 +161,12 @@ class Background(BaseModel):
     # instrumentId: str
 
 
+class ForInstrumentBackgroundIn(BaseModel):
+    url: str
+    projectId: str
+    type: Optional[str]
+
+
 class LinkBackgroundReq(BaseModel):
     scanId: str
 
@@ -170,7 +176,7 @@ class ScanToUrlReq(BaseModel):
     url: str
 
 
-class ScanTypeNum(str, Enum):
+class ScanTypeEnum(str, Enum):
     RAW_BACKGROUND = "RAW_BACKGROUND"  # From scanner, up to 2 of them with names "back_large_raw_1.tif" and "back_large_raw_2.tif"
     BACKGROUND = (
         "BACKGROUND"  # 8-bit version of the raw backgrounds, same name without "_raw"
@@ -220,7 +226,7 @@ class Scan(BaseModel):
 
     id: str
     url: str
-    type: ScanTypeNum
+    type: ScanTypeEnum
     archived: bool = False
     deleted: bool = False
     metadata: List["MetadataModel"]
