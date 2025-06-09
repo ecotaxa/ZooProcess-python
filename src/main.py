@@ -1,5 +1,6 @@
 # Main
 import os
+import shutil
 import typing
 from pathlib import Path
 from typing import List
@@ -24,17 +25,21 @@ from Models import (
     ForInstrumentBackgroundIn,
 )
 from ZooProcess_lib.Processor import Processor, Lut
-from helpers.auth import get_current_user_from_credentials
 from demo_get_vignettes import generate_json
+from helpers.auth import get_current_user_from_credentials
 from helpers.web import (
     internal_server_error_handler,
     TimingMiddleware,
     validation_exception_handler,
     raise_500,
+    raise_501,
 )
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
+from legacy import LegacyTimeStamp
+from legacy.backgrounds import LegacyBackgroundDir
 from legacy.drives import validate_drives
+from legacy.writers.background import file_name_for_raw_background
 from local_DB.db_dependencies import get_db
 from local_DB.models import init_db
 from logger import logger
@@ -42,20 +47,21 @@ from modern.app_urls import is_download_url, extract_file_id_from_download_url
 from modern.files import UPLOAD_DIR
 from modern.from_legacy import (
     drives_from_legacy,
+    backgrounds_from_legacy_project,
 )
 from providers.SeparateServer import SeparateServer
+from providers.separate_fn import separate_images
 from providers.server import Server
 from remote.TaskStatus import TaskStatus
 from routers.images import router as images_router
 from routers.instruments import (
     router as instruments_router,
-    get_backgrounds_by_instrument,
 )
 from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
 from routers.tasks import router as tasks_router
-from providers.separate_fn import separate_images
+from routers.utils import validate_path_components
 from static.favicon import create_plankton_favicon
 
 params = {"server": "http://localhost:8081", "dbserver": "http://localhost:8000"}
@@ -587,12 +593,38 @@ def mediumBackground(back1url, back2url):
 @app.post("/background/{instrument_id}/url")
 @typing.no_type_check
 def add_background_for_instrument(
-    instrument_id: str, projectId: str, background: ForInstrumentBackgroundIn
+    instrument_id: str,
+    projectId: str,
+    background: ForInstrumentBackgroundIn,
+    _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
 ) -> Background:
     logger.info(
         f"add_background_for_instrument instrument_id: {instrument_id}, projectId: {projectId}, background: {background}"
     )
-    for_all = get_backgrounds_by_instrument(instrument_id)
+    _, zoo_project, _, _ = validate_path_components(db, background.projectId)
+    if not is_download_url(background.url):
+        raise_501("Invalid background URL, not produced here")
+    src_image_path = UPLOAD_DIR / extract_file_id_from_download_url(background.url)
+    # AFAICS, there is no indication that the bg is the first or the second one in the API
+    # but the 2 backgrounds have to end up with the same timestamp
+    stamp = LegacyTimeStamp()
+    two_mins_ago = stamp.subtract_minutes(2)
+    lgcy_dir = LegacyBackgroundDir(zoo_project)
+    recent_additions_dates = lgcy_dir.dates_younger_than(two_mins_ago)
+    if len(recent_additions_dates) > 0:
+        stamp = recent_additions_dates[0]
+        logger.info(
+            f"Recent background date: {recent_additions_dates}, last: {stamp}, entries: {lgcy_dir.entries_by_date[stamp.to_string()]}"
+        )
+        frame_num = 2
+    else:
+        frame_num = 1
+    dst_file_name = file_name_for_raw_background(stamp.to_string(), frame_num)
+    dst_file_path = zoo_project.zooscan_back.path / dst_file_name
+    logger.info(f"Copying to dst_file_name: {dst_file_path}")
+    shutil.copyfile(src_image_path, dst_file_path)
+    for_all = backgrounds_from_legacy_project(zoo_project, stamp.to_string())
     return for_all[0]
 
 
@@ -735,7 +767,7 @@ def login_get(email: str, password: str, db: Session = Depends(get_db)):
     """
     GET variant of the login endpoint
 
-    If successful, returns a JWT token which will have to be used in bearer authentication scheme for subsequent calls.
+    If successful, return a JWT token which will have to be used in bearer authentication scheme for subsequent calls.
 
     Note: While this endpoint is provided for convenience, using POST /login is recommended for better security
     as it doesn't expose credentials in URL or server logs.

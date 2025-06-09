@@ -165,14 +165,14 @@ def get_scans(
 
 
 @router.get("/{project_hash}/background/{background_id}")
-async def get_background(
+async def get_image_for_background(
     project_hash: str,
     background_id: str,
     # _user=Depends(get_current_user_from_credentials), # TODO: Fix on client side
     db: Session = Depends(get_db),
 ) -> StreamingResponse:
     """
-    Get a specific background from a project by its ID, in a browser-compatible format.
+    Get JPG equivalent of a specific background from a project by its ID.
 
     Args:
         project_hash (str): The hash of the project to get the background from.

@@ -44,7 +44,7 @@ def extract_file_id_from_download_url(url: str) -> str:
     return url.replace(f"{config.public_url}/download/", "")
 
 
-def get_scan_url(project_hash: str, sample_hash: str, subsample_hash: str) -> str:
+def generate_scan_url(project_hash: str, sample_hash: str, subsample_hash: str) -> str:
     """
     Generate a URL for a scan.
 
@@ -59,7 +59,7 @@ def get_scan_url(project_hash: str, sample_hash: str, subsample_hash: str) -> st
     return f"{config.public_url}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/scan.jpg"
 
 
-def get_background_url(project_hash: str, background_date: str) -> str:
+def generate_background_url(project_hash: str, background_date: str) -> str:
     """
     Generate a URL for a background image.
 
