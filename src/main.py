@@ -624,6 +624,7 @@ def add_background_for_instrument(
     dst_file_path = zoo_project.zooscan_back.path / dst_file_name
     logger.info(f"Copying to dst_file_name: {dst_file_path}")
     shutil.copyfile(src_image_path, dst_file_path)
+    zoo_project.zooscan_back.read()  # Refresh content
     for_all = backgrounds_from_legacy_project(zoo_project, stamp.to_string())
     return for_all[0]
 

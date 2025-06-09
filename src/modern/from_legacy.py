@@ -374,7 +374,7 @@ def backgrounds_from_legacy_project(
         elif entry["raw_background_1"] is not None:
             scan_type = ScanTypeEnum.RAW_BACKGROUND
             background_id = f"{a_date}_bg1"
-            background_name = f"{a_date}_background_2"
+            background_name = f"{a_date}_background_1"
         else:
             continue
 
