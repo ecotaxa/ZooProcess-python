@@ -35,7 +35,7 @@ from legacy.scans import (
 )
 from local_DB.data_utils import get_background_id
 from logger import logger
-from modern.app_urls import get_scan_url, get_background_url
+from modern.app_urls import generate_scan_url, generate_background_url
 from modern.ids import (
     hash_from_project,
     subsample_name_from_scan_name,
@@ -284,7 +284,7 @@ def scans_from_legacy_subsample(
     subsample_hash = hash_from_subsample_name(subsample_name)
     the_scan = Scan(
         id=scan_name_from_subsample_name(subsample_name),
-        url=get_scan_url(project_hash, sample_hash, subsample_hash),
+        url=generate_scan_url(project_hash, sample_hash, subsample_hash),
         metadata=[],
         type=ScanTypeEnum.SCAN,
         user=user,
@@ -303,7 +303,7 @@ def background_from_legacy_as_scan(
     project_hash = hash_from_project(zoo_project.path)
     the_scan = Scan(
         id=background_date,
-        url=get_background_url(project_hash, background_date),
+        url=generate_background_url(project_hash, background_date),
         metadata=[],
         type=ScanTypeEnum.MEDIUM_BACKGROUND,
         user=user,
@@ -314,12 +314,14 @@ def background_from_legacy_as_scan(
 
 def backgrounds_from_legacy_project(
     zoo_project: ZooscanProjectFolder,
+    single_date: Optional[str] = None,
 ) -> list[Background]:
     """
     Extract background information from a ZooscanProjectFolder and return a list of Background objects.
 
     Args:
         zoo_project (ZooscanProjectFolder): The project folder to extract backgrounds from.
+        single_date (Optional[str]): If provided, keep only entries for this date
 
     Returns:
         list[Background]: A list of Background objects representing the backgrounds in the project.
@@ -354,6 +356,10 @@ def backgrounds_from_legacy_project(
     # For each date, create a Background object. Dates are in ZooProcess format
     dates = back_folder.get_dates()
     for a_date in dates:
+
+        if single_date is not None and a_date != single_date:
+            continue
+
         # Get the background entry for this date
         entry = back_folder.content[a_date]
 
@@ -361,18 +367,18 @@ def backgrounds_from_legacy_project(
             scan_type = ScanTypeEnum.MEDIUM_BACKGROUND
             background_id = f"{a_date}_fnl"
             background_name = f"{a_date}_final"
-        elif entry["raw_background_1"] is not None:
-            scan_type = ScanTypeEnum.RAW_BACKGROUND
-            background_id = f"{a_date}_bg1"
-            background_name = f"{a_date}_background_2"
         elif entry["raw_background_2"] is not None:
             scan_type = ScanTypeEnum.RAW_BACKGROUND
             background_id = f"{a_date}_bg2"
             background_name = f"{a_date}_background_2"
+        elif entry["raw_background_1"] is not None:
+            scan_type = ScanTypeEnum.RAW_BACKGROUND
+            background_id = f"{a_date}_bg1"
+            background_name = f"{a_date}_background_2"
         else:
             continue
 
-        background_url = get_background_url(project_hash, background_id)
+        background_url = generate_background_url(project_hash, background_id)
 
         # Convert the date string to a datetime object for the model
         api_date = parse_legacy_date(a_date)
