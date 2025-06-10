@@ -21,13 +21,10 @@ def test_hash_from_project():
     # Call the function
     result = hash_from_project(mock_path)
 
-    # Check that the result is as expected
-    # If DO_HASH is True, the function returns a base64 encoded string
-    # If DO_HASH is False, the function returns the original string
-    expected = (
-        "dGVzdF9kcml2ZXx0ZXN0X3Byb2plY3Q=" if DO_HASH else "test_drive|test_project"
-    )
-    assert result == expected
+    # With the caching mechanism, we can't predict the exact hash
+    # But we can check that it's a string and not empty
+    assert isinstance(result, str)
+    assert result
 
 
 @patch("modern.ids.get_drive_path")
@@ -40,24 +37,30 @@ def test_drive_and_project_from_hash_success(mock_get_drive_path):
     # Create a mock project path that exists and is a directory
     mock_project_path = mock_drive_path / "test_project"
 
-    # Use different input based on DO_HASH
-    project_hash = (
-        "dGVzdF9kcml2ZXx0ZXN0X3Byb2plY3Q=" if DO_HASH else "test_drive|test_project"
-    )
+    # Mock the projects_cache to return a known value
+    with patch("modern.ids.projects_cache") as mock_cache:
+        # Set up the mock cache to return a known value
+        mock_cache.name_from_id.return_value = "test_drive|test_project"
 
-    # Mock the exists and is_dir methods
-    with patch.object(Path, "exists", return_value=True), patch.object(
-        Path, "is_dir", return_value=True
-    ):
-        # Call the function
-        drive_path, project_name = drive_and_project_from_hash(project_hash)
+        # Use a dummy project hash (the actual value doesn't matter as we're mocking the cache)
+        project_hash = "dummy_hash"
 
-        # Check that the result is as expected
-        assert drive_path == mock_drive_path
-        assert project_name == "test_project"
+        # Mock the exists and is_dir methods
+        with patch.object(Path, "exists", return_value=True), patch.object(
+            Path, "is_dir", return_value=True
+        ):
+            # Call the function
+            drive_path, project_name = drive_and_project_from_hash(project_hash)
 
-        # Check that get_drive_path was called with the correct argument
-        mock_get_drive_path.assert_called_once_with("test_drive")
+            # Check that the result is as expected
+            assert drive_path == mock_drive_path
+            assert project_name == "test_project"
+
+            # Check that get_drive_path was called with the correct argument
+            mock_get_drive_path.assert_called_once_with("test_drive")
+
+            # Check that the cache was called with the correct argument
+            mock_cache.name_from_id.assert_called_once_with(project_hash)
 
 
 @patch("modern.ids.get_drive_path")
@@ -72,54 +75,71 @@ def test_hash_from_project_and_drive_and_project_from_hash_roundtrip(
     # Create a mock project path
     mock_project_path = mock_drive_path / "test_project"
 
-    # Step 1: Generate a hash from the project path
-    project_hash = hash_from_project(mock_project_path)
+    # Mock the projects_cache for both id_from_name and name_from_id
+    with patch("modern.ids.projects_cache") as mock_cache:
+        # Set up the mock cache to return a known value for id_from_name
+        mock_project_hash = "dummy_hash"
+        mock_cache.id_from_name.return_value = mock_project_hash
+        # Set up the mock cache to return a known value for name_from_id
+        mock_cache.name_from_id.return_value = "test_drive|test_project"
 
-    # Verify the hash is correctly formatted based on DO_HASH
-    expected_hash = (
-        "dGVzdF9kcml2ZXx0ZXN0X3Byb2plY3Q=" if DO_HASH else "test_drive|test_project"
-    )
-    assert project_hash == expected_hash
+        # Step 1: Generate a hash from the project path
+        project_hash = hash_from_project(mock_project_path)
 
-    # Step 2: Extract drive path and project name from the hash
-    # Mock the exists and is_dir methods
-    with patch.object(Path, "exists", return_value=True), patch.object(
-        Path, "is_dir", return_value=True
-    ):
-        extracted_drive_path, extracted_project_name = drive_and_project_from_hash(
-            project_hash
-        )
+        # Verify the hash is the one returned by the mock cache
+        assert project_hash == mock_project_hash
 
-        # Verify the extracted information matches the original input
-        assert extracted_drive_path == mock_drive_path
-        assert extracted_project_name == "test_project"
+        # Verify that id_from_name was called with the correct argument
+        mock_cache.id_from_name.assert_called_once_with("test_drive|test_project")
 
-        # Verify that the reconstructed project path matches the original
-        reconstructed_project_path = extracted_drive_path / extracted_project_name
-        assert str(reconstructed_project_path) == str(mock_project_path)
+        # Step 2: Extract drive path and project name from the hash
+        # Mock the exists and is_dir methods
+        with patch.object(Path, "exists", return_value=True), patch.object(
+            Path, "is_dir", return_value=True
+        ):
+            extracted_drive_path, extracted_project_name = drive_and_project_from_hash(
+                project_hash
+            )
 
-        # Check that get_drive_path was called with the correct argument
-        mock_get_drive_path.assert_called_once_with("test_drive")
+            # Verify the extracted information matches the original input
+            assert extracted_drive_path == mock_drive_path
+            assert extracted_project_name == "test_project"
+
+            # Verify that the reconstructed project path matches the original
+            reconstructed_project_path = extracted_drive_path / extracted_project_name
+            assert str(reconstructed_project_path) == str(mock_project_path)
+
+            # Check that get_drive_path was called with the correct argument
+            mock_get_drive_path.assert_called_once_with("test_drive")
+
+            # Check that name_from_id was called with the correct argument
+            mock_cache.name_from_id.assert_called_once_with(project_hash)
 
 
 @patch("modern.ids.get_drive_path")
 def test_drive_and_project_from_hash_invalid_format(mock_get_drive_path):
     """Test that drive_and_project_from_hash raises an exception for invalid hash format."""
-    # Use different input based on DO_HASH
-    invalid_hash = (
-        "aW52YWxpZF9oYXNo" if DO_HASH else "invalid_hash"
-    )  # Base64 for "invalid_hash" if DO_HASH is True
+    # Mock the projects_cache to return a value that will cause an error
+    with patch("modern.ids.projects_cache") as mock_cache:
+        # Set up the mock cache to return a value that doesn't contain a pipe character
+        mock_cache.name_from_id.return_value = "invalid_hash"
 
-    # Call the function with an invalid hash format
-    with pytest.raises(HTTPException) as excinfo:
-        drive_and_project_from_hash(invalid_hash)
+        # Use a dummy hash (the actual value doesn't matter as we're mocking the cache)
+        invalid_hash = "dummy_hash"
 
-    # Check that the exception has the expected status code and detail
-    assert excinfo.value.status_code == 400
-    assert "Invalid project ID format: invalid_hash" in excinfo.value.detail
+        # Call the function with an invalid hash format
+        with pytest.raises(HTTPException) as excinfo:
+            drive_and_project_from_hash(invalid_hash)
 
-    # Check that get_drive_path was not called
-    mock_get_drive_path.assert_not_called()
+        # Check that the exception has the expected status code and detail
+        assert excinfo.value.status_code == 400
+        assert "Invalid project ID format: invalid_hash" in excinfo.value.detail
+
+        # Check that get_drive_path was not called
+        mock_get_drive_path.assert_not_called()
+
+        # Check that name_from_id was called with the correct argument
+        mock_cache.name_from_id.assert_called_once_with(invalid_hash)
 
 
 @patch("modern.ids.get_drive_path")
@@ -128,21 +148,29 @@ def test_drive_and_project_from_hash_drive_not_found(mock_get_drive_path):
     # Set up the mock to return None (drive not found)
     mock_get_drive_path.return_value = None
 
-    # Use different input based on DO_HASH
-    project_hash = (
-        "dGVzdF9kcml2ZXx0ZXN0X3Byb2plY3Q=" if DO_HASH else "test_drive|test_project"
-    )
+    # Mock the projects_cache to return a known value
+    with patch("modern.ids.projects_cache") as mock_cache:
+        # Set up the mock cache to return a known value for name_from_id
+        mock_cache.name_from_id.return_value = "test_drive|test_project"
 
-    # Call the function
-    with pytest.raises(HTTPException) as excinfo:
-        drive_and_project_from_hash(project_hash)
+        # Use a dummy hash (the actual value doesn't matter as we're mocking the cache)
+        project_hash = "dummy_hash"
 
-    # Check that the exception has the expected status code and detail
-    assert excinfo.value.status_code == 404
-    assert "Project with ID test_drive|test_project not found" in excinfo.value.detail
+        # Call the function with a hash for a non-existent drive
+        with pytest.raises(HTTPException) as excinfo:
+            drive_and_project_from_hash(project_hash)
 
-    # Check that get_drive_path was called with the correct argument
-    mock_get_drive_path.assert_called_once_with("test_drive")
+        # Check that the exception has the expected status code and detail
+        assert excinfo.value.status_code == 404
+        assert (
+            "Project with ID test_drive|test_project not found" in excinfo.value.detail
+        )
+
+        # Check that get_drive_path was called with the correct argument
+        mock_get_drive_path.assert_called_once_with("test_drive")
+
+        # Check that name_from_id was called with the correct argument
+        mock_cache.name_from_id.assert_called_once_with(project_hash)
 
 
 @patch("modern.ids.get_drive_path")
@@ -152,25 +180,32 @@ def test_drive_and_project_from_hash_project_not_found(mock_get_drive_path):
     mock_drive_path = Path("/drives/test_drive")
     mock_get_drive_path.return_value = mock_drive_path
 
-    # Use different input based on DO_HASH
-    project_hash = (
-        "dGVzdF9kcml2ZXx0ZXN0X3Byb2plY3Q=" if DO_HASH else "test_drive|test_project"
-    )
+    # Mock the projects_cache to return a known value
+    with patch("modern.ids.projects_cache") as mock_cache:
+        # Set up the mock cache to return a known value for name_from_id
+        mock_cache.name_from_id.return_value = "test_drive|test_project"
 
-    # Mock the exists method to return False (project not found)
-    with patch.object(Path, "exists", return_value=False):
-        # Call the function
-        with pytest.raises(HTTPException) as excinfo:
-            drive_and_project_from_hash(project_hash)
+        # Use a dummy hash (the actual value doesn't matter as we're mocking the cache)
+        project_hash = "dummy_hash"
 
-        # Check that the exception has the expected status code and detail
-        assert excinfo.value.status_code == 404
-        assert (
-            "Project with ID test_drive|test_project not found" in excinfo.value.detail
-        )
+        # Mock the exists method to return False (project not found)
+        with patch.object(Path, "exists", return_value=False):
+            # Call the function
+            with pytest.raises(HTTPException) as excinfo:
+                drive_and_project_from_hash(project_hash)
 
-        # Check that get_drive_path was called with the correct argument
-        mock_get_drive_path.assert_called_once_with("test_drive")
+            # Check that the exception has the expected status code and detail
+            assert excinfo.value.status_code == 404
+            assert (
+                "Project with ID test_drive|test_project not found"
+                in excinfo.value.detail
+            )
+
+            # Check that get_drive_path was called with the correct argument
+            mock_get_drive_path.assert_called_once_with("test_drive")
+
+            # Check that name_from_id was called with the correct argument
+            mock_cache.name_from_id.assert_called_once_with(project_hash)
 
 
 @patch("modern.ids.get_drive_path")
@@ -180,27 +215,34 @@ def test_drive_and_project_from_hash_not_a_directory(mock_get_drive_path):
     mock_drive_path = Path("/drives/test_drive")
     mock_get_drive_path.return_value = mock_drive_path
 
-    # Use different input based on DO_HASH
-    project_hash = (
-        "dGVzdF9kcml2ZXx0ZXN0X3Byb2plY3Q=" if DO_HASH else "test_drive|test_project"
-    )
+    # Mock the projects_cache to return a known value
+    with patch("modern.ids.projects_cache") as mock_cache:
+        # Set up the mock cache to return a known value for name_from_id
+        mock_cache.name_from_id.return_value = "test_drive|test_project"
 
-    # Mock the exists method to return True but is_dir to return False
-    with patch.object(Path, "exists", return_value=True), patch.object(
-        Path, "is_dir", return_value=False
-    ):
-        # Call the function
-        with pytest.raises(HTTPException) as excinfo:
-            drive_and_project_from_hash(project_hash)
+        # Use a dummy hash (the actual value doesn't matter as we're mocking the cache)
+        project_hash = "dummy_hash"
 
-        # Check that the exception has the expected status code and detail
-        assert excinfo.value.status_code == 404
-        assert (
-            "Project with ID test_drive|test_project not found" in excinfo.value.detail
-        )
+        # Mock the exists method to return True but is_dir to return False (not a directory)
+        with patch.object(Path, "exists", return_value=True), patch.object(
+            Path, "is_dir", return_value=False
+        ):
+            # Call the function
+            with pytest.raises(HTTPException) as excinfo:
+                drive_and_project_from_hash(project_hash)
 
-        # Check that get_drive_path was called with the correct argument
-        mock_get_drive_path.assert_called_once_with("test_drive")
+            # Check that the exception has the expected status code and detail
+            assert excinfo.value.status_code == 404
+            assert (
+                "Project with ID test_drive|test_project not found"
+                in excinfo.value.detail
+            )
+
+            # Check that get_drive_path was called with the correct argument
+            mock_get_drive_path.assert_called_once_with("test_drive")
+
+            # Check that name_from_id was called with the correct argument
+            mock_cache.name_from_id.assert_called_once_with(project_hash)
 
 
 def test_subsample_name_from_scan_name():

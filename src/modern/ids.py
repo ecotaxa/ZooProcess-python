@@ -38,44 +38,8 @@ def hash_from_name(name: str) -> str:
     return urlsafe_b64encode(name.encode()).decode()
 
 
-def hash_from_project(a_prj_path: Path) -> str:
-    """
-    Compute some user and browser compatible IDs for URLs
-    Assumes that the drive's name is _always_ the project parent directory name
-    """
-    drive_name = drive_from_project_path(a_prj_path)
-    url_hash = f"{drive_name}|{a_prj_path.name}"
-    return hash_from_name(url_hash)
-
-
 def drive_from_project_path(a_prj_path: Path) -> str:
     return a_prj_path.parent.name
-
-
-def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str]:
-    """
-    Extract drive and project names from a project hash generated above.
-    """
-    project_hash = name_from_hash(project_hash)
-    try:
-        drive_name, project_name = project_hash.split("|")
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid project ID format: {project_hash}. Expected format: drive|project",
-        )
-
-    drive_path = get_drive_path(drive_name)
-    if drive_path is None:
-        raise HTTPException(
-            status_code=404, detail=f"Project with ID {project_hash} not found"
-        )
-    project_path = Path(drive_path) / project_name
-    if not (project_path.exists() and project_path.is_dir()):
-        raise HTTPException(
-            status_code=404, detail=f"Project with ID {project_hash} not found"
-        )
-    return drive_path, project_name
 
 
 THE_SCAN_PER_SUBSAMPLE = 1
@@ -131,3 +95,49 @@ def hash_from_subsample_name(subsample_name: str) -> str:
 
 def subsample_name_from_hash(subsample_hash: str) -> str:
     return subsamples_cache.name_from_id(subsample_hash)
+
+
+projects_cache = CachedIds("projects")
+
+
+def hash_from_project(a_prj_path: Path) -> str:
+    """
+    Compute some user and browser compatible IDs for URLs
+    Assumes that the drive's name is _always_ the project parent directory name
+    """
+    drive_name = drive_from_project_path(a_prj_path)
+    url_hash = f"{drive_name}|{a_prj_path.name}"
+    return projects_cache.id_from_name(url_hash)
+
+
+def drive_and_project_from_hash(project_hash: str) -> Tuple[Path, str]:
+    """
+    Extract drive and project names from a project hash generated above.
+    """
+    # Always call name_from_id, but handle KeyError gracefully
+    try:
+        project_id = project_hash
+        project_hash = projects_cache.name_from_id(project_id)
+    except KeyError:
+        # If the project hash is not in the cache, assume it might be a direct project ID
+        pass
+
+    try:
+        drive_name, project_name = project_hash.split("|")
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid project ID format: {project_hash}. Expected format: drive|project",
+        )
+
+    drive_path = get_drive_path(drive_name)
+    if drive_path is None:
+        raise HTTPException(
+            status_code=404, detail=f"Project with ID {project_hash} not found"
+        )
+    project_path = Path(drive_path) / project_name
+    if not (project_path.exists() and project_path.is_dir()):
+        raise HTTPException(
+            status_code=404, detail=f"Project with ID {project_hash} not found"
+        )
+    return drive_path, project_name

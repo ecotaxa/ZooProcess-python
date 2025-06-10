@@ -53,6 +53,8 @@ class CachedIds:
         return self.name_to_id[name]
 
     def name_from_id(self, id_: str) -> str:
+        if id_ not in self.id_to_name:
+            raise KeyError(f"ID {id_} not found in cache for {self.entity}")
         return self.id_to_name[id_]
 
     def _add_entry(self, name: str):

@@ -2,7 +2,6 @@ from pytest_mock import MockFixture
 
 from local_DB.db_dependencies import get_db
 from main import app
-from modern.ids import hash_from_name
 
 
 def test_project_by_id_endpoint_with_valid_token(
@@ -84,6 +83,18 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_project_from_legacy = mocker.patch("routers.projects.project_from_legacy")
     mock_project_from_legacy.return_value = test_project
 
+    # Mock the projects_cache to return a known value
+    mock_cache = mocker.MagicMock()
+    mock_cache.id_from_name.return_value = "dummy_id"
+    mock_cache.name_from_id.return_value = "drive1|Project1"
+    mocker.patch("modern.ids.projects_cache", mock_cache)
+
+    # Use the mocked project_id
+    project_id = "dummy_id"
+
+    # Generate a project hash for our test project
+    project_hash = project_id
+
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
     login_response = app_client.post("/login", json=login_data)
@@ -91,7 +102,7 @@ def test_project_by_id_endpoint_with_valid_token(
 
     # Make request to the /projects/{project_id} endpoint with the token
     response = app_client.get(
-        "/projects/drive1|Project1", headers={"Authorization": f"Bearer {token}"}
+        f"/projects/{project_hash}", headers={"Authorization": f"Bearer {token}"}
     )
 
     # Check that the response is successful
@@ -106,7 +117,7 @@ def test_project_by_id_endpoint_with_valid_token(
     assert project_data["instrumentSerialNumber"] == "TEST123"
 
     # Verify that validate_path_components was called with the correct project_id
-    mock_validate.assert_called_once_with(local_db, "drive1|Project1")
+    mock_validate.assert_called_once_with(local_db, "dummy_id")
 
     # Verify that project_from_legacy was called with the correct arguments
     mock_project_from_legacy.assert_called_once()
@@ -126,17 +137,23 @@ def test_project_by_id_endpoint_with_invalid_drive(
     mock_get_drive_path = mocker.patch("modern.ids.get_drive_path")
     mock_get_drive_path.return_value = None
 
+    # Mock the projects_cache to return a known value
+    mock_cache = mocker.MagicMock()
+    mock_cache.name_from_id.return_value = "invalid_drive|Project1"
+    mocker.patch("modern.ids.projects_cache", mock_cache)
+
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
     login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
-    # Create a valid hash for an invalid drive
-    invalid_drive_hash = hash_from_name("invalid_drive|Project1")
+    # Use a dummy project hash (the actual value doesn't matter as we're mocking the cache)
+    invalid_drive_hash = "dummy_hash"
 
     # Make request to the /projects/{project_id} endpoint with the token and a valid hash with an invalid drive
     response = app_client.get(
-        f"/projects/{invalid_drive_hash}", headers={"Authorization": f"Bearer {token}"}
+        f"/projects/{invalid_drive_hash}",
+        headers={"Authorization": f"Bearer {token}"},
     )
 
     # Check that the response is 404 Not Found
@@ -177,13 +194,18 @@ def test_project_by_id_endpoint_with_invalid_project(
     mock_exists.return_value = False
     mock_is_dir.return_value = False
 
+    # Mock the projects_cache to return a known value
+    mock_cache = mocker.MagicMock()
+    mock_cache.name_from_id.return_value = "drive1|NonExistentProject"
+    mocker.patch("modern.ids.projects_cache", mock_cache)
+
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
     login_response = app_client.post("/login", json=login_data)
     token = login_response.json()
 
-    # Create a valid hash for a valid drive but non-existent project
-    invalid_project_hash = hash_from_name("drive1|NonExistentProject")
+    # Use a dummy project hash (the actual value doesn't matter as we're mocking the cache)
+    invalid_project_hash = "dummy_hash"
 
     # Make request to the /projects/{project_id} endpoint with the token and a valid hash with a non-existent project
     response = app_client.get(
@@ -205,10 +227,15 @@ def test_project_by_id_endpoint_with_invalid_project(
     app.dependency_overrides.clear()
 
 
-def test_project_by_id_endpoint_with_invalid_format(app_client, local_db):
+def test_project_by_id_endpoint_with_invalid_format(app_client, local_db, mocker):
     """Test that the /projects/{project_id} endpoint returns an error when the project_id is not in the correct format"""
     # Override the get_db dependency to return our local_db
     app.dependency_overrides[get_db] = lambda: local_db
+
+    # Mock the projects_cache to raise a KeyError when name_from_id is called with an invalid ID
+    mock_cache = mocker.MagicMock()
+    mock_cache.name_from_id.side_effect = KeyError("Invalid ID")
+    mocker.patch("modern.ids.projects_cache", mock_cache)
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
@@ -228,20 +255,36 @@ def test_project_by_id_endpoint_with_invalid_format(app_client, local_db):
     app.dependency_overrides.clear()
 
 
-def test_project_by_id_endpoint_without_token(app_client):
+def test_project_by_id_endpoint_without_token(app_client, mocker):
     """Test that the /projects/{project_id} endpoint returns 401 without a token"""
+    # Mock the projects_cache to return a known value
+    mock_cache = mocker.MagicMock()
+    mock_cache.id_from_name.return_value = "dummy_id"
+    mocker.patch("modern.ids.projects_cache", mock_cache)
+
+    # Generate a project hash for our test project
+    project_hash = "dummy_id"
+
     # Make request to the /projects/{project_id} endpoint without a token
-    response = app_client.get("/projects/drive1|Project1")
+    response = app_client.get(f"/projects/{project_hash}")
 
     # Check that the response is 401 Unauthorized
     assert response.status_code == 401
 
 
-def test_project_by_id_endpoint_with_invalid_token(app_client):
+def test_project_by_id_endpoint_with_invalid_token(app_client, mocker):
     """Test that the /projects/{project_id} endpoint returns 401 with an invalid token"""
+    # Mock the projects_cache to return a known value
+    mock_cache = mocker.MagicMock()
+    mock_cache.id_from_name.return_value = "dummy_id"
+    mocker.patch("modern.ids.projects_cache", mock_cache)
+
+    # Generate a project hash for our test project
+    project_hash = "dummy_id"
+
     # Make request to the /projects/{project_id} endpoint with an invalid token
     response = app_client.get(
-        "/projects/drive1|Project1",
+        f"/projects/{project_hash}",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
