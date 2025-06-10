@@ -49,6 +49,7 @@ from modern.from_legacy import (
     drives_from_legacy,
     backgrounds_from_legacy_project,
 )
+from modern.tasks import JobScheduler
 from providers.SeparateServer import SeparateServer
 from providers.separate_fn import separate_images
 from providers.server import Server
@@ -79,6 +80,8 @@ from contextlib import asynccontextmanager
 from helpers.auth import create_jwt_token, get_user_from_db, SESSION_COOKIE_NAME
 from remote.DB import DB
 
+JOB_INTERVAL = 2
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -89,9 +92,11 @@ async def lifespan(_app: FastAPI):
     # Initialize database tables if they don't exist
     logger.info("Initializing database tables")
     init_db()
+    JobScheduler.launch_at_interval(JOB_INTERVAL)
 
     yield
-    # Cleanup code (if any) would go here
+    # Cleanup code
+    JobScheduler.shutdown()
 
 
 # Initialize FastAPI with lifespan event handler

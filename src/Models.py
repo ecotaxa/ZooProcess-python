@@ -297,12 +297,12 @@ class VignetteFolder(BaseModel):
     output: str
 
 
-class TaskIn(BaseModel):
+class TaskReq(BaseModel):
     exec: str
     params: Dict[str, Any]
 
 
-class Task(TaskIn):
+class TaskRsp(TaskReq):
     id: str
     log: Optional[str]  # url to log file
     percent: int

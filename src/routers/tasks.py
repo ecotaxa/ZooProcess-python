@@ -3,11 +3,16 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
-from Models import Task, TaskIn
+from Models import TaskRsp, TaskReq
 from helpers.auth import get_current_user_from_credentials
+from helpers.web import raise_500, raise_404, raise_501
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
 from logger import logger
+from modern.jobs.process import BackgroundAndScanToSegmented
+from modern.tasks import JobScheduler
+from modern.utils import job_to_task_rsp
+from routers.utils import validate_path_components
 
 # Create a router instance with prefix "/task"
 router = APIRouter(
@@ -18,10 +23,10 @@ router = APIRouter(
 
 @router.post("")
 def create_task(
-    task: TaskIn,
+    task: TaskReq,
     _user: User = Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
-) -> Task:
+) -> TaskRsp:
     """
     Create a new task.
 
@@ -29,10 +34,10 @@ def create_task(
     It simply returns the received task.
 
     Args:
-        task (TaskIn): The task creation data.
+        task (TaskReq): The task creation data.
 
     Returns:
-        Task: The received task.
+        TaskRsp: The received task.
     """
     logger.info(f"Received task: {task}")
     # e.g.   exec: 'PROCESS',
@@ -48,16 +53,26 @@ def create_task(
     #     'background': ['http://localhost:5000/projects/zooscan_lov|Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/background/20240527_0759_fnl.jpg',
     #     'http://localhost:5000/projects/zooscan_lov|Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/background/20240527_0759_fnl.jpg']
 
-    ret = Task(
-        **task.model_dump(),
-        id="1",
-        percent=1,
-        status="PENDING",
-        log="task1log",
-        createdAt=datetime.now(),
-        updatedAt=datetime.now(),
-    )
-    return ret
+    if task.exec == "PROCESS":
+        params = task.params
+        # Note: params["scanId"] is ignored
+        project_hash, sample_hash, subsample_hash = (
+            params["project"],
+            params["sample"],
+            params["subsample"],
+        )
+        zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
+            db, project_hash, sample_hash, subsample_hash
+        )
+        new_task = BackgroundAndScanToSegmented(
+            zoo_project, sample_name, subsample_name
+        )
+        JobScheduler.submit(new_task)
+        logger.info(f"Processing task: {task}")
+        # Use job_to_task_rsp to create TaskRsp from the job
+        return job_to_task_rsp(new_task)
+    raise_501(f"Task.exec not implemented: {task.exec}")
+    assert False
 
 
 COUNTER = 0
@@ -68,36 +83,34 @@ def get_task(
     task_id: str,
     _user: User = Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
-) -> Task:
+) -> TaskRsp:
     """
     Get a task by ID.
 
-    This endpoint returns a hardcoded task with the provided ID.
+    This endpoint returns a TaskRsp based on the job with the provided ID.
+    If no job with the provided ID is found, returns a default TaskRsp.
 
     Args:
         task_id (str): The ID of the task to retrieve.
 
     Returns:
-        Task: A hardcoded task with the provided ID.
+        TaskRsp: A TaskRsp representing the job status and information.
     """
     logger.info(f"Received request to get task with ID: {task_id}")
-    global COUNTER
-    COUNTER += 1
-    if COUNTER > 10:
-        status = "FINISHED"
-        COUNTER = 0
-    else:
-        status = "RUNNING"
-    return Task(
-        id=task_id,
-        exec="process_images",
-        params={"project_id": "123", "sample_id": "456"},
-        percent=75,
-        status=status,
-        log="task_log_url",
-        createdAt=datetime.now(),
-        updatedAt=datetime.now(),
-    )
+
+    try:
+        # Try to convert task_id to int for JobScheduler.get_job
+        job_id = int(task_id)
+        job = JobScheduler.get_job(job_id)
+        if job is not None:
+            # If job exists, use job_to_task_rsp to create TaskRsp
+            return job_to_task_rsp(job)
+        else:
+            raise_404(f"{task_id} not found")
+    except (ValueError, TypeError):
+        # If task_id is not a valid integer, continue to default response
+        raise_500(f"Invalid task ID format: {task_id}")
+    assert False
 
 
 @router.post("/{task_id}/run")

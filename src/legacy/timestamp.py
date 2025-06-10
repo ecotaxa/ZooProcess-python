@@ -95,7 +95,7 @@ class LegacyTimeStamp:
         new_dt = self.dt - timedelta(minutes=minutes)
         return LegacyTimeStamp(new_dt)
 
-    def __eq__(self, other: Union["LegacyTimeStamp", str, datetime]) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Compare equality with another timestamp.
 

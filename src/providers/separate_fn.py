@@ -1,3 +1,5 @@
+import typing
+
 import cv2
 import numpy as np
 import requests
@@ -5,7 +7,7 @@ from typing import List, Optional
 
 from providers.server import Server
 from logger import logger
-from ZooProcess_lib.img_tools import loadimage, saveimage
+from ZooProcess_lib.img_tools import loadimage, saveimage, getPath
 
 # server = "http://niko.obs-vlfr.fr:5000"
 # server2 = "http://localhost:5001"
@@ -25,6 +27,7 @@ dbserver = Server("http://zooprocess.imev-mer.fr:8081/v1/", "/ping")
 #         raise Exception("Server not responding")
 
 
+@typing.no_type_check
 def send_img_to_separator(
     filename: str, out_path: Optional[str] = None
 ) -> requests.Response:
@@ -55,6 +58,7 @@ def send_img_to_separator(
         return response
 
 
+@typing.no_type_check
 def separate_img(
     path: str,
     filename: str,
@@ -109,6 +113,7 @@ def separate_apply_mask(filename_image: str, filename_mask: str) -> np.ndarray:
     return final
 
 
+@typing.no_type_check
 def separate_images(
     path: str,
     path_out: str,

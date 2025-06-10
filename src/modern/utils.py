@@ -2,6 +2,10 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Dict
+
+from Models import TaskRsp
+from .tasks import Job, JobStateEnum
 
 
 def find_latest_modification_time(directory_path: Path) -> datetime:
@@ -179,3 +183,57 @@ def convert_ddm_to_decimal_degrees(a_value):
     decimal = (val - degrees) * 100
     decimal = round(decimal / 30 * 50, 4)
     return degrees + decimal / 100
+
+
+def job_to_task_rsp(job: Job) -> TaskRsp:
+    """
+    Transform a Job object into a TaskRsp model.
+
+    Args:
+        job: A Job object with properties like job_id, state, created_at, updated_at
+
+    Returns:
+        A TaskRsp model representing the job status and information
+
+    Examples:
+        >>> job = Job(1)
+        >>> task_rsp = job_to_task_rsp(job)
+    """
+
+    # Map job state to task status
+    status_map = {
+        JobStateEnum.Pending: "PENDING",
+        JobStateEnum.Running: "RUNNING",
+        JobStateEnum.Error: "FAILED",
+        JobStateEnum.Finished: "FINISHED",
+    }
+
+    # Calculate progress percentage based on job state
+    percent = 0
+    if job.state == JobStateEnum.Running:
+        percent = 50  # Default to 50% for running jobs
+    elif job.state == JobStateEnum.Finished:
+        percent = 100
+
+    # Determine exec and params based on job type
+    exec_name = job.__class__.__name__
+    params: Dict[str, str] = {}  # I guess it's unused in a response
+
+    # Create log URL if available
+    log_url = None
+    for handler in job.logger.handlers:
+        if hasattr(handler, "baseFilename"):
+            log_url = f"file://{handler.baseFilename}"
+            break
+
+    # Create and return the TaskRsp model
+    return TaskRsp(
+        id=str(job.job_id),
+        exec=exec_name,  # TODO: Is it really used?
+        params=params,  # TODO: Is it really used?
+        percent=percent,
+        status=status_map.get(job.state, "PENDING"),
+        log=log_url,
+        createdAt=job.created_at,
+        updatedAt=job.updated_at,
+    )
