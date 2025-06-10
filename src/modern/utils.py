@@ -220,11 +220,11 @@ def job_to_task_rsp(job: Job) -> TaskRsp:
     params: Dict[str, str] = {}  # I guess it's unused in a response
 
     # Create log URL if available
-    log_url = None
-    for handler in job.logger.handlers:
-        if hasattr(handler, "baseFilename"):
-            log_url = f"file://{handler.baseFilename}"
-            break
+    # log_url = None
+    # for handler in job.logger.handlers:
+    #     if hasattr(handler, "baseFilename"):
+    #         log_url = f"file://{handler.baseFilename}"
+    #         break
 
     # Create and return the TaskRsp model
     return TaskRsp(
@@ -233,7 +233,7 @@ def job_to_task_rsp(job: Job) -> TaskRsp:
         params=params,  # TODO: Is it really used?
         percent=percent,
         status=status_map.get(job.state, "PENDING"),
-        log=log_url,
+        log=job.last_log_line,
         createdAt=job.created_at,
         updatedAt=job.updated_at,
     )

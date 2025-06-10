@@ -34,6 +34,7 @@ class Job(ABC):
         self.state: JobStateEnum = JobStateEnum.Pending
         self.created_at = datetime.now()
         self.updated_at = self.created_at
+        self.last_log_line = None
         self.logger = self._setup_job_logger()
 
     def _setup_job_logger(self):
@@ -45,7 +46,7 @@ class Job(ABC):
         job_logger = logging.getLogger(logger_name)
         job_logger.setLevel(logging.INFO)
 
-        # Create formatter
+        # Create file formatter
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
@@ -56,8 +57,26 @@ class Job(ABC):
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
 
-        # Add handler to logger
+        # Create a custom handler to store the last log line
+        class LastLogHandler(logging.Handler):
+            def __init__(self, job):
+                super().__init__()
+                self.job = job
+
+            def emit(self, record):
+                self.job.last_log_line = self.format(record)
+
+        # Create eye formatter, users will see this output
+        eye_formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(message)s", datefmt="%H:%M"
+        )
+        last_log_handler = LastLogHandler(self)
+        last_log_handler.setLevel(logging.INFO)
+        last_log_handler.setFormatter(eye_formatter)
+
+        # Add handlers to logger
         job_logger.addHandler(file_handler)
+        job_logger.addHandler(last_log_handler)
 
         return job_logger
 
