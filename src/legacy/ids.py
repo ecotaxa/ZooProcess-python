@@ -1,4 +1,4 @@
-# Conventional namings
+# Conventional namings from Legacy app
 from modern.ids import subsample_name_from_scan_name, THE_SCAN_PER_SUBSAMPLE
 
 

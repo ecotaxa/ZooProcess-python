@@ -8,6 +8,8 @@ USERS = [
     {"id": "user1", "name": "n/a", "email": "user@example.com"},
 ]
 
+SYSTEM_USER = User(id="system", name="System User", email="<EMAIL>")
+
 
 def get_mock_user() -> User:
     """

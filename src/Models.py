@@ -187,6 +187,7 @@ class ScanTypeEnum(str, Enum):
     VIS = "VIS"
     CHECK_BACKGROUND = "CHECK_BACKGROUND"
     OUT = "OUT"
+    SEP = "SEP"  # Separator GIF
 
 
 class ScanPostRsp(BaseModel):

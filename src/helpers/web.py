@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, JSONResponse, Response
+from starlette.responses import PlainTextResponse, JSONResponse
 
 from logger import logger
 
@@ -41,6 +41,20 @@ def raise_404(error_message: str):
     """
     logger.info(error_message)
     raise HTTPException(status_code=404, detail=error_message)
+
+
+def raise_422(error_message: str):
+    """
+    Logs an error and raises an HTTP 422 exception (validation error).
+
+    Args:
+        error_message (str): The error message to log and include in the exception detail.
+
+    Raises:
+        HTTPException: An HTTP 404 exception with the provided error message as detail.
+    """
+    logger.info(error_message)
+    raise HTTPException(status_code=422, detail=error_message)
 
 
 def raise_501(error_message: str):
@@ -100,6 +114,8 @@ def get_stream(
         media_type = "image/png"
     elif file_name_lower.endswith(".tif"):
         media_type = "image/tiff"
+    elif file_name_lower.endswith(".gif"):
+        media_type = "image/gif"
     return fp, fp.size(), media_type
 
 

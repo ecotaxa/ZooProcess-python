@@ -15,8 +15,9 @@ from Models import (
     User,
     ScanPostRsp,
 )
+from ZooProcess_lib.img_tools import load_zipped_image, saveimage
 from helpers.auth import get_current_user_from_credentials
-from helpers.web import raise_404, get_stream, raise_501
+from helpers.web import raise_404, get_stream, raise_422
 from img_proc.convert import convert_tiff_to_jpeg
 from legacy.ids import raw_file_name
 from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
@@ -24,7 +25,11 @@ from legacy.writers.scan import add_legacy_scan
 from local_DB.data_utils import set_background_id
 from local_DB.db_dependencies import get_db
 from logger import logger
-from modern.app_urls import is_download_url, extract_file_id_from_download_url
+from modern.app_urls import (
+    is_download_url,
+    extract_file_id_from_download_url,
+    SCAN_JPEG,
+)
 from modern.files import UPLOAD_DIR
 from modern.from_legacy import (
     subsamples_from_legacy_project_and_sample,
@@ -281,11 +286,12 @@ def process_subsample(
     return result
 
 
-@router.get("/{subsample_hash}/scan.jpg")
+@router.get("/{subsample_hash}/{img_name}")
 async def get_subsample_scan(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
+    img_name: str,
     # _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> StreamingResponse:
@@ -296,6 +302,7 @@ async def get_subsample_scan(
         project_hash (str): The hash of the project.
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample.
+        img_name (str): The name of the image to return.
 
     Returns:
         StreamingResponse: The scan image as a streaming response.
@@ -314,27 +321,48 @@ async def get_subsample_scan(
 
     # Get the files for the subsample
     try:
-        _subsample_files = zoo_project.zooscan_scan.work.get_files(
+        subsample_files = zoo_project.zooscan_scan.work.get_files(
             subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
     except Exception as e:
         raise_404(
             f"Scan image not found (error getting files) for subsample {subsample_name}"
         )
+        assert False
 
-    scan_file = zoo_project.zooscan_scan.get_8bit_file(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
-    if not scan_file.exists():
-        raise_404(f"Scan image not found for subsample {subsample_name}")
+    if img_name == SCAN_JPEG:
+        returned_file = zoo_project.zooscan_scan.get_8bit_file(
+            subsample_name, THE_SCAN_PER_SUBSAMPLE
+        )  # TODO: Might disappear, better return the _vis1.zip
+        if not returned_file.exists():
+            raise_404(f"Scan image not found for subsample {subsample_name}")
 
-    # Convert the TIF file to JPG
-    tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
-    convert_tiff_to_jpeg(scan_file, tmp_jpg)
-    scan_file = tmp_jpg
+        # Convert the TIF file to JPG
+        tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
+        convert_tiff_to_jpeg(returned_file, tmp_jpg)
+        returned_file = tmp_jpg
+    else:
+        real_files: List[Path] = list(
+            filter(
+                lambda p: isinstance(p, Path) and p.name == img_name,  # type:ignore
+                subsample_files.values(),
+            )
+        )
+        if not real_files:
+            raise_404(f"Image {img_name} not found for subsample {subsample_name}")
+        real_file = real_files[0]
+        if img_name.endswith(".zip"):
+            img_info, img = load_zipped_image(real_file)
+            logger.info(f"Image info: {img_info}")
+            tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
+            saveimage(img, tmp_jpg)
+            returned_file = tmp_jpg
+        else:
+            # TODO: GIFs are too big for Firefox, they display OK in Chromium
+            returned_file = real_file
 
     # Stream the file
-    file_like, length, media_type = get_stream(scan_file)
+    file_like, length, media_type = get_stream(returned_file)
     headers = {"content-length": str(length)}
     return StreamingResponse(file_like, headers=headers, media_type=media_type)
 
@@ -360,14 +388,14 @@ def link_subsample_to_scan(
     # http://localhost:5000/download/upload_apero2023_tha_bioness_sup2000_017_st66_d_n1_d2_3_sur_4_raw_1.tif
     # Validate more
     if not is_download_url(scan_url.url):
-        raise_501("Invalid scan URL, not produced here")
+        raise_422("Invalid scan URL, not produced here")
     src_image_path = UPLOAD_DIR / extract_file_id_from_download_url(scan_url.url)
     if not src_image_path.exists():
         raise_404(f"Scan URL {scan_url} not found")
     if not src_image_path.is_file():
-        raise_501("Invalid scan URL, not a file")
+        raise_422("Invalid scan URL, not a file")
     if not src_image_path.suffix.lower() == ".tif":
-        raise_501("Invalid scan URL, not a .tif file")
+        raise_422("Invalid scan URL, not a .tif file")
 
     scan_name = scan_name_from_subsample_name(subsample_name)
     # TODO: Log a bit, we're _writing_ into legacy

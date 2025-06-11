@@ -21,7 +21,14 @@ from Models import (
     ScanSubsample,
     User,
 )
-from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, ZooscanDrive
+from ZooProcess_lib.ZooscanFolder import (
+    ZooscanProjectFolder,
+    ZooscanDrive,
+    WRK_VIS1,
+    WRK_SEP,
+    WRK_OUT1,
+    WRK_MSK1,
+)
 from config_rdr import config
 from legacy.samples import (
     find_sample_metadata,
@@ -35,7 +42,11 @@ from legacy.scans import (
 )
 from local_DB.data_utils import get_background_id
 from logger import logger
-from modern.app_urls import generate_scan_url, generate_background_url
+from modern.app_urls import (
+    generate_scan_url,
+    generate_background_url,
+    generate_work_image_url,
+)
 from modern.ids import (
     hash_from_project,
     subsample_name_from_scan_name,
@@ -43,10 +54,11 @@ from modern.ids import (
     hash_from_sample_name,
     hash_from_subsample_name,
     drive_from_project_path,
+    THE_SCAN_PER_SUBSAMPLE,
 )
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
 from modern.subsample import get_project_scans_metadata, get_project_scans, parse_fracid
-from modern.users import get_mock_user, user_with_name
+from modern.users import get_mock_user, user_with_name, SYSTEM_USER
 from modern.utils import (
     extract_serial_number,
     find_latest_modification_time,
@@ -216,6 +228,47 @@ def sample_from_legacy(
     return ret
 
 
+legacy_work_image_type_to_modern = {
+    WRK_VIS1: ScanTypeEnum.VIS,
+    WRK_SEP: ScanTypeEnum.SEP,
+    WRK_OUT1: ScanTypeEnum.OUT,
+    WRK_MSK1: ScanTypeEnum.MASK,
+}
+
+
+def work_images_from_legacy_as_scans(
+    db: Session,
+    zoo_project: ZooscanProjectFolder,
+    sample_name: str,
+    subsample_name: str,
+) -> List[Scan]:
+    ret = []
+    project_hash = hash_from_project(zoo_project.path)
+    sample_hash = hash_from_sample_name(sample_name)
+    subsample_hash = hash_from_subsample_name(subsample_name)
+    work_files = zoo_project.zooscan_scan.work.get_files(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+    for lgcy_type, modern_type in legacy_work_image_type_to_modern.items():
+        if lgcy_type not in work_files:
+            continue
+        the_work_file = work_files[lgcy_type]
+        assert isinstance(the_work_file, Path), work_files[lgcy_type]
+        work_file_name = the_work_file.name
+        scan = Scan(
+            id=work_file_name,
+            url=generate_work_image_url(
+                project_hash, sample_hash, subsample_hash, work_file_name
+            ),
+            metadata=[],
+            type=modern_type,
+            user=SYSTEM_USER,
+            scanSubsamples=[],  # Quite sure it's unnecessary here
+        )
+        ret.append(scan)
+    return ret
+
+
 def subsample_from_legacy(
     db: Session,
     zoo_project: ZooscanProjectFolder,
@@ -253,6 +306,11 @@ def subsample_from_legacy(
     )
     if bg_id is not None:
         scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user, parent))
+    # Client-side also expects some produced files as pseudo-scans
+    extra_scans = work_images_from_legacy_as_scans(
+        db, zoo_project, sample_name, subsample_name
+    )
+    scans.extend(extra_scans)
     # Create the sample with metadata and scans
     ret = SubSample(
         id=hash_from_subsample_name(subsample_name),
@@ -427,8 +485,8 @@ def scans_from_legacy_project(
     Uses scans_from_legacy in a loop over samples and subsamples.
 
     Args:
-        zoo_project (ZooscanProjectFolder): The project folder to extract scans from.
         db (sqlalchemy.orm.Session, optional): The SQLAlchemy session to use.
+        zoo_project (ZooscanProjectFolder): The project folder to extract scans from.
 
     Returns:
         list[Scan]: A list of Scan objects representing the scans in the project.
