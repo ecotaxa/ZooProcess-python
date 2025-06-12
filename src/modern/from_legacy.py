@@ -237,7 +237,6 @@ legacy_work_image_type_to_modern = {
 
 
 def work_images_from_legacy_as_scans(
-    db: Session,
     zoo_project: ZooscanProjectFolder,
     sample_name: str,
     subsample_name: str,
@@ -308,7 +307,7 @@ def subsample_from_legacy(
         scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user, parent))
     # Client-side also expects some produced files as pseudo-scans
     extra_scans = work_images_from_legacy_as_scans(
-        db, zoo_project, sample_name, subsample_name
+        zoo_project, sample_name, subsample_name
     )
     scans.extend(extra_scans)
     # Create the sample with metadata and scans

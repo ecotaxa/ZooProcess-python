@@ -1,5 +1,4 @@
 import shutil
-import tempfile
 from pathlib import Path
 from typing import List
 
@@ -15,10 +14,9 @@ from Models import (
     User,
     ScanPostRsp,
 )
-from ZooProcess_lib.img_tools import load_zipped_image, saveimage
 from helpers.auth import get_current_user_from_credentials
 from helpers.web import raise_404, get_stream, raise_422
-from img_proc.convert import convert_tiff_to_jpeg
+from img_proc.convert import convert_image_for_display
 from legacy.ids import raw_file_name
 from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
 from legacy.writers.scan import add_legacy_scan
@@ -331,16 +329,11 @@ async def get_subsample_scan(
         assert False
 
     if img_name == SCAN_JPEG:
-        returned_file = zoo_project.zooscan_scan.get_8bit_file(
+        real_file = zoo_project.zooscan_scan.get_8bit_file(
             subsample_name, THE_SCAN_PER_SUBSAMPLE
         )  # TODO: Might disappear, better return the _vis1.zip
-        if not returned_file.exists():
+        if not real_file.exists():
             raise_404(f"Scan image not found for subsample {subsample_name}")
-
-        # Convert the TIF file to JPG
-        tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
-        convert_tiff_to_jpeg(returned_file, tmp_jpg)
-        returned_file = tmp_jpg
     else:
         real_files: List[Path] = list(
             filter(
@@ -351,15 +344,7 @@ async def get_subsample_scan(
         if not real_files:
             raise_404(f"Image {img_name} not found for subsample {subsample_name}")
         real_file = real_files[0]
-        if img_name.endswith(".zip"):
-            img_info, img = load_zipped_image(real_file)
-            logger.info(f"Image info: {img_info}")
-            tmp_jpg = Path(tempfile.mktemp(suffix=".jpg"))
-            saveimage(img, tmp_jpg)
-            returned_file = tmp_jpg
-        else:
-            # TODO: GIFs are too big for Firefox, they display OK in Chromium
-            returned_file = real_file
+    returned_file = convert_image_for_display(real_file)
 
     # Stream the file
     file_like, length, media_type = get_stream(returned_file)
