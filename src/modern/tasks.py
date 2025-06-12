@@ -81,9 +81,16 @@ class Job(ABC):
         return job_logger
 
     @abstractmethod
-    def start(self):
+    def prepare(self):
         """
         Start the job execution. This method must be implemented by subclasses.
+        It's supposed to prepare prerequisites (fast) and raise in case of a problem.
+        """
+
+    @abstractmethod
+    def run(self):
+        """
+        Run the job execution. This method must be implemented by subclasses.
         """
 
     def mark_started(self):
@@ -112,17 +119,29 @@ class JobRunner(Thread):
         self.job = a_job
 
     def run(self) -> None:
+        job = self.job
         try:
-            self.job.start()
-        except (AssertionError, TypeError, json.decoder.JSONDecodeError) as te:
+            job.prepare()
+        except (AssertionError, TypeError) as te:
             self.tech_error(te)
             return
+        try:
+            job.run()
+            job.logger.info("Processing completed successfully")
+            job.state = JobStateEnum.Finished
+            job.mark_alive()
+        except Exception as e:
+            job.logger.error(f"Error during processing: {str(e)}", exc_info=True)
+            job.state = JobStateEnum.Error
+            job.mark_alive()
+            raise
 
     def tech_error(self, te: Any) -> None:
         """
         Technical problem, which cannot be managed by the service
         as it was not possible to start it. Report here.
         """
+        self.job.state = JobStateEnum.Error
         self.job.logger.error(f"Failed to start due to {str(te)}")
 
 
