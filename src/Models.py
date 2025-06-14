@@ -310,3 +310,19 @@ class TaskRsp(TaskReq):
     status: Literal["PENDING", "RUNNING", "FINISHED", "FAILED"]
     createdAt: datetime
     updatedAt: datetime
+
+
+class SeparationPrediction(BaseModel):
+    """Model for a single prediction in the separation response"""
+
+    name: str  # input file name
+    separation_coordinates: List[List[int]]  # [[x-coords], [y-coords]
+    image_shape: List[int]  # [w,h] of input
+    score: float
+
+
+class SeparationResponse(BaseModel):
+    """Model for the response from the separation service"""
+
+    status: str  # Seen: "OK"
+    predictions: List[SeparationPrediction]

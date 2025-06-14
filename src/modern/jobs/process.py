@@ -123,4 +123,6 @@ class BackgroundAndScanToSegmented(Job):
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
         if WRK_MSK1 in work_files:
-            os.remove(work_files[WRK_MSK1])
+            the_work_file = work_files[WRK_MSK1]
+            assert isinstance(the_work_file, Path), "Unexpected {WRK_MSK1}!"
+            os.remove(the_work_file)
