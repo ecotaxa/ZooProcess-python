@@ -312,7 +312,7 @@ class TaskRsp(TaskReq):
     updatedAt: datetime
 
 
-class SeparationPrediction(BaseModel):
+class MultiplesSeparatorPrediction(BaseModel):
     """Model for a single prediction in the separation response"""
 
     name: str  # input file name
@@ -321,8 +321,8 @@ class SeparationPrediction(BaseModel):
     score: float
 
 
-class SeparationResponse(BaseModel):
+class MultiplesSeparatorRsp(BaseModel):
     """Model for the response from the separation service"""
 
     status: str  # Seen: "OK"
-    predictions: List[SeparationPrediction]
+    predictions: List[MultiplesSeparatorPrediction]

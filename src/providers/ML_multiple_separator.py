@@ -7,7 +7,7 @@ from typing import List, Tuple, Optional
 import cv2
 import requests
 
-from Models import SeparationResponse
+from Models import MultiplesSeparatorRsp
 from ZooProcess_lib.img_tools import load_image, saveimage
 from logger import logger
 
@@ -23,7 +23,7 @@ BASE_URI = "v2/models/zooprocess_multiple_separator/predict/"
 
 def separate_each_image_from(
     path: Path,
-) -> List[Tuple[str, Optional[SeparationResponse], Optional[str]]]:
+) -> List[Tuple[str, Optional[MultiplesSeparatorRsp], Optional[str]]]:
     """
     Process multiple images using the separator service, one call per file.
 
@@ -69,7 +69,7 @@ def separate_each_image_from(
 
 def separate_all_images_from(
     path: Path,
-) -> Tuple[Optional[SeparationResponse], Optional[str]]:
+) -> Tuple[Optional[MultiplesSeparatorRsp], Optional[str]]:
     """
     Process multiple images using the separator service and parse the JSON responses.
 
@@ -105,7 +105,7 @@ def separate_all_images_from(
 
 
 def apply_separations(
-    base_dir: Path, separation_response: SeparationResponse
+    base_dir: Path, separation_response: MultiplesSeparatorRsp
 ) -> List[Path]:
     ret = []
     predictions = separation_response.predictions
@@ -155,7 +155,7 @@ def apply_separations(
 
 def call_separate_server(
     image_or_zip_path: Path, min_mask_score: float = 0.9, bottom_crop: int = 0
-) -> Tuple[Optional[SeparationResponse], Optional[str]]:
+) -> Tuple[Optional[MultiplesSeparatorRsp], Optional[str]]:
     """
     Send an image to the separator service using the BASE_URL and parse the JSON response.
 
@@ -199,7 +199,7 @@ def call_separate_server(
                     response_data = response.json()
 
                     # Create a SeparationResponse object from the JSON
-                    separation_response = SeparationResponse(**response_data)
+                    separation_response = MultiplesSeparatorRsp(**response_data)
 
                     # Log success
                     logger.info(
@@ -230,7 +230,7 @@ def call_separate_server(
 
 def do_separation_file_by_file(
     to_separate: Path,
-) -> List[Tuple[str, Optional[SeparationResponse], Optional[str]]]:
+) -> List[Tuple[str, Optional[MultiplesSeparatorRsp], Optional[str]]]:
     """
     Process all jpg files in a directory using the separator service and parse the JSON responses.
 

@@ -12,7 +12,7 @@ from ZooProcess_lib.img_tools import (
 )
 from helpers.tools import find_directory_with_zooscan_back
 from logger import logger
-from providers.ML_separator import LS_PATH, BGR_RED_COLOR
+from providers.ML_multiple_separator import LS_PATH, BGR_RED_COLOR
 
 
 def compare_image_directories(to_separate: Path, separated: Path) -> None:
