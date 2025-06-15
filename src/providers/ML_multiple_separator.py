@@ -108,6 +108,11 @@ def apply_separations(
     base_dir: Path, separation_response: MultiplesSeparatorRsp
 ) -> List[Path]:
     ret = []
+    # Create 'separated' subdirectory if it doesn't exist
+    separated_dir = base_dir / "separated"
+    if not separated_dir.exists():
+        separated_dir.mkdir(parents=False)
+
     predictions = separation_response.predictions
     for a_prediction in predictions:
         coords = a_prediction.separation_coordinates
@@ -137,11 +142,6 @@ def apply_separations(
         # Draw individual points
         for y, x in points:
             cv2.circle(color_image, (y, x), 1, BGR_RED_COLOR, -1)
-
-        # Create 'separated' subdirectory if it doesn't exist
-        separated_dir = base_dir / "separated"
-        if not separated_dir.exists():
-            separated_dir.mkdir(parents=False)
 
         # Save the result in subdirectory 'separated' of base directory
         png_filename = filename.replace(".jpg", ".png")
