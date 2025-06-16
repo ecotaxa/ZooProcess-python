@@ -341,3 +341,19 @@ class MultiplesClassifierRsp(BaseModel):
         if "names" in values and len(v) != len(values["names"]):
             raise ValueError("names and scores lists must have the same length")
         return v
+
+
+class VignetteData(BaseModel):
+    """Model for vignette data"""
+
+    scan: str
+    matrix: str
+    mask: Optional[str] = None
+    vignettes: Optional[List[str]] = None
+
+
+class VignetteResponse(BaseModel):
+    """Model for vignette response"""
+
+    data: List[VignetteData]
+    folder: str

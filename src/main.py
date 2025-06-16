@@ -1,16 +1,20 @@
 # Main
 import os
 import shutil
+import tempfile
 import typing
 from pathlib import Path
 from typing import List
 
+import aiofiles
+import numpy as np
 import requests
-from fastapi import FastAPI, HTTPException, Depends
+from PIL import Image
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from starlette import status
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
 
 from Models import (
     ScanIn,
@@ -23,16 +27,21 @@ from Models import (
     ImageUrl,
     VignetteFolder,
     ForInstrumentBackgroundIn,
+    VignetteResponse,
+    VignetteData,
 )
 from ZooProcess_lib.Processor import Processor, Lut
+from config_rdr import config
 from demo_get_vignettes import generate_json
 from helpers.auth import get_current_user_from_credentials
+from helpers.matrix import save_matrix_as_binary
 from helpers.web import (
     internal_server_error_handler,
     TimingMiddleware,
     validation_exception_handler,
     raise_500,
     raise_501,
+    get_stream,
 )
 from img_proc.convert import convert_tiff_to_jpeg
 from img_proc.process import Process
@@ -53,6 +62,7 @@ from modern.tasks import JobScheduler
 from providers.SeparateServer import SeparateServer
 from providers.separate_fn import separate_images
 from providers.server import Server
+from providers.ML_multiple_separator import BGR_RED_COLOR
 from remote.TaskStatus import TaskStatus
 from routers.images import router as images_router
 from routers.instruments import (
@@ -634,6 +644,93 @@ def add_background_for_instrument(
     return for_all[0]
 
 
+BASE_DIR = "/mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_monitoring/Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/Zooscan_scan/_work/jb19790620_tot_1"
+sep = ":"
+
+
+@app.get("/vignettes")
+def get_vignettes() -> VignetteResponse:
+    """Get some vignettes"""
+    base_dir = config.public_url + "/vignette"
+    multiples_dir = "v10_thumbs/multiples"
+    multiples = multiples_dir.replace("/", sep)
+    masks = f"v10_thumbs{sep}multiples_vis"
+    a_vignette = VignetteData(
+        scan=multiples + sep + "jb19790620_tot_1_724.png",
+        matrix=masks + sep + "jb19790620_tot_1_724.png.gz",
+        mask=masks + sep + "jb19790620_tot_1_724.png",
+    )
+    ret = VignetteResponse(data=[a_vignette], folder=base_dir)
+    return ret
+
+
+@app.get("/vignette/{img_path}")
+def get_a_vignette(img_path: str) -> StreamingResponse:
+    """Get one vignette"""
+    logger.info(f"get_a_vignette: {img_path}")
+    img_path = img_path.replace(sep, "/")
+    if img_path.endswith(".gz"):
+        img_path = Path(BASE_DIR + "/" + img_path[:-3])
+        img = Image.open(img_path)
+
+        # Convert to RGB if not already
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+
+        # Convert PIL image to a numpy array
+        img_array = np.array(img)
+
+        # Create a binary image where pixels exactly match BGR_RED_COLOR
+        # BGR_RED_COLOR is (0, 0, 255) in BGR format, which is (255, 0, 0) in RGB format
+        # Since PIL uses RGB format, we need to convert BGR_RED_COLOR to RGB
+        rgb_red_color = (
+            BGR_RED_COLOR[2],
+            BGR_RED_COLOR[1],
+            BGR_RED_COLOR[0],
+        )  # Convert BGR to RGB
+        binary_img = np.all(img_array == rgb_red_color, axis=2)
+
+        # Save to a temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png.gz")
+        save_matrix_as_binary(binary_img, temp_file.name)
+        logger.info(f"saving matrix to temp file {temp_file.name}")
+
+        # Also save as a visible image for display
+        # pil_binary_img = Image.fromarray((binary_img * 255).astype(np.uint8))
+        # pil_binary_img.save(temp_file.name)
+        temp_file.close()
+
+        img_file = Path(temp_file.name)
+    else:
+        img_file = Path(BASE_DIR + "/" + img_path)
+
+    file_like, length, media_type = get_stream(img_file)
+    headers = {"content-length": str(length)}
+    return StreamingResponse(file_like, headers=headers, media_type=media_type)
+
+
+@app.post("/vignette/{img_path}")
+async def update_a_vignette(img_path: str, file: UploadFile = File(...)) -> dict:
+    """Update a vignette with an image from the request body"""
+    logger.info(f"update_a_vignette: {img_path}")
+    img_path = img_path.replace(sep, "/")
+    img_file = Path(BASE_DIR + "/" + img_path)
+
+    # Ensure the directory exists
+    img_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Save the uploaded file
+    async with aiofiles.open(img_file, "wb") as out_file:
+        content = await file.read()
+        await out_file.write(content)
+
+    return {
+        "status": "success",
+        "message": f"Image updated at {img_path}",
+        "path": str(img_file),
+    }
+
+
 @app.post("/background/")
 @typing.no_type_check
 def add_background(background: Background):
@@ -726,11 +823,6 @@ def add_background(background: Background):
         # else:
         #     markTaskWithErrorStatus(background.taskId, background.db, background.bearer, "Cannot generate medium scan")
         #     raise HTTPException(status_code=response.status_code, detail="Cannot generate medium scan")
-
-
-# from importe import importe
-
-# importe(app)
 
 
 @app.post("/login")
