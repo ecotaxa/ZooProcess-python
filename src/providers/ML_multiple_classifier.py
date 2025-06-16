@@ -7,7 +7,7 @@ import requests
 
 from Models import MultiplesClassifierRsp
 from logger import logger
-from providers.utils import zip_images_to_tempfile
+from providers.utils import ImageList
 
 LS_VIGNETTES_PATH = Path(
     "/mnt/pgssd2t/zooscan_lov/Zooscan_apero_tha_bioness_2_sn033/Zooscan_scan/_work/apero2023_tha_bioness_013_st46_d_n5_d2_2_sur_2_1"
@@ -37,7 +37,8 @@ def classify_all_images_from(
     logger.info(f"Classifying images for multiples in: {img_path}")
 
     # Create a zip file of images in a directory
-    zip_path = zip_images_to_tempfile(logger, img_path)
+    image_list = ImageList(img_path)
+    zip_path = image_list.zipped(logger)
 
     # Get JSON response from classifier
     separation_response, error = call_classify_server(logger, zip_path)

@@ -15,6 +15,7 @@ from providers.ML_multiple_separator import (
     separate_all_images_from,
     show_separations_in_images,
 )
+from providers.utils import ImageList
 
 
 class BackgroundAndScanToSegmented(Job):
@@ -133,7 +134,7 @@ class BackgroundAndScanToSegmented(Job):
         )
 
         self.logger.info(f"Determining multiples")
-        # Create an empty 'v10' subdirectory
+        # Create an empty 'v10_thumbs/multiples' subdirectory
         multiples_dir = thumbs_dir / "multiples"
         if multiples_dir.exists():
             shutil.rmtree(multiples_dir)
@@ -141,14 +142,22 @@ class BackgroundAndScanToSegmented(Job):
         classify_all_images_from(self.logger, thumbs_dir, 0.6, multiples_dir)
 
         self.logger.info(f"Separating multiples (auto)")
-        # Create an empty 'v10/multiples_vis' subdirectory
+        # Create an empty 'v10_thumbs/multiples_vis' subdirectory
         multiples_vis_dir = thumbs_dir / "multiples_vis"
         if multiples_vis_dir.exists():
             shutil.rmtree(multiples_vis_dir)
         multiples_vis_dir.mkdir(parents=False)
-        results, error = separate_all_images_from(self.logger, multiples_dir)
-        assert error is None, error
-        show_separations_in_images(multiples_dir, results, multiples_vis_dir)
+        image_list = ImageList(multiples_dir)
+        # Send files by chunks to avoid the operator waiting too long with no feedback
+        processed = 0
+        to_process = len(image_list.get_images())
+        for a_chunk in image_list.split(12):
+            results, error = separate_all_images_from(self.logger, a_chunk)
+            assert error is None, error
+            assert results is not None  # mypy
+            show_separations_in_images(multiples_dir, results, multiples_vis_dir)
+            processed += len(a_chunk.get_images())
+            self.logger.info(f"Processed {processed}/{to_process} images")
 
     def _cleanup_work(self):
         """Cleanup the files that present process is going to (re) create"""

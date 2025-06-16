@@ -9,7 +9,7 @@ import requests
 from Models import MultiplesSeparatorRsp
 from ZooProcess_lib.img_tools import load_image, saveimage
 from logger import logger
-from providers.utils import zip_images_to_tempfile
+from providers.utils import ImageList
 
 BGR_RED_COLOR = (0, 0, 255)
 
@@ -67,24 +67,24 @@ def separate_each_image_from(
 
 def separate_all_images_from(
     logger: Logger,
-    path: Path,
+    image_list: ImageList,
 ) -> Tuple[Optional[MultiplesSeparatorRsp], Optional[str]]:
     """
     Process multiple images using the separator service and parse the JSON responses.
 
     Args:
         logger: Logger instance
-        path: Directory containing the images
+        image_list: ImageList containing the images to process
 
     Returns:
         List of tuples, each containing:
         - SeparationResponse object parsed from the JSON response
         - Error message if any, None otherwise
     """
-    logger.info(f"Separating images in: {path}")
+    logger.info(f"Separating images from ImageList")
 
-    # Example 2: Create a zip file of images in a directory
-    zip_path = zip_images_to_tempfile(logger, path)
+    # Create a zip file of images from the ImageList
+    zip_path = image_list.zipped(logger)
 
     # Get JSON response
     separation_response, error = call_separate_server(zip_path)
@@ -118,7 +118,9 @@ def show_separations_in_images(
     return ret
 
 
-def build_separated_image(base_dir, coords, filename, separated_dir) -> Optional[Path]:
+def build_separated_image(
+    base_dir: Path, coords: List[List[int]], filename: str, separated_dir: Path
+) -> Optional[Path]:
     # Construct the full path from base_dir and filename
     full_path = base_dir / filename
     # Open the image from the constructed path
@@ -252,7 +254,8 @@ def do_separation_file_by_file(
 
 
 def main():
-    results, error = separate_all_images_from(logger, LS_PATH)
+    image_list = ImageList(LS_PATH)
+    results, error = separate_all_images_from(logger, image_list)
     if results is not None:
         # Create 'separated' subdirectory if it doesn't exist
         separated_dir = LS_PATH / "separated"
