@@ -1,15 +1,20 @@
 # Process a scan from its background until segmentation
 import os
-import time
+import shutil
 from pathlib import Path
 from typing import List
 
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
-from modern.ids import THE_SCAN_PER_SUBSAMPLE
+from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
+from providers.ML_multiple_classifier import classify_all_images_from
+from providers.ML_multiple_separator import (
+    separate_all_images_from,
+    show_separations_in_images,
+)
 
 
 class BackgroundAndScanToSegmented(Job):
@@ -21,8 +26,9 @@ class BackgroundAndScanToSegmented(Job):
         self.zoo_project = zoo_project
         self.sample_name = sample_name
         self.subsample_name = subsample_name
+        self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Image inputs
-        self.raw_scan: Path = Path("/tmp")
+        self.raw_scan: Path = Path("xyz")  # Just to keep mypy happy
         self.bg_scans: List[Path] = []
 
     def prepare(self):
@@ -66,21 +72,8 @@ class BackgroundAndScanToSegmented(Job):
             ), f"Background scan {for_msg} date is _after_ raw background date"
             self.bg_scans.append(a_bg)
 
-        # TEMPORARY, TODO: Ensure a consistent 8-bit scan is present
-        zooscan_scan = self.zoo_project.zooscan_scan
-        self.eight_bit_scan = zooscan_scan.get_file_produced_from(raw_scan.name)
-        for_msg = self.eight_bit_scan.relative_to(prj_path)
-        assert (
-            self.eight_bit_scan.exists()
-        ), f"Need {for_msg} to proceed to segmentation"
-        eight_bit_date = get_creation_date(self.eight_bit_scan)
-        assert (
-            eight_bit_date > raw_scan_date
-        ), f"Combined scan {for_msg} date is _before_ raw background date"
-
     def run(self):
         self._cleanup_work()
-        time.sleep(10)  # TODO: Remove
         processor = Processor.from_legacy_config(
             self.zoo_project.zooscan_config.read(),
             self.zoo_project.zooscan_config.read_lut(),
@@ -94,35 +87,77 @@ class BackgroundAndScanToSegmented(Job):
         combined_bg_image, bg_resolution = processor.bg_combiner.do_from_images(
             bg_converted_files
         )
-        # Sample pre-processing
+
+        # Scan pre-processing
         self.logger.info(f"Converting scan")
         eight_bit_scan_image, scan_resolution = processor.converter.do_file_to_image(
             self.raw_scan
         )
+
         # Background removal
         self.logger.info(f"Removing background")
         scan_without_background = processor.bg_remover.do_from_images(
             combined_bg_image, bg_resolution, eight_bit_scan_image, scan_resolution
         )
+
         # Mask generation
         self.logger.info(f"Generating MSK")
         mask = processor.segmenter.get_mask_from_image(scan_without_background)
         save_mask_image(
             self.logger, mask, self.zoo_project.zooscan_scan.work, self.subsample_name
         )
+
         # Segmentation
         self.logger.info(f"Segmenting")
         rois, stats = processor.segmenter.find_ROIs_in_image(
             scan_without_background,
             scan_resolution,
         )
-        self.logger.info(f"stats: {stats}")
+        self.logger.info(f"Segmentation stats: {stats}")
+
+        # Thumbnail generation
+        self.logger.info(f"Extracting")
+        thumbs_dir = (
+            self.zoo_project.zooscan_scan.work.get_sub_directory(
+                self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+            )
+            / "v10_thumbs"
+        )
+        os.makedirs(thumbs_dir, exist_ok=True)
+        processor.extractor.extract_all_with_border_to_dir(
+            scan_without_background,
+            scan_resolution,
+            rois,
+            thumbs_dir,
+            self.scan_name,
+        )
+
+        self.logger.info(f"Determining multiples")
+        # Create an empty 'v10' subdirectory
+        multiples_dir = thumbs_dir / "multiples"
+        if multiples_dir.exists():
+            shutil.rmtree(multiples_dir)
+        multiples_dir.mkdir(parents=False)
+        classify_all_images_from(self.logger, thumbs_dir, 0.6, multiples_dir)
+
+        self.logger.info(f"Separating multiples (auto)")
+        # Create an empty 'v10/multiples_vis' subdirectory
+        multiples_vis_dir = thumbs_dir / "multiples_vis"
+        if multiples_vis_dir.exists():
+            shutil.rmtree(multiples_vis_dir)
+        multiples_vis_dir.mkdir(parents=False)
+        results, error = separate_all_images_from(self.logger, multiples_dir)
+        assert error is None, error
+        show_separations_in_images(multiples_dir, results, multiples_vis_dir)
 
     def _cleanup_work(self):
+        """Cleanup the files that present process is going to (re) create"""
         work_files = self.zoo_project.zooscan_scan.work.get_files(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
         if WRK_MSK1 in work_files:
             the_work_file = work_files[WRK_MSK1]
-            assert isinstance(the_work_file, Path), "Unexpected {WRK_MSK1}!"
+            assert isinstance(
+                the_work_file, Path
+            ), f"Unexpected {WRK_MSK1} (not a file?)!"
             os.remove(the_work_file)

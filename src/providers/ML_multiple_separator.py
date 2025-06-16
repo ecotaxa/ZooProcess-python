@@ -1,6 +1,5 @@
 import random
-import tempfile
-import zipfile
+from logging import Logger
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -10,6 +9,7 @@ import requests
 from Models import MultiplesSeparatorRsp
 from ZooProcess_lib.img_tools import load_image, saveimage
 from logger import logger
+from providers.utils import zip_images_to_tempfile
 
 BGR_RED_COLOR = (0, 0, 255)
 
@@ -61,19 +61,19 @@ def separate_each_image_from(
             logger.error(f"Failed to process {name}: {error}")
             continue
 
-        apply_separations(path, separation_response)
-
     logger.info(f"Processed {len(results)} images")
     return results
 
 
 def separate_all_images_from(
+    logger: Logger,
     path: Path,
 ) -> Tuple[Optional[MultiplesSeparatorRsp], Optional[str]]:
     """
     Process multiple images using the separator service and parse the JSON responses.
 
     Args:
+        logger: Logger instance
         path: Directory containing the images
 
     Returns:
@@ -81,12 +81,10 @@ def separate_all_images_from(
         - SeparationResponse object parsed from the JSON response
         - Error message if any, None otherwise
     """
-    logger.info(f"Processing images in: {path}")
+    logger.info(f"Separating images in: {path}")
 
     # Example 2: Create a zip file of images in a directory
-    print("\nCreating a zip file of images...")
-    zip_path = zip_images_to_tempfile(path)
-    print(f"Created zip file at: {zip_path}")
+    zip_path = zip_images_to_tempfile(logger, path)
 
     # Get JSON response
     separation_response, error = call_separate_server(zip_path)
@@ -97,64 +95,62 @@ def separate_all_images_from(
 
     logger.info(f"Successfully processed {zip_path}")
     nb_predictions = len(separation_response.predictions)
-    logger.info(f"Found {nb_predictions} predictions")
-    apply_separations(path, separation_response)
-
     logger.info(f"Got {nb_predictions} predictions")
+
     return separation_response, error
 
 
-def apply_separations(
-    base_dir: Path, separation_response: MultiplesSeparatorRsp
+def show_separations_in_images(
+    base_dir: Path, separation_response: MultiplesSeparatorRsp, separated_dir: Path
 ) -> List[Path]:
     ret = []
-    # Create 'separated' subdirectory if it doesn't exist
-    separated_dir = base_dir / "separated"
-    if not separated_dir.exists():
-        separated_dir.mkdir(parents=False)
 
     predictions = separation_response.predictions
     for a_prediction in predictions:
         coords = a_prediction.separation_coordinates
         filename = a_prediction.name
 
-        # Construct the full path from base_dir and filename
-        full_path = base_dir / filename
+        output_path = build_separated_image(base_dir, coords, filename, separated_dir)
 
-        # Open the image from the constructed path
-        image = load_image(full_path)
-
-        # Convert grayscale image to color for drawing
-        if len(image.shape) == 2:
-            color_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        else:
-            color_image = image.copy()
-
-        # Draw coords in the image
-        # coords is a list of two lists: [x-coords], [y-coords]
-        assert len(coords) == 2
-        x_coords = coords[0]
-        y_coords = coords[1]
-
-        # Create a list of points from the coordinates
-        points = list(zip(y_coords, x_coords))
-
-        # Draw individual points
-        for y, x in points:
-            cv2.circle(color_image, (y, x), 1, BGR_RED_COLOR, -1)
-
-        # Save the result in subdirectory 'separated' of base directory
-        png_filename = filename.replace(".jpg", ".png")
-        output_path = separated_dir / png_filename
-        saveimage(color_image, png_filename, path=str(separated_dir))
-
-        logger.info(f"Saved separated image to {output_path}")
-        ret.append(output_path)
+        if output_path is not None:
+            logger.info(f"Saved separated image to {output_path}")
+            ret.append(output_path)
     return ret
 
 
+def build_separated_image(base_dir, coords, filename, separated_dir) -> Optional[Path]:
+    # Construct the full path from base_dir and filename
+    full_path = base_dir / filename
+    # Open the image from the constructed path
+    image = load_image(full_path)
+    # Convert grayscale image to color for drawing
+    if len(image.shape) == 2:
+        color_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    else:
+        color_image = image.copy()
+    # Draw coords in the image
+    # coords is a list of two lists: [x-coords], [y-coords]
+    assert len(coords) == 2
+    x_coords = coords[0]
+    y_coords = coords[1]
+    assert len(x_coords) == len(y_coords)
+    if len(x_coords) == 0:
+        # Nothing found to separate
+        return None
+    # Create a list of points from the coordinates
+    points = list(zip(y_coords, x_coords))
+    # Draw individual points
+    for y, x in points:
+        cv2.circle(color_image, (y, x), 1, BGR_RED_COLOR, -1)
+    # Save the result in subdirectory 'separated' of base directory
+    png_filename = filename.replace(".jpg", ".png")
+    output_path = separated_dir / png_filename
+    saveimage(color_image, png_filename, path=str(separated_dir))
+    return output_path
+
+
 def call_separate_server(
-    image_or_zip_path: Path, min_mask_score: float = 0.9, bottom_crop: int = 0
+    image_or_zip_path: Path, min_mask_score: float = 0.9, bottom_crop: int = 31
 ) -> Tuple[Optional[MultiplesSeparatorRsp], Optional[str]]:
     """
     Send an image to the separator service using the BASE_URL and parse the JSON response.
@@ -255,59 +251,14 @@ def do_separation_file_by_file(
     return results
 
 
-def zip_images_to_tempfile(directory_path: Path) -> Path:
-    """
-    Zips all images inside a given directory to a temporary zip file.
-
-    Args:
-        directory_path: Path to the directory containing images
-
-    Returns:
-        Path to the temporary zip file
-    """
-    logger.info(f"Zipping images from directory: {directory_path}")
-
-    # Create a temporary file with .zip extension
-    temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
-    temp_zip_path = Path(temp_zip.name)
-    temp_zip.close()
-
-    try:
-        # Find all jpg files in the directory
-        image_paths = list(directory_path.glob("*.jpg"))
-
-        if not image_paths:
-            logger.warning(f"No jpg images found in {directory_path}")
-            return temp_zip_path
-
-        # Create a zip file
-        with zipfile.ZipFile(temp_zip_path, "w") as zip_file:
-            # Add each image to the zip file
-            for image_path in image_paths:
-                logger.info(f"Adding {image_path.name} to zip file")
-                zip_file.write(image_path, arcname=image_path.name)
-
-        logger.info(
-            f"Successfully created zip file with {len(image_paths)} images at {temp_zip_path}"
-        )
-        return temp_zip_path
-
-    except Exception as e:
-        logger.error(f"Error creating zip file: {str(e)}")
-        # If an error occurs, return the path anyway so the caller can handle it
-        return temp_zip_path
-
-
 def main():
-    # results = do_sep_file_by_file(LS_PATH)
-    # # Print summary of results
-    # print(f"\nProcessed {len(results)} images:")
-    # for filename, response, error in results:
-    #     if response:
-    #         print(f"  ✓ {filename}: {len(response.predictions)} predictions")
-    #     else:
-    #         print(f"  ✗ {filename}: {error}")
-    results = separate_all_images_from(LS_PATH)
+    results, error = separate_all_images_from(logger, LS_PATH)
+    if results is not None:
+        # Create 'separated' subdirectory if it doesn't exist
+        separated_dir = LS_PATH / "separated"
+        if not separated_dir.exists():
+            separated_dir.mkdir(parents=False)
+        show_separations_in_images(LS_PATH, results, separated_dir)
 
 
 if __name__ == "__main__":

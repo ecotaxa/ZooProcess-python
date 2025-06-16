@@ -1,44 +1,46 @@
 import shutil
+from logging import Logger
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 
 import requests
 
 from Models import MultiplesClassifierRsp
 from logger import logger
-from providers.ML_multiple_separator import zip_images_to_tempfile
+from providers.utils import zip_images_to_tempfile
 
 LS_VIGNETTES_PATH = Path(
     "/mnt/pgssd2t/zooscan_lov/Zooscan_apero_tha_bioness_2_sn033/Zooscan_scan/_work/apero2023_tha_bioness_013_st46_d_n5_d2_2_sur_2_1"
 )
-SERVER = "https://inference-walton.cloud.imagine-ai.eu/system/services/zooprocess-multiple-classifier/exposed/main/"  # Timeout on zip submission
+SERVER = "https://inference-walton.cloud.imagine-ai.eu/system/services/zooprocess-multiple-classifier/exposed/main/"
 SERVER = "http://localhost:55001/"  # Docker image from instructions at https://github.com/ai4os-hub/zooprocess-multiple-classifier
 BASE_URI = "v2/models/zooprocess_multiple_classifier/predict/"
 
 
 def classify_all_images_from(
-    path: Path,
+    logger: Logger, img_path: Path, min_score: float, multiples_path: Path
 ) -> Tuple[Optional[MultiplesClassifierRsp], Optional[str]]:
     """
     Process multiple images using the classifier service and parse the JSON responses.
 
     Args:
-        path: Directory containing the images
+        logger: Logger instance
+        min_score: Minimum classification score, images above this score are discarded
+        img_path: Directory containing the images
+        multiples_path: Directory where images considered as probable multiples will be copied
 
     Returns:
         List of tuples, each containing:
         - SeparationResponse object parsed from the JSON response
         - Error message if any, None otherwise
     """
-    logger.info(f"Processing images in: {path}")
+    logger.info(f"Classifying images for multiples in: {img_path}")
 
-    # Example 2: Create a zip file of images in a directory
-    print("\nCreating a zip file of images...")
-    zip_path = zip_images_to_tempfile(path)
-    print(f"Created zip file at: {zip_path}")
+    # Create a zip file of images in a directory
+    zip_path = zip_images_to_tempfile(logger, img_path)
 
-    # Get JSON response
-    separation_response, error = call_classify_server(zip_path)
+    # Get JSON response from classifier
+    separation_response, error = call_classify_server(logger, zip_path)
 
     if not separation_response:
         logger.error(f"Failed to process {zip_path}: {error}")
@@ -47,36 +49,29 @@ def classify_all_images_from(
     logger.info(f"Successfully processed {zip_path}")
     nb_predictions = len(separation_response.scores)
     logger.info(f"Found {nb_predictions} predictions")
-    potentials_ones = use_classifications(path, separation_response)
+    above_threshold = [
+        assoc[1]
+        for assoc in zip(separation_response.scores, separation_response.names)
+        if assoc[0] > min_score
+    ]
+    use_classifications(img_path, multiples_path, above_threshold)
 
-    logger.info(f"Copied {len(potentials_ones)} images: {potentials_ones}")
+    logger.info(f"Copied {len(above_threshold)} images into {multiples_path}")
     return separation_response, error
 
 
 def use_classifications(
-    base_dir: Path, classification_response: MultiplesClassifierRsp
-) -> List[Tuple[str, float]]:
-    ret = []
-    # Create an empty 'v10' subdirectory
-    multiples_dir = base_dir / "multiples_to_separate" / "v10"
-    if multiples_dir.exists():
-        shutil.rmtree(multiples_dir)
-    multiples_dir.mkdir(parents=False)
-
-    for a_name, a_score in zip(
-        classification_response.names, classification_response.scores
-    ):
-        if a_score <= 0.5:
-            continue
+    base_dir: Path, multiples_dir: Path, selected_names: list[str]
+) -> None:
+    for a_name in selected_names:
         # Construct the full target path from base_dir and filename
         full_path = base_dir / a_name
         shutil.copy(full_path, multiples_dir / a_name)
-        ret.append((a_name, a_score))
-    return ret
+    return
 
 
 def call_classify_server(
-    image_or_zip_path: Path, bottom_crop: int = 31
+    logger: Logger, image_or_zip_path: Path, bottom_crop: int = 31
 ) -> Tuple[Optional[MultiplesClassifierRsp], Optional[str]]:
     """
     Send an image to the classifier service using the BASE_URL and parse the JSON response.
@@ -150,7 +145,7 @@ def call_classify_server(
 
 
 def main():
-    results = classify_all_images_from(LS_VIGNETTES_PATH)
+    results = classify_all_images_from(logger, LS_VIGNETTES_PATH, 0.5, Path("/tmp"))
 
 
 if __name__ == "__main__":
