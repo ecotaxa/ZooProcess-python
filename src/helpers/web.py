@@ -97,7 +97,7 @@ class AutoCloseBinaryIO(object):
             raise StopIteration()
 
     def __del__(self):
-        if self.fd is not None:
+        if hasattr(self, "fd") and self.fd is not None:
             self.fd.close()
             self.fd = None  # type:ignore
 

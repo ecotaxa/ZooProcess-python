@@ -47,13 +47,13 @@ def send_img_to_separator(
             # 'Content-Type': 'multipart/form-data'
         }
 
-        logger.info("Request")
-        logger.info(f"url: {url}")
-        logger.info(f"headers: {headers}")
-        logger.info(f"files: {file_dict}")
+        logger.debug("Request")
+        logger.debug(f"url: {url}")
+        logger.debug(f"headers: {headers}")
+        logger.debug(f"files: {file_dict}")
 
         response = requests.post(url, files=file_dict, headers=headers)
-        logger.info(response)
+        logger.debug(response)
 
         return response
 

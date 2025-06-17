@@ -103,12 +103,12 @@ def call_classify_server(
             }
 
             logger.info("Request to multiples classifier service")
-            logger.info(f"url: {url}")
-            logger.info(f"headers: {headers}")
+            logger.debug(f"url: {url}")
+            logger.debug(f"headers: {headers}")
 
             # Make POST request with multipart/form-data
             response = requests.post(url, files=file_dict, headers=headers)
-            logger.info(f"Response status: {response.status_code}")
+            logger.debug(f"Response status: {response.status_code}")
 
             if response.ok:
                 try:

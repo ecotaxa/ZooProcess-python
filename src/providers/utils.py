@@ -2,7 +2,7 @@ import tempfile
 import zipfile
 from logging import Logger
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 
 class ImageList:
@@ -15,7 +15,7 @@ class ImageList:
         _temp_zip_path (Path): Path to the temporary zip file (class variable)
     """
 
-    _temp_zip_path: Path = None
+    _temp_zip_path: Optional[Path] = None
 
     @classmethod
     def cleanup_temp_zip(cls):
@@ -31,7 +31,7 @@ class ImageList:
                 # Ignore errors when cleaning up
                 pass
 
-    def __init__(self, directory_path: Path, images: List[Path] = None):
+    def __init__(self, directory_path: Path, images: Optional[List[Path]] = None):
         """
         Initialize the ImageList with a directory path and list all PNG images.
 
@@ -119,16 +119,18 @@ class ImageList:
         Returns:
             Path to the temporary zip file
         """
-        logger.info(f"Zipping images from directory: {self.directory_path}")
+        logger.debug(f"Zipping images from directory: {self.directory_path}")
 
         # Create a temporary file with .zip extension if it doesn't exist yet
         if ImageList._temp_zip_path is None or not ImageList._temp_zip_path.exists():
             temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
             ImageList._temp_zip_path = Path(temp_zip.name)
             temp_zip.close()
-            logger.info(f"Created new temporary zip file at {ImageList._temp_zip_path}")
+            logger.debug(
+                f"Created new temporary zip file at {ImageList._temp_zip_path}"
+            )
         else:
-            logger.info(
+            logger.debug(
                 f"Reusing existing temporary zip file at {ImageList._temp_zip_path}"
             )
 

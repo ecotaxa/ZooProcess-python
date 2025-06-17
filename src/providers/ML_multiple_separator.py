@@ -81,8 +81,6 @@ def separate_all_images_from(
         - SeparationResponse object parsed from the JSON response
         - Error message if any, None otherwise
     """
-    logger.info(f"Separating images from ImageList")
-
     # Create a zip file of images from the ImageList
     zip_path = image_list.zipped(logger)
 
@@ -184,8 +182,8 @@ def call_separate_server(
             }
 
             logger.info("Request to separator service")
-            logger.info(f"url: {url}")
-            logger.info(f"headers: {headers}")
+            logger.debug(f"url: {url}")
+            logger.debug(f"headers: {headers}")
 
             # Make POST request with multipart/form-data
             response = requests.post(url, files=file_dict, headers=headers)
