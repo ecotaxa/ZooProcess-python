@@ -655,8 +655,7 @@ def add_background_for_instrument(
     return for_all[0]
 
 
-BASE_DIR = "/mnt/zooscan_pool/zooscan/remote/complex/piqv/plankton/zooscan_monitoring/Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/Zooscan_scan/_work/jb19790620_tot_1"
-PATH_SEP = ":"
+API_PATH_SEP = ":"
 MSK_SUFFIX_TO_API = "_mask.gz"
 MSK_SUFFIX_FROM_API = "_mask.png"
 SEG_SUFFIX_FROM_API = "_seg.png"
@@ -705,20 +704,26 @@ def get_vignettes() -> VignetteResponse:
     )
     api_vignettes = []
     for a_multiple in multiples:
-        multiples = f"{V10_THUMBS_SUBDIR}{PATH_SEP}multiples"
-        masks = f"{V10_THUMBS_SUBDIR}{PATH_SEP}multiples_vis"
-        original = multiples + PATH_SEP + a_multiple
         # Segmenter
         sep_img_path = multiples_to_check_dir / a_multiple
         assert sep_img_path.is_file()
         _, rois = segment_mask(processor, sep_img_path)
         segmenter_output = []
         for i in range(len(rois)):
-            segmenter_output.append(original + f"_{i}{SEG_SUFFIX_FROM_API}")
+            seg_name = (
+                V10_THUMBS_MULTIPLES_SUBDIR
+                + API_PATH_SEP
+                + a_multiple
+                + f"_{i}{SEG_SUFFIX_FROM_API}"
+            )
+            segmenter_output.append(seg_name)
         a_multiple = VignetteData(
-            scan=original,
-            matrix=masks + PATH_SEP + a_multiple + MSK_SUFFIX_TO_API,
-            mask=masks + PATH_SEP + a_multiple,
+            scan=V10_THUMBS_MULTIPLES_SUBDIR + API_PATH_SEP + a_multiple,
+            matrix=V10_THUMBS_TO_CHECK_SUBDIR
+            + API_PATH_SEP
+            + a_multiple
+            + MSK_SUFFIX_TO_API,
+            mask=V10_THUMBS_TO_CHECK_SUBDIR + API_PATH_SEP + a_multiple,
             vignettes=segmenter_output,
         )
         api_vignettes.append(a_multiple)
@@ -741,15 +746,14 @@ def segment_mask(
 def get_a_vignette(img_path: str) -> StreamingResponse:
     """Get one vignette"""
     logger.info(f"get_a_vignette: {img_path}")
-    img_path = img_path.replace(PATH_SEP, "/")
+    img_path = img_path.replace(API_PATH_SEP, "/")
+    multiples, processor, multiples_dir, multiples_to_check_dir = (
+        last_processed_vignettes()
+    )
     if img_path.endswith(SEG_SUFFIX_FROM_API):
         img_path = img_path[: -len(SEG_SUFFIX_FROM_API)]
         img_path, seg_num = img_path.rsplit("_", 1)
         multiple_name = img_path.rsplit("/", 1)[1]
-        img_file = Path(BASE_DIR + "/" + img_path)
-        multiples, processor, multiples_dir, multiples_to_check_dir = (
-            last_processed_vignettes()
-        )
         sep_img_path = multiples_to_check_dir / multiple_name
         assert sep_img_path.is_file(), f"Not a file: {sep_img_path}"
         sep_img, rois = segment_mask(processor, sep_img_path)
@@ -762,11 +766,18 @@ def get_a_vignette(img_path: str) -> StreamingResponse:
         save_lossless_small_image(vignette_in_vignette, 2400, tmp_png_path)
         img_file = Path(tmp_png_path)
     elif img_path.endswith(MSK_SUFFIX_TO_API):
-        img_path = BASE_DIR + "/" + img_path[: -len(MSK_SUFFIX_TO_API)]
+        multiple_name = img_path[: -len(MSK_SUFFIX_TO_API)].rsplit("/", 1)[1]
+        img_path = multiples_to_check_dir / multiple_name
         temp_file = get_gzipped_matrix_from_mask(img_path)
         img_file = Path(temp_file.name)
     else:
-        img_file = Path(BASE_DIR + "/" + img_path)
+        multiple_name = img_path.rsplit("/", 1)[1]
+        if img_path.startswith(V10_THUMBS_TO_CHECK_SUBDIR):
+            img_file = multiples_to_check_dir / multiple_name
+        elif img_path.startswith(V10_THUMBS_MULTIPLES_SUBDIR):
+            img_file = multiples_dir / multiple_name
+        else:
+            logger.error(f"Unknown img_path: {img_path}")
 
     file_like, length, media_type = get_stream(img_file)
     headers = {"content-length": str(length)}
@@ -801,10 +812,15 @@ def get_gzipped_matrix_from_mask(img_path):
 async def update_a_vignette(img_path: str, file: UploadFile = File(...)) -> dict:
     """Update a vignette with an image from the request body"""
     logger.info(f"update_a_vignette: {img_path}")
-    img_path = img_path.replace(PATH_SEP, "/")
-    if img_path.endswith(MSK_SUFFIX_FROM_API):
-        img_path = img_path[: -len(MSK_SUFFIX_FROM_API)]
-    img_file = Path(BASE_DIR + "/" + img_path)
+    img_path = img_path.replace(API_PATH_SEP, "/")
+    assert img_path.startswith(V10_THUMBS_TO_CHECK_SUBDIR)  # Cannot save elsewhere
+    assert img_path.endswith(MSK_SUFFIX_FROM_API)
+    img_path = img_path[: -len(MSK_SUFFIX_FROM_API)]
+    img_name = img_path.rsplit("/", 1)[1]
+    multiples, processor, multiples_dir, multiples_to_check_dir = (
+        last_processed_vignettes()
+    )
+    img_file = multiples_to_check_dir / img_name
 
     # Ensure the directory exists
     img_file.parent.mkdir(parents=True, exist_ok=True)
@@ -813,7 +829,7 @@ async def update_a_vignette(img_path: str, file: UploadFile = File(...)) -> dict
     content = await file.read()
 
     # Check if the file is a PNG (might have alpha channel)
-    if file.content_type == "image/png" or img_path.lower().endswith(".png"):
+    if file.content_type == "image/png" or img_name.lower().endswith(".png"):
         try:
             # Use PIL to open the image from bytes
             img = Image.open(io.BytesIO(content))
@@ -823,7 +839,7 @@ async def update_a_vignette(img_path: str, file: UploadFile = File(...)) -> dict
                 img.mode == "P" and "transparency" in img.info
             ):
                 # Convert to RGB to remove alpha channel
-                logger.info(f"Removing alpha channel from PNG image: {img_path}")
+                logger.info(f"Removing alpha channel from PNG image: {img_name}")
                 img = img.convert("RGB")
 
                 # Save the image without alpha channel
@@ -834,6 +850,7 @@ async def update_a_vignette(img_path: str, file: UploadFile = File(...)) -> dict
             logger.error(f"Error processing PNG image: {e}")
 
     # Save the file
+    logger.info(f"Saving mask into {img_file}")
     async with aiofiles.open(img_file, "wb") as out_file:
         await out_file.write(content)
 
