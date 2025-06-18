@@ -8,7 +8,6 @@ from ZooProcess_lib.img_tools import (
     load_image,
     convert_image_to_8bit_flattened,
     saveimage,
-    convert_image_to_8bit,
 )
 from helpers.tools import find_directory_with_zooscan_back
 from logger import logger
@@ -79,7 +78,7 @@ def compare_image_directories(to_separate: Path, separated: Path) -> None:
 def compare_separated_or_not(processor, filename, not_sep_path, sep_path):
     not_sep_img = load_image(not_sep_path, cv2.IMREAD_GRAYSCALE)
     rois_original, _ = processor.segmenter.find_ROIs_in_cropped_image(not_sep_img, 2400)
-    sep_img = load_image(sep_path, img_type=cv2.IMREAD_UNCHANGED)
+    sep_img = load_image(sep_path, cv2.IMREAD_COLOR_BGR)
     # Replace all pixels with RED_COLOR with white
     # saveimage(sep_img, "/tmp/t.jpg")
     if len(sep_img.shape) == 3:

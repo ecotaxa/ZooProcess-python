@@ -12,6 +12,7 @@ from logger import logger
 from providers.utils import ImageList
 
 BGR_RED_COLOR = (0, 0, 255)
+RGB_RED_COLOR = (255, 0, 0)
 
 LS_PATH = Path(
     "/mnt/pgssd2t/zooscan_lov/Zooscan_apero_tha_bioness_2_sn033/Zooscan_scan/_work/apero2023_tha_bioness_013_st46_d_n5_d2_2_sur_2_1/multiples_to_separate"
@@ -122,12 +123,7 @@ def build_separated_image(
     # Construct the full path from base_dir and filename
     full_path = base_dir / filename
     # Open the image from the constructed path
-    image = load_image(full_path)
-    # Convert grayscale image to color for drawing
-    if len(image.shape) == 2:
-        color_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    else:
-        color_image = image.copy()
+    color_image = load_image(full_path, cv2.IMREAD_COLOR_BGR)
     # Draw coords in the image
     # coords is a list of two lists: [x-coords], [y-coords]
     assert len(coords) == 2

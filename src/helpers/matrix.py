@@ -2,13 +2,14 @@
 Helper functions for matrix operations.
 """
 
-import numpy as np
-import struct
 import gzip
-from pathlib import Path
+import struct
+import zlib
+
+import numpy as np
 
 
-def save_matrix_as_binary(matrix: np.ndarray, filename: str) -> None:
+def save_matrix_as_gzip(matrix: np.ndarray, filename: str) -> None:
     """
     Save a binary matrix to a gzip-compressed file.
 
@@ -50,19 +51,16 @@ def save_matrix_as_binary(matrix: np.ndarray, filename: str) -> None:
         f.write(buffer)
 
 
-def load_matrix_from_binary(filename: str) -> np.ndarray:
+def _construct_matrix_from_data(data: bytes) -> np.ndarray:
     """
-    Load a binary matrix from a gzip-compressed file.
+    Construct a matrix from decompressed binary data.
 
     Args:
-        filename: The name of the input file
+        data: Decompressed binary data containing the matrix
 
     Returns:
         A 2D numpy array containing the matrix data
     """
-    with gzip.open(filename, "rb") as f:
-        data = f.read()
-
     # Extract dimensions
     width, height = struct.unpack_from("<II", data, 0)
 
@@ -81,3 +79,98 @@ def load_matrix_from_binary(filename: str) -> np.ndarray:
                 matrix[y, x] = True
 
     return matrix
+
+
+def load_matrix_from_gzip(filename: str) -> np.ndarray:
+    """
+    Load a binary matrix from a gzip-compressed file.
+
+    Args:
+        filename: The name of the input file
+
+    Returns:
+        A 2D numpy array containing the matrix data
+    """
+    with gzip.open(filename, "rb") as f:
+        data = f.read()
+
+    return _construct_matrix_from_data(data)
+
+
+def is_valid_compressed_matrix(content: bytes) -> bool:
+    """
+    Check if the given content is a valid gzip or zip-encoded matrix.
+
+    Args:
+        content: Bytes content to validate
+
+    Returns:
+        True if the content is a valid gzip or zip-encoded matrix, False otherwise
+    """
+    try:
+        # Use zlib.decompressobj with wbits=0 (auto)
+        decompressor = zlib.decompressobj(wbits=0)
+        data: bytes = decompressor.decompress(content)
+
+        # Check if we have at least 8 bytes (for width and height)
+        if len(data) >= 8:
+            # Try to extract width and height
+            width, height = struct.unpack_from("<II", data, 0)
+
+            # Calculate expected size based on dimensions
+            row_bytes = (width + 7) // 8
+            expected_size = 8 + height * row_bytes
+
+            # Check if the data size matches exactly the expected size
+            if len(data) == expected_size:
+                return True
+    except Exception as e:
+        # Not a valid gzip matrix, try zip next
+        pass
+
+    return False
+
+
+def load_matrix_from_compressed(content: bytes) -> np.ndarray:
+    """
+    Load a binary matrix from compressed bytes content.
+
+    Args:
+        content: Compressed bytes content containing the matrix data
+
+    Returns:
+        A 2D numpy array containing the matrix data
+
+    This function decompresses the content and extracts the matrix data.
+    The content should be in the same format as expected by is_valid_compressed_matrix:
+    - First 4 bytes: width (uint32, little endian)
+    - Next 4 bytes: height (uint32, little endian)
+    - Remaining bytes: matrix data, where each bit represents a cell in the matrix
+      (1 for true/set, 0 for false/unset), packed into bytes row by row
+    """
+    # Try to decompress the content using different methods
+    data = None
+
+    # Try gzip first
+    try:
+        data = gzip.decompress(content)
+    except Exception:
+        pass
+
+    # If gzip failed, try zlib with different window bits
+    if data is None:
+        try:
+            # Try with gzip header (wbits=16+15)
+            decompressor = zlib.decompressobj(wbits=16 + 15)
+            data = decompressor.decompress(content)
+        except Exception:
+            # Try with raw deflate (wbits=-15)
+            try:
+                decompressor = zlib.decompressobj(wbits=-15)
+                data = decompressor.decompress(content)
+            except Exception:
+                # Try with auto-detect (wbits=0)
+                decompressor = zlib.decompressobj(wbits=0)
+                data = decompressor.decompress(content)
+
+    return _construct_matrix_from_data(data)

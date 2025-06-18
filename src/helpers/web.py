@@ -73,7 +73,7 @@ def raise_501(error_message: str):
 
 class AutoCloseBinaryIO(object):
     """
-    An IO object which closes underlying file pointer when going out of scope.
+    An IO object which closes the underlying file pointer when going out of scope.
     """
 
     def __init__(self, path: str):
@@ -108,14 +108,19 @@ def get_stream(
     fp = AutoCloseBinaryIO(file_path.resolve().as_posix())
     media_type = "text/plain"
     file_name_lower = file_path.name.lower()
-    if file_name_lower.endswith(".jpg"):
-        media_type = "image/jpeg"
-    elif file_name_lower.endswith(".png"):
-        media_type = "image/png"
-    elif file_name_lower.endswith(".tif"):
-        media_type = "image/tiff"
-    elif file_name_lower.endswith(".gif"):
-        media_type = "image/gif"
+    match file_name_lower:
+        case name if name.endswith(".jpg"):
+            media_type = "image/jpeg"
+        case name if name.endswith(".png"):
+            media_type = "image/png"
+        case name if name.endswith(".tif"):
+            media_type = "image/tiff"
+        case name if name.endswith(".gif"):
+            media_type = "image/gif"
+        case name if name.endswith(".gz"):
+            media_type = "application/gzip"
+        case _:
+            pass
     return fp, fp.size(), media_type
 
 
