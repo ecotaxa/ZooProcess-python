@@ -53,7 +53,8 @@ class Job(ABC):
 
         # Create file handler with a filename based on job_id
         log_file = logs_dir / f"job_{self.job_id}.log"
-        file_handler = logging.FileHandler(log_file)
+        # Use mode='w' to clear the log file at job startup
+        file_handler = logging.FileHandler(log_file, mode="w")
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
 

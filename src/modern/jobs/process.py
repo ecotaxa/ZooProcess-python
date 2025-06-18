@@ -187,7 +187,8 @@ class BackgroundAndScanToSegmented(Job):
         if multiples_dir.exists():
             shutil.rmtree(multiples_dir)
         multiples_dir.mkdir(parents=False)
-        classify_all_images_from(self.logger, thumbs_dir, 0.4, multiples_dir)
+        _, error = classify_all_images_from(self.logger, thumbs_dir, 0.4, multiples_dir)
+        assert error is None, error
 
         self.logger.info(f"Separating multiples (auto)")
         # Create an empty 'v10_thumbs/multiples_vis' subdirectory
