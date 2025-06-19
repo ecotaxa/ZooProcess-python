@@ -167,6 +167,46 @@ def get_user_from_db(email: str, db):
     return db.query(User).filter(User.email == email).first()
 
 
+def authenticate_user(email: str, password: str, db) -> Dict:
+    """
+    Authenticate a user with email and password.
+
+    Args:
+        email: The user's email
+        password: The user's password
+        db: The database session
+
+    Returns:
+        A dictionary containing the JWT token
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    # Validate the credentials against the database
+    user = get_user_from_db(email, db)
+
+    if (
+        not user or user.password != password
+    ):  # In a real app, use proper password hashing
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Create user data for the token
+    user_data = {
+        "sub": user.id,
+        "name": user.name,
+        "email": user.email,
+    }
+
+    # Create a JWT token with 30-day expiration
+    token = create_jwt_token(user_data, expires_delta=30 * 24 * 60 * 60)
+
+    return token
+
+
 async def get_current_user_from_credentials(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
