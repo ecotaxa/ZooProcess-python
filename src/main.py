@@ -3,7 +3,7 @@ import shutil
 import typing
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 from fastapi import FastAPI, Depends
 from fastapi.exceptions import RequestValidationError
@@ -22,7 +22,6 @@ from Models import (
     ImageUrl,
     ForInstrumentBackgroundIn,
 )
-from ZooProcess_lib.Processor import Processor
 from helpers.auth import SESSION_COOKIE_NAME, authenticate_user
 from helpers.auth import get_current_user_from_credentials
 from helpers.web import (
@@ -45,13 +44,6 @@ from modern.files import UPLOAD_DIR
 from modern.from_legacy import (
     drives_from_legacy,
     backgrounds_from_legacy_project,
-)
-from modern.ids import THE_SCAN_PER_SUBSAMPLE
-from modern.jobs.process import (
-    LAST_PROCESS,
-    V10_THUMBS_SUBDIR,
-    V10_THUMBS_TO_CHECK_SUBDIR,
-    V10_THUMBS_MULTIPLES_SUBDIR,
 )
 from modern.tasks import JobScheduler
 from routers.images import router as images_router
@@ -209,34 +201,6 @@ def add_background_for_instrument(
     zoo_project.zooscan_back.read()  # Refresh content
     for_all = backgrounds_from_legacy_project(zoo_project, stamp.to_string())
     return for_all[0]
-
-
-def processing_context() -> Tuple[Processor, Path, Path]:
-    """TODO : Temporary until we have full path to subsample"""
-    if LAST_PROCESS is None:
-        raise_500("No last process")
-        assert False
-    zoo_project, sample_name, subsample_name, scan_name = LAST_PROCESS
-    multiples_dir = (
-        zoo_project.zooscan_scan.work.get_sub_directory(
-            subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
-        / V10_THUMBS_SUBDIR
-        / V10_THUMBS_MULTIPLES_SUBDIR
-    )
-    multiples_to_check_dir = (
-        zoo_project.zooscan_scan.work.get_sub_directory(
-            subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
-        / V10_THUMBS_SUBDIR
-        / V10_THUMBS_TO_CHECK_SUBDIR
-    )
-    logger.info(f"{zoo_project}, {sample_name}, {subsample_name}, {scan_name}")
-    processor = Processor.from_legacy_config(
-        zoo_project.zooscan_config.read(),
-        zoo_project.zooscan_config.read_lut(),
-    )
-    return processor, multiples_dir, multiples_to_check_dir
 
 
 @app.post("/login")

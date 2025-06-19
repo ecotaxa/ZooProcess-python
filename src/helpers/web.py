@@ -1,4 +1,6 @@
+import os
 import sys
+import tempfile
 import time
 import traceback
 from os import fstat
@@ -71,13 +73,18 @@ def raise_501(error_message: str):
     raise HTTPException(status_code=501, detail=error_message)
 
 
+TEMP_PATH_PRFX = tempfile.gettempdir() + os.sep + tempfile.gettempprefix()
+
+
 class AutoCloseBinaryIO(object):
     """
     An IO object which closes the underlying file pointer when going out of scope.
+    If the file is a temp one, also delete it when done with streaming.
     """
 
     def __init__(self, path: str):
         self.fd: BinaryIO = open(path, "rb")
+        self.to_unlink = path if path.startswith(TEMP_PATH_PRFX) else None
 
     def size(self) -> int:
         return fstat(self.fd.fileno()).st_size
@@ -94,6 +101,8 @@ class AutoCloseBinaryIO(object):
         except StopIteration:
             self.fd.close()
             self.fd = None  # type:ignore
+            if self.to_unlink is not None:
+                os.unlink(self.to_unlink)
             raise StopIteration()
 
     def __del__(self):
