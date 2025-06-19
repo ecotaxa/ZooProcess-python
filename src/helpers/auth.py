@@ -167,7 +167,7 @@ def get_user_from_db(email: str, db):
     return db.query(User).filter(User.email == email).first()
 
 
-def authenticate_user(email: str, password: str, db) -> Dict:
+def authenticate_user(email: str, password: str, db) -> str:
     """
     Authenticate a user with email and password.
 
