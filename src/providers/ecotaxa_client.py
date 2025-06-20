@@ -13,7 +13,7 @@ def get_project(
 
     url = f"{api_base_url}/projects/{project_id}"
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=(10, 600))
     response.raise_for_status()  # Raises exception for 4XX/5XX status codes
 
     # Convert response data to ProjectModel

@@ -108,7 +108,9 @@ def call_classify_server(
             logger.debug(f"headers: {headers}")
 
             # Make POST request with multipart/form-data
-            response = requests.post(url, files=file_dict, headers=headers)
+            response = requests.post(
+                url, files=file_dict, headers=headers, timeout=(10, 600)
+            )
             logger.debug(f"Response status: {response.status_code}")
 
             if response.ok:
