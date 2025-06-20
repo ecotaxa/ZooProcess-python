@@ -6,7 +6,7 @@ from typing import List
 
 from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
-from ZooProcess_lib.ROI import ROI
+from ZooProcess_lib.ROI import ROI, unique_visible_key
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
 from legacy.ids import measure_file_name
@@ -188,13 +188,12 @@ class BackgroundAndScanToSegmented(Job):
 def generate_box_measures(rois: List[ROI], scan_name: str, meta_file: Path) -> None:
     """Keep track of box measures, the vignettes names are indexes inside this list"""
     rows = []
-    index = 1
     for a_roi in rois:
         bx, by = a_roi.x, a_roi.y
         height, width = a_roi.mask.shape
         rows.append(
             {
-                "": index,
+                "": unique_visible_key(a_roi),
                 "Label": scan_name,
                 "BX": bx,
                 "BY": by,
@@ -202,7 +201,6 @@ def generate_box_measures(rois: List[ROI], scan_name: str, meta_file: Path) -> N
                 "Height": height,
             }
         )
-        index += 1
     out = Measurements()
     out.header_row = ["", "Label", "BX", "BY", "Width", "Height"]
     out.data_rows = rows
