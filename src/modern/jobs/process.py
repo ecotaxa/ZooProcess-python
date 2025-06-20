@@ -4,9 +4,12 @@ import shutil
 from pathlib import Path
 from typing import List
 
+from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
+from ZooProcess_lib.ROI import ROI
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
+from legacy.ids import measure_file_name
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
@@ -44,7 +47,7 @@ class BackgroundAndScanToSegmented(Job):
         Pre-requisites:
             - 2 RAW backgrounds
             - 1 RAW scan
-        Process a scan from its background until first segmentation.
+        Process a scan from its background until first segmentation and automatic separation.
         """
         prj_path = self.zoo_project.path
         # Mark the job as started
@@ -139,13 +142,20 @@ class BackgroundAndScanToSegmented(Job):
             self.scan_name,
         )
 
+        # Index generation
+        meta_dir = work_dir / V10_METADATA_SUBDIR
+        os.makedirs(meta_dir, exist_ok=True)
+        generate_box_measures(
+            rois, self.scan_name, meta_dir / measure_file_name(self.subsample_name)
+        )
+
         self.logger.info(f"Determining multiples")
-        # First step, send all images to the multiples classifier
+        # First ML step, send all images to the multiples classifier
         maybe_multiples, error = classify_all_images_from(self.logger, thumbs_dir, 0.4)
         assert error is None, error
 
         self.logger.info(f"Separating multiples (auto)")
-        # Second step, send potential multiples to the separator
+        # Second ML step, send potential multiples to the separator
         multiples_vis_dir = work_dir / V10_THUMBS_TO_CHECK_SUBDIR
         if multiples_vis_dir.exists():
             shutil.rmtree(multiples_vis_dir)
@@ -173,3 +183,27 @@ class BackgroundAndScanToSegmented(Job):
                 the_work_file, Path
             ), f"Unexpected {WRK_MSK1} (not a file?)!"
             os.remove(the_work_file)
+
+
+def generate_box_measures(rois: List[ROI], scan_name: str, meta_file: Path) -> None:
+    """Keep track of box measures, the vignettes names are indexes inside this list"""
+    rows = []
+    index = 1
+    for a_roi in rois:
+        bx, by = a_roi.x, a_roi.y
+        height, width = a_roi.mask.shape
+        rows.append(
+            {
+                "": index,
+                "Label": scan_name,
+                "BX": bx,
+                "BY": by,
+                "Width": width,
+                "Height": height,
+            }
+        )
+        index += 1
+    out = Measurements()
+    out.header_row = ["", "Label", "BX", "BY", "Width", "Height"]
+    out.data_rows = rows
+    out.write(meta_file)

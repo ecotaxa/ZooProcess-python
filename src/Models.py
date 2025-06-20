@@ -305,7 +305,7 @@ class TaskReq(BaseModel):
 
 class TaskRsp(TaskReq):
     id: str
-    log: Optional[str]  # url to log file
+    log: Optional[str]  # last user log line produced
     percent: int
     status: Literal["PENDING", "RUNNING", "FINISHED", "FAILED"]
     createdAt: datetime

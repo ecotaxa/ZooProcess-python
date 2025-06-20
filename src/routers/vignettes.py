@@ -10,22 +10,29 @@ from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
 from Models import VignetteResponse, VignetteData
+from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ROI import ROI
-from ZooProcess_lib.img_tools import load_image, save_lossless_small_image
+from ZooProcess_lib.img_tools import (
+    load_image,
+    save_lossless_small_image,
+    borders_of_original,
+)
 from helpers.matrix import (
     save_matrix_as_gzip,
     is_valid_compressed_matrix,
     load_matrix_from_compressed,
 )
-from helpers.web import get_stream, raise_422
+from helpers.web import get_stream, raise_422, raise_500
 from img_proc.drawing import apply_matrix_onto
+from legacy.ids import measure_file_name
 from local_DB.db_dependencies import get_db
 from logger import logger
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.jobs.process import (
     V10_THUMBS_SUBDIR,
     V10_THUMBS_TO_CHECK_SUBDIR,
+    V10_METADATA_SUBDIR,
 )
 from providers.ML_multiple_separator import BGR_RED_COLOR, RGB_RED_COLOR
 from .utils import validate_path_components
@@ -43,7 +50,7 @@ router = APIRouter(
 
 def processing_context(
     zoo_project=None, sample_name=None, subsample_name=None
-) -> Tuple[Processor, Path, Path]:
+) -> Tuple[Processor, Path, Path, Path]:
     """Get processing context for a subsample
 
     Args:
@@ -56,6 +63,7 @@ def processing_context(
             - processor: Processor object
             - thumbs_dir: Path to the thumbs directory
             - multiples_to_check_dir: Path to the multiples_to_check directory
+            - meta_dir: Path to the v10 metdata directory
     """
     scan_name = scan_name_from_subsample_name(subsample_name)
 
@@ -64,12 +72,13 @@ def processing_context(
     )
     thumbs_dir = subsample_dir / V10_THUMBS_SUBDIR
     multiples_to_check_dir = subsample_dir / V10_THUMBS_TO_CHECK_SUBDIR
+    meta_dir = subsample_dir / V10_METADATA_SUBDIR
     logger.info(f"{zoo_project}, {sample_name}, {subsample_name}, {scan_name}")
     processor = Processor.from_legacy_config(
         zoo_project.zooscan_config.read(),
         zoo_project.zooscan_config.read_lut(),
     )
-    return processor, thumbs_dir, multiples_to_check_dir
+    return processor, thumbs_dir, multiples_to_check_dir, meta_dir
 
 
 @router.get("/vignettes/{project_hash}/{sample_hash}/{subsample_hash}")
@@ -94,7 +103,7 @@ async def get_vignettes(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-    processor, thumbs_dir, multiples_to_check_dir = processing_context(
+    processor, thumbs_dir, multiples_to_check_dir, _ = processing_context(
         zoo_project, sample_name, subsample_name
     )
     assert multiples_to_check_dir is not None
@@ -160,7 +169,7 @@ async def get_a_vignette(
         db, project_hash, sample_hash, subsample_hash
     )
     img_path = img_path.replace(API_PATH_SEP, "/")
-    processor, thumbs_dir, multiples_to_check_dir = processing_context(
+    processor, thumbs_dir, multiples_to_check_dir, _ = processing_context(
         zoo_project, sample_name, subsample_name
     )
     assert processor.config is not None
@@ -207,6 +216,44 @@ async def get_a_vignette(
     return StreamingResponse(file_like, headers=headers, media_type=media_type)
 
 
+def check_mask_sanity(
+    scan_img: np.ndarray,
+    mask: np.ndarray,
+    subsample_name: str,
+    img_basename: str,
+    meta_dir: Path,
+):
+    """Ensure we are in sync with global image for future re-generation"""
+    measure = Measurements().read(meta_dir / measure_file_name(subsample_name))
+    line_for_image = measure.find(img_basename)
+    if line_for_image is None:
+        raise_500("Could not locate image from its mask")
+        assert False
+    top, left, bottom, right = borders_of_original(scan_img)
+    height, width = bottom - top, right - left
+    meas_width, meas_height = int(line_for_image["Width"]), int(
+        line_for_image["Height"]
+    )
+    if meas_width != width or meas_height != height:
+        raise_500(
+            f"Mismatch between measures {meas_width}x{meas_height} and vignette {width}x{height}"
+        )
+    # Clear the mask outside the boundaries
+    mask_height, mask_width = mask.shape[:2]
+    # Clear above top
+    if top > 0:
+        mask[:top, :] = False
+    # Clear below bottom
+    if bottom < mask_height:
+        mask[bottom:, :] = False
+    # Clear to the left of left
+    if left > 0:
+        mask[:, :left] = False
+    # Clear to the right of right
+    if right < mask_width:
+        mask[:, right:] = False
+
+
 @router.post("/vignette_mask/{project_hash}/{sample_hash}/{subsample_hash}/{img_path}")
 async def update_a_vignette_mask(
     project_hash: str,
@@ -240,8 +287,8 @@ async def update_a_vignette_mask(
     assert img_path.startswith(V10_THUMBS_TO_CHECK_SUBDIR)  # Convention with UI
     assert img_path.endswith(MSK_SUFFIX_TO_API)
     img_path = img_path[: -len(MSK_SUFFIX_TO_API)]
-    img_name = img_path.rsplit("/", 1)[1]
-    processor, thumbs_dir, multiples_to_check_dir = processing_context(
+    _, img_name = img_path.rsplit("/", 1)
+    processor, thumbs_dir, multiples_to_check_dir, meta_dir = processing_context(
         zoo_project, sample_name, subsample_name
     )
     assert processor.config is not None
@@ -252,9 +299,11 @@ async def update_a_vignette_mask(
         raise_422("Invalid compressed matrix")
         assert False
     mask = load_matrix_from_compressed(content)
-    multiple_path = thumbs_dir / img_name
-    multiple_img = load_image(multiple_path, cv2.IMREAD_COLOR_RGB)
-    masked_img = apply_matrix_onto(multiple_img, mask)
+    scan_path = thumbs_dir / img_name
+    scan_img = load_image(scan_path, cv2.IMREAD_GRAYSCALE)
+    check_mask_sanity(scan_img, mask, subsample_name, img_name[:-4], meta_dir)
+    scan_img_rgb = cv2.cvtColor(scan_img, cv2.COLOR_GRAY2RGB)
+    masked_img = apply_matrix_onto(scan_img_rgb, mask)
     multiple_masked_path = multiples_to_check_dir / img_name
     # Save the file
     logger.info(f"Saving mask into {multiple_masked_path}")
