@@ -1,12 +1,12 @@
 import shutil
+import tempfile
 from logging import Logger
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, NamedTuple
 
 import requests
 
 from Models import MultiplesClassifierRsp
-from logger import logger
 from providers.utils import ImageList
 
 LS_VIGNETTES_PATH = Path(
@@ -17,9 +17,14 @@ SERVER = "http://localhost:55001/"  # Docker image from instructions at https://
 BASE_URI = "v2/models/zooprocess_multiple_classifier/predict/"
 
 
+class NameAndScore(NamedTuple):
+    name: str
+    score: float
+
+
 def classify_all_images_from(
-    logger: Logger, img_path: Path, min_score: float, multiples_path: Path
-) -> Tuple[Optional[MultiplesClassifierRsp], Optional[str]]:
+    logger: Logger, img_path: Path, min_score: float
+) -> Tuple[List[NameAndScore], Optional[str]]:
     """
     Process multiple images using the classifier service and parse the JSON responses.
 
@@ -27,11 +32,10 @@ def classify_all_images_from(
         logger: Logger instance
         min_score: Minimum classification score, images above this score are discarded
         img_path: Directory containing the images
-        multiples_path: Directory where images considered as probable multiples will be copied
 
     Returns:
-        List of tuples, each containing:
-        - SeparationResponse object parsed from the JSON response
+        A tuple with:
+        - list of (Vignette name, Vignette score)
         - Error message if any, None otherwise
     """
     logger.info(f"Classifying images for multiples in: {img_path}")
@@ -45,20 +49,17 @@ def classify_all_images_from(
 
     if not separation_response:
         logger.error(f"Failed to process {zip_path}: {error}")
-        return separation_response, error
+        return [], error
 
     logger.info(f"Successfully processed {zip_path}")
     nb_predictions = len(separation_response.scores)
     logger.info(f"Found {nb_predictions} predictions")
     above_threshold = [
-        assoc[1]
-        for assoc in zip(separation_response.scores, separation_response.names)
-        if assoc[0] > min_score
+        NameAndScore(assoc[0], assoc[1])
+        for assoc in zip(separation_response.names, separation_response.scores)
+        if assoc[1] > min_score
     ]
-    use_classifications(img_path, multiples_path, above_threshold)
-
-    logger.info(f"Copied {len(above_threshold)} images into {multiples_path}")
-    return separation_response, error
+    return above_threshold, error
 
 
 def use_classifications(
@@ -146,7 +147,12 @@ def call_classify_server(
 
 
 def main():
-    results = classify_all_images_from(logger, LS_VIGNETTES_PATH, 0.5, Path("/tmp"))
+    from logger import logger  # Don't pollute global scope
+
+    multiples_path = Path(tempfile.mkdtemp("maybe_multiples"))
+    results, _ = classify_all_images_from(logger, LS_VIGNETTES_PATH, 0.5)
+    use_classifications(LS_VIGNETTES_PATH, multiples_path, [s.name for s in results])
+    logger.info(f"Copied {len(results)} images into {multiples_path}")
 
 
 if __name__ == "__main__":

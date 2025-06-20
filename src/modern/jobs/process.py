@@ -1,11 +1,9 @@
 # Process a scan from its background until segmentation
 import os
-import pickle
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List
 
-from config_rdr import config
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
@@ -19,48 +17,11 @@ from providers.ML_multiple_separator import (
 )
 from providers.utils import ImageList
 
-V10_THUMBS_SUBDIR = "v10_thumbs"
-V10_THUMBS_MULTIPLES_SUBDIR = "multiples"
-V10_THUMBS_TO_CHECK_SUBDIR = "multiples_vis"
-
-# Yuk, for ensuring it works
-LAST_PROCESS: Optional[Tuple[ZooscanProjectFolder, str, str, str]] = None
-
-
-def _get_last_process_path() -> Path:
-    """Get the path to the LAST_PROCESS pickle file."""
-    logs_dir = Path(config.WORKING_DIR) / "logs"
-    logs_dir.mkdir(exist_ok=True, parents=True)
-    return logs_dir / "last_process.pkl"
-
-
-def save_last_process():
-    """Save LAST_PROCESS to a pickle file."""
-    global LAST_PROCESS
-    if LAST_PROCESS is None:
-        return
-
-    try:
-        with open(_get_last_process_path(), "wb") as f:
-            pickle.dump(LAST_PROCESS, f)
-    except (pickle.PickleError, IOError) as e:
-        print(f"Error saving LAST_PROCESS: {e}")
-
-
-def load_last_process():
-    """Load LAST_PROCESS from a pickle file if it exists."""
-    global LAST_PROCESS
-    path = _get_last_process_path()
-    if path.exists():
-        try:
-            with open(path, "rb") as f:
-                LAST_PROCESS = pickle.load(f)
-        except (pickle.PickleError, IOError) as e:
-            print(f"Error loading LAST_PROCESS: {e}")
-
-
-# Load LAST_PROCESS at module initialization
-load_last_process()
+V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
+V10_THUMBS_TO_CHECK_SUBDIR = (
+    "v10_multiples"  # Where and how ML determined we should separate, RGB PNGs
+)
+V10_METADATA_SUBDIR = "v10_meta"  # For indexes
 
 
 class BackgroundAndScanToSegmented(Job):
@@ -73,9 +34,6 @@ class BackgroundAndScanToSegmented(Job):
         self.sample_name = sample_name
         self.subsample_name = subsample_name
         self.scan_name = scan_name_from_subsample_name(subsample_name)
-        global LAST_PROCESS
-        LAST_PROCESS = (zoo_project, sample_name, subsample_name, self.scan_name)
-        save_last_process()
         # Image inputs
         self.raw_scan: Path = Path("xyz")  # Just to keep mypy happy
         self.bg_scans: List[Path] = []
@@ -166,12 +124,12 @@ class BackgroundAndScanToSegmented(Job):
 
         # Thumbnail generation
         self.logger.info(f"Extracting")
-        thumbs_dir = (
-            self.zoo_project.zooscan_scan.work.get_sub_directory(
-                self.subsample_name, THE_SCAN_PER_SUBSAMPLE
-            )
-            / V10_THUMBS_SUBDIR
+        work_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
+            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
+        thumbs_dir = work_dir / V10_THUMBS_SUBDIR
+        if thumbs_dir.exists():
+            shutil.rmtree(thumbs_dir)
         os.makedirs(thumbs_dir, exist_ok=True)
         processor.extractor.extract_all_with_border_to_dir(
             scan_without_background,
@@ -182,21 +140,17 @@ class BackgroundAndScanToSegmented(Job):
         )
 
         self.logger.info(f"Determining multiples")
-        # Create an empty 'v10_thumbs/multiples' subdirectory
-        multiples_dir = thumbs_dir / V10_THUMBS_MULTIPLES_SUBDIR
-        if multiples_dir.exists():
-            shutil.rmtree(multiples_dir)
-        multiples_dir.mkdir(parents=False)
-        _, error = classify_all_images_from(self.logger, thumbs_dir, 0.4, multiples_dir)
+        # First step, send all images to the multiples classifier
+        maybe_multiples, error = classify_all_images_from(self.logger, thumbs_dir, 0.4)
         assert error is None, error
 
         self.logger.info(f"Separating multiples (auto)")
-        # Create an empty 'v10_thumbs/multiples_vis' subdirectory
-        multiples_vis_dir = thumbs_dir / V10_THUMBS_TO_CHECK_SUBDIR
+        # Second step, send potential multiples to the separator
+        multiples_vis_dir = work_dir / V10_THUMBS_TO_CHECK_SUBDIR
         if multiples_vis_dir.exists():
             shutil.rmtree(multiples_vis_dir)
         multiples_vis_dir.mkdir(parents=False)
-        image_list = ImageList(multiples_dir)
+        image_list = ImageList(thumbs_dir, [m.name for m in maybe_multiples])
         # Send files by chunks to avoid the operator waiting too long with no feedback
         processed = 0
         to_process = len(image_list.get_images())
@@ -204,7 +158,7 @@ class BackgroundAndScanToSegmented(Job):
             results, error = separate_all_images_from(self.logger, a_chunk)
             assert error is None, error
             assert results is not None  # mypy
-            show_separations_in_images(multiples_dir, results, multiples_vis_dir)
+            show_separations_in_images(thumbs_dir, results, multiples_vis_dir)
             processed += len(a_chunk.get_images())
             self.logger.info(f"Processed {processed}/{to_process} images")
 

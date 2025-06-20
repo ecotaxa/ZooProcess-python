@@ -349,7 +349,7 @@ class VignetteData(BaseModel):
     scan: str  # The vignette output from segmenter, 3 channels image with all chans ==
     matrix: str  # Same size as vignette, 0 = not a separator 1 = separator, gzipped with image header
     mask: Optional[str] = None  # Vignette + red for separator matrix
-    vignettes: Optional[List[str]] = None
+    vignettes: Optional[List[str]] = None  # Sub-vignettes from separating the vignette
 
 
 class VignetteResponse(BaseModel):

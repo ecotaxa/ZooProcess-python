@@ -1,8 +1,13 @@
+import os
 import tempfile
 import zipfile
+import io
 from logging import Logger
 from pathlib import Path
 from typing import List, Optional
+from zipfile import ZipInfo
+
+from PIL import Image
 
 
 class ImageList:
@@ -31,7 +36,7 @@ class ImageList:
                 # Ignore errors when cleaning up
                 pass
 
-    def __init__(self, directory_path: Path, images: Optional[List[Path]] = None):
+    def __init__(self, directory_path: Path, images: Optional[List[str]] = None):
         """
         Initialize the ImageList with a directory path and list all PNG images.
 
@@ -40,7 +45,7 @@ class ImageList:
             images (List[Path], optional): List of image paths to use instead of loading from directory
         """
         self.directory_path = directory_path
-        self.images: List[Path] = []
+        self.images: List[str] = []
         if images is not None:
             self.images = images
         else:
@@ -54,14 +59,16 @@ class ImageList:
         if not self.directory_path.exists() or not self.directory_path.is_dir():
             return
 
-        self.images = sorted(list(self.directory_path.glob("*.png")))
+        self.images = sorted(
+            [x for x in os.listdir(self.directory_path) if x.endswith(".png")]
+        )
 
-    def get_images(self) -> List[Path]:
+    def get_images(self) -> List[str]:
         """
-        Get the list of PNG image paths.
+        Get the list of PNG image names.
 
         Returns:
-            List[Path]: List of paths to PNG images
+            List[str]: List of paths to PNG images
         """
         return self.images
 
@@ -111,6 +118,7 @@ class ImageList:
     def zipped(self, logger: Logger) -> Path:
         """
         Zips flat all images from this ImageList to a temporary zip file.
+        Images are converted to RGB if it's not their format.
         Reuses the same temporary zip file if it already exists.
 
         Args:
@@ -135,20 +143,30 @@ class ImageList:
             )
 
         try:
-            image_paths = self.get_images()
+            image_names = self.get_images()
 
-            if not image_paths:
+            if not image_names:
                 logger.warning("No images found in the ImageList")
                 return ImageList._temp_zip_path
 
             # Create a zip file (overwriting if it already exists)
             with zipfile.ZipFile(ImageList._temp_zip_path, "w") as zip_file:
                 # Add each image to the zip file
-                for image_path in image_paths:
-                    zip_file.write(image_path, arcname=image_path.name)
+                for image_name in image_names:
+                    image_path = self.directory_path / image_name
+                    pil_img = Image.open(image_path)
+                    if pil_img.mode != "RGB":
+                        cvt_pil_img = pil_img.convert("RGB")
+                        img_buffer = io.BytesIO()
+                        cvt_pil_img.save(img_buffer, format="PNG")
+                        img_buffer.seek(0)
+                        # Add the image from the buffer to the zip file
+                        zip_file.writestr(ZipInfo(image_name), img_buffer.getvalue())
+                    else:
+                        zip_file.write(image_path, arcname=image_name)
 
             logger.debug(
-                f"Successfully created zip file with {len(image_paths)} images from ImageList at {ImageList._temp_zip_path}"
+                f"Successfully created zip file with {len(image_names)} images from ImageList at {ImageList._temp_zip_path}"
             )
             return ImageList._temp_zip_path
 
