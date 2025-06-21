@@ -9,7 +9,8 @@ from helpers.web import raise_500, raise_404, raise_501
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
 from logger import logger
-from modern.jobs.process import BackgroundAndScanToSegmented
+from modern.jobs.ManuSepToUpload import ManuallySeparatedToEcoTaxa
+from modern.jobs.ScanToAutoSep import BackgroundAndScanToAutoSeparated
 from modern.tasks import JobScheduler
 from modern.utils import job_to_task_rsp
 from routers.utils import validate_path_components
@@ -64,13 +65,29 @@ def create_task(
         zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
             db, project_hash, sample_hash, subsample_hash
         )
-        new_task = BackgroundAndScanToSegmented(
+        bg2auto_task = BackgroundAndScanToAutoSeparated(
             zoo_project, sample_name, subsample_name
         )
-        JobScheduler.submit(new_task)
+        JobScheduler.submit(bg2auto_task)
         logger.info(f"Processing task: {task}")
-        # Use job_to_task_rsp to create TaskRsp from the job
-        return job_to_task_rsp(new_task)
+        return job_to_task_rsp(bg2auto_task)
+    elif task.exec == "UPLOAD":
+        params = task.params
+        # Note: params["scanId"] is ignored
+        project_hash, sample_hash, subsample_hash = (
+            params["project"],
+            params["sample"],
+            params["subsample"],
+        )
+        zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
+            db, project_hash, sample_hash, subsample_hash
+        )
+        manu2ecotaxa_task = ManuallySeparatedToEcoTaxa(
+            zoo_project, sample_name, subsample_name
+        )
+        JobScheduler.submit(manu2ecotaxa_task)
+        logger.info(f"Processing task: {task}")
+        return job_to_task_rsp(manu2ecotaxa_task)
     raise_501(f"Task.exec not implemented: {task.exec}")
     assert False
 

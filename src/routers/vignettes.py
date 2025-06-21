@@ -28,12 +28,12 @@ from img_proc.drawing import apply_matrix_onto
 from legacy.ids import measure_file_name
 from local_DB.db_dependencies import get_db
 from logger import logger
-from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.filesystem import (
-    V10_THUMBS_SUBDIR,
+    ModernScanFileSystem,
     V10_THUMBS_TO_CHECK_SUBDIR,
-    V10_METADATA_SUBDIR,
+    V10_THUMBS_SUBDIR,
 )
+from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from providers.ML_multiple_separator import BGR_RED_COLOR, RGB_RED_COLOR
 from .utils import validate_path_components
 
@@ -70,15 +70,13 @@ def processing_context(
     subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
         subsample_name, THE_SCAN_PER_SUBSAMPLE
     )
-    thumbs_dir = subsample_dir / V10_THUMBS_SUBDIR
-    multiples_to_check_dir = subsample_dir / V10_THUMBS_TO_CHECK_SUBDIR
-    meta_dir = subsample_dir / V10_METADATA_SUBDIR
     logger.info(f"{zoo_project}, {sample_name}, {subsample_name}, {scan_name}")
     processor = Processor.from_legacy_config(
         zoo_project.zooscan_config.read(),
         zoo_project.zooscan_config.read_lut(),
     )
-    return processor, thumbs_dir, multiples_to_check_dir, meta_dir
+    fs = ModernScanFileSystem(subsample_dir)
+    return processor, fs.cut_dir(), fs.multiples_vis_dir(), fs.meta_dir()
 
 
 @router.get("/vignettes/{project_hash}/{sample_hash}/{subsample_hash}")

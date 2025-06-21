@@ -1,4 +1,4 @@
-# Process a scan from its background until segmentation
+# Process a scan from its background+scan until auto separation
 import os
 import shutil
 from pathlib import Path
@@ -10,11 +10,7 @@ from ZooProcess_lib.ROI import ROI, unique_visible_key
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
 from legacy.ids import measure_file_name
-from modern.filesystem import (
-    V10_THUMBS_SUBDIR,
-    V10_THUMBS_TO_CHECK_SUBDIR,
-    V10_METADATA_SUBDIR,
-)
+from modern.filesystem import ModernScanFileSystem
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
@@ -26,7 +22,7 @@ from providers.ML_multiple_separator import (
 from providers.ImageList import ImageList
 
 
-class BackgroundAndScanToSegmented(Job):
+class BackgroundAndScanToAutoSeparated(Job):
 
     def __init__(
         self, zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
@@ -126,13 +122,11 @@ class BackgroundAndScanToSegmented(Job):
 
         # Thumbnail generation
         self.logger.info(f"Extracting")
-        work_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
+        subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
-        thumbs_dir = work_dir / V10_THUMBS_SUBDIR
-        if thumbs_dir.exists():
-            shutil.rmtree(thumbs_dir)
-        os.makedirs(thumbs_dir, exist_ok=True)
+        fs = ModernScanFileSystem(subsample_dir)
+        thumbs_dir = fs.fresh_empty_cut_dir()
         processor.extractor.extract_all_with_border_to_dir(
             scan_without_background,
             scan_resolution,
@@ -142,7 +136,7 @@ class BackgroundAndScanToSegmented(Job):
         )
 
         # Index generation
-        meta_dir = work_dir / V10_METADATA_SUBDIR
+        meta_dir = fs.meta_dir()
         os.makedirs(meta_dir, exist_ok=True)
         generate_box_measures(
             rois, self.scan_name, meta_dir / measure_file_name(self.subsample_name)
@@ -155,10 +149,7 @@ class BackgroundAndScanToSegmented(Job):
 
         self.logger.info(f"Separating multiples (auto)")
         # Second ML step, send potential multiples to the separator
-        multiples_vis_dir = work_dir / V10_THUMBS_TO_CHECK_SUBDIR
-        if multiples_vis_dir.exists():
-            shutil.rmtree(multiples_vis_dir)
-        multiples_vis_dir.mkdir(parents=False)
+        multiples_vis_dir = fs.fresh_empty_multiples_vis_dir()
         image_list = ImageList(thumbs_dir, [m.name for m in maybe_multiples])
         # Send files by chunks to avoid the operator waiting too long with no feedback
         processed = 0
