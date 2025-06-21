@@ -236,20 +236,20 @@ def check_mask_sanity(
         raise_500(
             f"Mismatch between measures {meas_width}x{meas_height} and vignette {width}x{height}"
         )
-    # Clear the mask outside the boundaries
-    mask_height, mask_width = mask.shape[:2]
-    # Clear above top
-    if top > 0:
-        mask[:top, :] = False
-    # Clear below bottom
-    if bottom < mask_height:
-        mask[bottom:, :] = False
-    # Clear to the left of left
-    if left > 0:
-        mask[:, :left] = False
-    # Clear to the right of right
-    if right < mask_width:
-        mask[:, right:] = False
+    # # Clear the mask outside the boundaries
+    # mask_height, mask_width = mask.shape[:2]
+    # # Clear above top
+    # if top > 0:
+    #     mask[:top, :] = False
+    # # Clear below bottom
+    # if bottom < mask_height:
+    #     mask[bottom:, :] = False
+    # # Clear to the left of left
+    # if left > 0:
+    #     mask[:, :left] = False
+    # # Clear to the right of right
+    # if right < mask_width:
+    #     mask[:, right:] = False
 
 
 @router.post("/vignette_mask/{project_hash}/{sample_hash}/{subsample_hash}/{img_path}")
