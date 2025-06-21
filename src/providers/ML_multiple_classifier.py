@@ -7,7 +7,7 @@ from typing import Tuple, Optional, List, NamedTuple
 import requests
 
 from Models import MultiplesClassifierRsp
-from providers.utils import ImageList
+from providers.ImageList import ImageList
 from config_rdr import config
 
 BASE_URI = "v2/models/zooprocess_multiple_classifier/predict/"

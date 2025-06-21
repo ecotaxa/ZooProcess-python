@@ -23,7 +23,7 @@ from providers.ML_multiple_separator import (
     separate_all_images_from,
     show_separations_in_images,
 )
-from providers.utils import ImageList
+from providers.ImageList import ImageList
 
 
 class BackgroundAndScanToSegmented(Job):

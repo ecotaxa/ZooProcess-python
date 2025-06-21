@@ -1,14 +1,13 @@
 import os
 import sys
 import time
-from pathlib import Path
-from typing import Optional
-from logger import logger
 from functools import wraps
+from pathlib import Path
+
+from logger import logger
 
 
 def nameit(func):
-
     @wraps(func)
     def nameit_wrapper(*args, **kwargs):
         logger.info(f"Running: {func.__name__}")
@@ -19,10 +18,8 @@ def nameit(func):
 
 
 def timeit(func):
-
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
-
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
@@ -60,37 +57,3 @@ def create_folder(path: Path):
 
 def is_file_exist(path):
     return os.path.exists(path)
-
-
-def find_directory_with_zooscan_back(path: Path) -> Optional[Path]:
-    """
-    Climbs up the directory tree from the given path until a directory is found
-    with a subdirectory named "Zooscan_back".
-
-    Args:
-        path: The starting path to search from
-
-    Returns:
-        Path to the directory containing "Zooscan_back" subdirectory, or None if not found
-    """
-    logger.info(f"Searching for directory with Zooscan_back subdirectory from: {path}")
-
-    # Convert to absolute path and resolve any symlinks
-    current_path = path.absolute().resolve()
-
-    # Climb up the directory tree
-    while current_path != current_path.parent:  # Stop at root directory
-        # Check if current directory has a subdirectory named "Zooscan_back"
-        zooscan_back_path = current_path / "Zooscan_back"
-        if zooscan_back_path.is_dir():
-            logger.info(
-                f"Found directory with Zooscan_back subdirectory: {current_path}"
-            )
-            return current_path
-
-        # Move up to parent directory
-        current_path = current_path.parent
-
-    # If we reach the root directory without finding it
-    logger.warning(f"No directory with Zooscan_back subdirectory found from: {path}")
-    return None

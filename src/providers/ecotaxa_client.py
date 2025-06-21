@@ -1,5 +1,5 @@
 import requests
-from .ProjectModel import ProjectModel
+from .EcoTaxaProjectModel import ProjectModel
 
 
 def get_project(
