@@ -146,14 +146,13 @@ def build_separated_image(
 
 
 def call_separate_server(
-    image_or_zip_path: Path, min_mask_score: float = 0.9, bottom_crop: int = 31
+    image_or_zip_path: Path, bottom_crop: int = 31
 ) -> Tuple[Optional[MultiplesSeparatorRsp], Optional[str]]:
     """
     Send an image to the separator service using the BASE_URL and parse the JSON response.
 
     Args:
         image_or_zip_path: Path to the single image file, or zip with images, to send
-        min_mask_score: Minimum score for mask detection (default: 0.9)
         bottom_crop: Number of pixels to crop from the bottom (default: 0)
 
     Returns:
@@ -171,7 +170,7 @@ def call_separate_server(
             }
 
             # Construct URL with query parameters
-            url = f"{SERVER}{BASE_URI}?min_mask_score={min_mask_score}&bottom_crop={bottom_crop}"
+            url = f"{SERVER}{BASE_URI}?bottom_crop={bottom_crop}"
 
             headers = {
                 "accept": "application/json",
@@ -183,7 +182,7 @@ def call_separate_server(
 
             # Make POST request with multipart/form-data
             response = requests.post(
-                url, files=file_dict, headers=headers, timeout=(10, 600)
+                url, files=file_dict, headers=headers, timeout=(10, 1200)
             )
             logger.info(f"Response status: {response.status_code}")
 
