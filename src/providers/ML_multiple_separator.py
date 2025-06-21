@@ -1,3 +1,4 @@
+import os
 import random
 from logging import Logger
 from pathlib import Path
@@ -10,15 +11,11 @@ from Models import MultiplesSeparatorRsp
 from ZooProcess_lib.img_tools import load_image, saveimage
 from logger import logger
 from providers.utils import ImageList
+from config_rdr import config
 
 BGR_RED_COLOR = (0, 0, 255)
 RGB_RED_COLOR = (255, 0, 0)
 
-LS_PATH = Path(
-    "/mnt/pgssd2t/zooscan_lov/Zooscan_apero_tha_bioness_2_sn033/Zooscan_scan/_work/apero2023_tha_bioness_013_st46_d_n5_d2_2_sur_2_1/multiples_to_separate"
-)
-SERVER = "https://inference-walton.cloud.imagine-ai.eu/system/services/zooprocess-multiple-separator/exposed/main/"  # Timeout on zip submission
-SERVER = "http://localhost:55000/"  # Docker image from instructions at https://github.com/ai4os-hub/zooprocess-multiple-separator
 BASE_URI = "v2/models/zooprocess_multiple_separator/predict/"
 
 
@@ -95,7 +92,7 @@ def separate_all_images_from(
     logger.info(f"Successfully processed {zip_path}")
     nb_predictions = len(separation_response.predictions)
     logger.info(f"Got {nb_predictions} predictions")
-
+    os.unlink(zip_path)
     return separation_response, error
 
 
@@ -170,7 +167,7 @@ def call_separate_server(
             }
 
             # Construct URL with query parameters
-            url = f"{SERVER}{BASE_URI}?bottom_crop={bottom_crop}"
+            url = f"{config.SEPARATOR_SERVER}{BASE_URI}?bottom_crop={bottom_crop}"
 
             headers = {
                 "accept": "application/json",
@@ -186,32 +183,29 @@ def call_separate_server(
             )
             logger.info(f"Response status: {response.status_code}")
 
-            if response.ok:
-                try:
-                    # Parse the JSON response
-                    response_data = response.json()
-
-                    # Create a SeparationResponse object from the JSON
-                    separation_response = MultiplesSeparatorRsp(**response_data)
-
-                    # Log success
-                    logger.info(
-                        f"Successfully parsed separation response for {image_or_zip_path}"
-                    )
-                    logger.info(
-                        f"Found {len(separation_response.predictions)} predictions"
-                    )
-
-                    return separation_response, None
-
-                except Exception as e:
-                    error_msg = f"Error parsing JSON response: {str(e)}"
-                    logger.error(error_msg)
-                    return None, error_msg
-            else:
+            if not response.ok:
                 error_msg = (
                     f"Request failed: {response.status_code} - {response.reason}"
                 )
+                logger.error(error_msg)
+                return None, error_msg
+            try:
+                # Parse the JSON response
+                response_data = response.json()
+
+                # Create a SeparationResponse object from the JSON
+                separation_response = MultiplesSeparatorRsp(**response_data)
+
+                # Log success
+                logger.info(
+                    f"Successfully parsed separation response for {image_or_zip_path}"
+                )
+                logger.info(f"Found {len(separation_response.predictions)} predictions")
+
+                return separation_response, None
+
+            except Exception as e:
+                error_msg = f"Error parsing JSON response: {str(e)}"
                 logger.error(error_msg)
                 return None, error_msg
 
@@ -246,18 +240,3 @@ def do_separation_file_by_file(
     logger.info(f"Successfully processed {success_count} out of {len(results)} images")
 
     return results
-
-
-def main():
-    image_list = ImageList(LS_PATH)
-    results, error = separate_all_images_from(logger, image_list)
-    if results is not None:
-        # Create 'separated' subdirectory if it doesn't exist
-        separated_dir = LS_PATH / "separated"
-        if not separated_dir.exists():
-            separated_dir.mkdir(parents=False)
-        show_separations_in_images(LS_PATH, results, separated_dir)
-
-
-if __name__ == "__main__":
-    main()

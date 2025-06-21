@@ -14,7 +14,7 @@ def get_download_url(file_id: str) -> str:
     Returns:
         str: The full URL to download the file
     """
-    return f"{config.public_url}/download/{file_id}"
+    return f"{config.PUBLIC_URL}/download/{file_id}"
 
 
 def is_download_url(url: str) -> bool:
@@ -27,7 +27,7 @@ def is_download_url(url: str) -> bool:
     Returns:
         bool: True if the URL is a download URL, False otherwise
     """
-    return url.startswith(f"{config.public_url}/download/")
+    return url.startswith(f"{config.PUBLIC_URL}/download/")
 
 
 def extract_file_id_from_download_url(url: str) -> str:
@@ -43,7 +43,7 @@ def extract_file_id_from_download_url(url: str) -> str:
     if not is_download_url(url):
         raise ValueError(f"Not a download URL: {url}")
 
-    return url.replace(f"{config.public_url}/download/", "")
+    return url.replace(f"{config.PUBLIC_URL}/download/", "")
 
 
 def generate_scan_url(project_hash: str, sample_hash: str, subsample_hash: str) -> str:
@@ -58,7 +58,7 @@ def generate_scan_url(project_hash: str, sample_hash: str, subsample_hash: str) 
     Returns:
         str: The full URL to the scan
     """
-    return f"{config.public_url}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/{SCAN_JPEG}"
+    return f"{config.PUBLIC_URL}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/{SCAN_JPEG}"
 
 
 def generate_background_url(project_hash: str, background_date: str) -> str:
@@ -73,7 +73,7 @@ def generate_background_url(project_hash: str, background_date: str) -> str:
         str: The full URL to the background image
     """
     return (
-        f"{config.public_url}/projects/{project_hash}/background/{background_date}.jpg"
+        f"{config.PUBLIC_URL}/projects/{project_hash}/background/{background_date}.jpg"
     )
 
 
@@ -92,4 +92,4 @@ def generate_work_image_url(
     Returns:
         str: The full URL to the image
     """
-    return f"{config.public_url}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/{image_name}"
+    return f"{config.PUBLIC_URL}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/{image_name}"

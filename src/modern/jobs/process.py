@@ -10,6 +10,11 @@ from ZooProcess_lib.ROI import ROI, unique_visible_key
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
 from legacy.ids import measure_file_name
+from modern.filesystem import (
+    V10_THUMBS_SUBDIR,
+    V10_THUMBS_TO_CHECK_SUBDIR,
+    V10_METADATA_SUBDIR,
+)
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
@@ -19,12 +24,6 @@ from providers.ML_multiple_separator import (
     show_separations_in_images,
 )
 from providers.utils import ImageList
-
-V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
-V10_THUMBS_TO_CHECK_SUBDIR = (
-    "v10_multiples"  # Where and how ML determined we should separate, RGB PNGs
-)
-V10_METADATA_SUBDIR = "v10_meta"  # For indexes
 
 
 class BackgroundAndScanToSegmented(Job):

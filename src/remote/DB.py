@@ -21,7 +21,7 @@ class DB:
         patch(url: str, body: dict): Sends a PATCH request with a JSON body.
     """
 
-    def __init__(self, bearer: str, db: str = config.dbserver):
+    def __init__(self, bearer: str, db: str = config.DB_SERVER):
         if not bearer:
             raise ValueError("Bearer token is required")
         self.bearer = bearer

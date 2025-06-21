@@ -45,8 +45,8 @@ def test_background_from_legacy_project(mocker: MockFixture):
         },
     }
 
-    # Mock the config.public_url
-    mocker.patch("modern.from_legacy.config.public_url", "http://localhost:5000")
+    # Mock the config.PUBLIC_URL
+    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "http://localhost:5000")
 
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
@@ -115,8 +115,8 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     # Mock the content dictionary
     mock_back_folder.content = {}
 
-    # Mock the config.public_url
-    mocker.patch("modern.from_legacy.config.public_url", "http://localhost:5000")
+    # Mock the config.PUBLIC_URL
+    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "http://localhost:5000")
 
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
@@ -168,8 +168,8 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
         }
     }
 
-    # Mock the config.public_url
-    mocker.patch("modern.from_legacy.config.public_url", "http://localhost:5000")
+    # Mock the config.PUBLIC_URL
+    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "http://localhost:5000")
 
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(

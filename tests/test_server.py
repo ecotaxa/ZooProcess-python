@@ -44,5 +44,5 @@ def test_dbserver_withconfig(mocker: MockFixture):
     mocker.patch("requests.get", return_value=mock_response)
 
     # print(config.dbserver)
-    server = Server(config.dbserver)
+    server = Server(config.DB_SERVER)
     assert server.test_server() is True

@@ -1,5 +1,5 @@
+import os
 import shutil
-import tempfile
 from logging import Logger
 from pathlib import Path
 from typing import Tuple, Optional, List, NamedTuple
@@ -8,12 +8,8 @@ import requests
 
 from Models import MultiplesClassifierRsp
 from providers.utils import ImageList
+from config_rdr import config
 
-LS_VIGNETTES_PATH = Path(
-    "/mnt/pgssd2t/zooscan_lov/Zooscan_apero_tha_bioness_2_sn033/Zooscan_scan/_work/apero2023_tha_bioness_013_st46_d_n5_d2_2_sur_2_1"
-)
-SERVER = "https://inference-walton.cloud.imagine-ai.eu/system/services/zooprocess-multiple-classifier/exposed/main/"
-SERVER = "http://localhost:55001/"  # Docker image from instructions at https://github.com/ai4os-hub/zooprocess-multiple-classifier
 BASE_URI = "v2/models/zooprocess_multiple_classifier/predict/"
 
 
@@ -59,6 +55,7 @@ def classify_all_images_from(
         for assoc in zip(separation_response.names, separation_response.scores)
         if assoc[1] > min_score
     ]
+    os.unlink(zip_path)
     return above_threshold, error
 
 
@@ -97,7 +94,7 @@ def call_classify_server(
             }
 
             # Construct URL with query parameters
-            url = f"{SERVER}{BASE_URI}?bottom_crop={bottom_crop}"
+            url = f"{config.CLASSIFIER_SERVER}{BASE_URI}?bottom_crop={bottom_crop}"
 
             headers = {
                 "accept": "application/json",
@@ -113,32 +110,29 @@ def call_classify_server(
             )
             logger.debug(f"Response status: {response.status_code}")
 
-            if response.ok:
-                try:
-                    # Parse the JSON response
-                    response_data = response.json()
-
-                    # Create a SeparationResponse object from the JSON
-                    classification_response = MultiplesClassifierRsp(**response_data)
-
-                    # Log success
-                    logger.info(
-                        f"Successfully parsed separation response for {image_or_zip_path}"
-                    )
-                    logger.info(
-                        f"Found {len(classification_response.scores)} predictions"
-                    )
-
-                    return classification_response, None
-
-                except Exception as e:
-                    error_msg = f"Error parsing JSON response: {str(e)}"
-                    logger.error(error_msg)
-                    return None, error_msg
-            else:
+            if not response.ok:
                 error_msg = (
                     f"Request failed: {response.status_code} - {response.reason}"
                 )
+                logger.error(error_msg)
+                return None, error_msg
+            try:
+                # Parse the JSON response
+                response_data = response.json()
+
+                # Create a SeparationResponse object from the JSON
+                classification_response = MultiplesClassifierRsp(**response_data)
+
+                # Log success
+                logger.info(
+                    f"Successfully parsed separation response for {image_or_zip_path}"
+                )
+                logger.info(f"Found {len(classification_response.scores)} predictions")
+
+                return classification_response, None
+
+            except Exception as e:
+                error_msg = f"Error parsing JSON response: {str(e)}"
                 logger.error(error_msg)
                 return None, error_msg
 
@@ -146,16 +140,3 @@ def call_classify_server(
         error_msg = f"Error sending request: {str(e)}"
         logger.error(error_msg)
         return None, error_msg
-
-
-def main():
-    from logger import logger  # Don't pollute global scope
-
-    multiples_path = Path(tempfile.mkdtemp("maybe_multiples"))
-    results, _ = classify_all_images_from(logger, LS_VIGNETTES_PATH, 0.5)
-    use_classifications(LS_VIGNETTES_PATH, multiples_path, [s.name for s in results])
-    logger.info(f"Copied {len(results)} images into {multiples_path}")
-
-
-if __name__ == "__main__":
-    main()

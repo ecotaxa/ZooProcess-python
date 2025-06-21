@@ -29,7 +29,7 @@ from legacy.ids import measure_file_name
 from local_DB.db_dependencies import get_db
 from logger import logger
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
-from modern.jobs.process import (
+from modern.filesystem import (
     V10_THUMBS_SUBDIR,
     V10_THUMBS_TO_CHECK_SUBDIR,
     V10_METADATA_SUBDIR,
@@ -152,7 +152,7 @@ async def get_a_vignette(
     """Get one vignette
 
     Args:
-        project_hash (str): The ID of the project
+        project_hash (str): The hash of the project
         sample_hash (str): The hash of the sample
         subsample_hash (str): The hash of the subsample
         img_path (str): The path to the image

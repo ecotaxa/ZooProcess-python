@@ -86,7 +86,7 @@ def test_get_db_from_config():
     # Assert
     assert db.db == "http://zooprocess.imev-mer.fr:8081/v1"
     assert db.bearer == "test_token"
-    assert db.db == config.dbserver
+    assert db.db == config.DB_SERVER
 
     assert db.makeUrl("/test") == "http://zooprocess.imev-mer.fr:8081/v1/test"
 

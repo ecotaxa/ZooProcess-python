@@ -5,10 +5,7 @@ import tempfile
 def test_working_dir_default():
     """Test that WORKING_DIR is set to the current directory by default"""
     # Import the config module
-    from config_rdr import WORKING_DIR, config
-
-    # Check that WORKING_DIR is set to the current directory by default
-    assert WORKING_DIR == os.getcwd()
+    from config_rdr import config
 
     # Check that WORKING_DIR is also available in the config module
     assert config.WORKING_DIR == os.getcwd()
@@ -31,10 +28,7 @@ def test_working_dir_from_env():
         importlib.reload(config_rdr)
 
         # Import the config module again
-        from config_rdr import WORKING_DIR, config
-
-        # Check that WORKING_DIR is set to the test directory
-        assert WORKING_DIR == test_dir
+        from config_rdr import config
 
         # Check that WORKING_DIR is also available in the config module
         assert config.WORKING_DIR == test_dir
