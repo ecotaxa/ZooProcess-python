@@ -15,7 +15,7 @@ from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ROI import ROI
 from ZooProcess_lib.img_tools import (
     load_image,
-    save_lossless_small_image,
+    save_jpg_or_png_image,
     borders_of_original,
 )
 from helpers.matrix import (
@@ -182,7 +182,7 @@ async def get_a_vignette(
         tmp_png_path = Path(
             tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
         )
-        save_lossless_small_image(
+        save_jpg_or_png_image(
             vignette_in_vignette, processor.config.resolution, tmp_png_path
         )
         img_file = Path(tmp_png_path)
@@ -303,9 +303,7 @@ async def update_a_vignette_mask(
     multiple_masked_path = multiples_to_check_dir / img_name
     # Save the file
     logger.info(f"Saving mask into {multiple_masked_path}")
-    save_lossless_small_image(
-        masked_img, processor.config.resolution, multiple_masked_path
-    )
+    save_jpg_or_png_image(masked_img, processor.config.resolution, multiple_masked_path)
 
     return {
         "status": "success",
