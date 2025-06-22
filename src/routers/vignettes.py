@@ -116,25 +116,23 @@ async def get_vignettes(
         segmenter_output = []
         for i in range(len(rois)):
             seg_name = (
-                base_api_path
-                + V10_THUMBS_TO_CHECK_SUBDIR
+                V10_THUMBS_TO_CHECK_SUBDIR
                 + API_PATH_SEP
                 + a_multiple
                 + f"_{i}{SEG_SUFFIX_FROM_API}"
             )
             segmenter_output.append(seg_name)
         vignette_data = VignetteData(
-            scan=base_api_path + V10_THUMBS_SUBDIR + API_PATH_SEP + a_multiple,
-            matrix=base_api_path
-            + V10_THUMBS_TO_CHECK_SUBDIR
+            scan=V10_THUMBS_SUBDIR + API_PATH_SEP + a_multiple,
+            matrix=V10_THUMBS_TO_CHECK_SUBDIR
             + API_PATH_SEP
             + a_multiple
             + MSK_SUFFIX_TO_API,
-            mask=base_api_path + V10_THUMBS_TO_CHECK_SUBDIR + API_PATH_SEP + a_multiple,
+            mask=V10_THUMBS_TO_CHECK_SUBDIR + API_PATH_SEP + a_multiple,
             vignettes=segmenter_output,
         )
         api_vignettes.append(vignette_data)
-    base_dir = "/api/backend/vignette"
+    base_dir = "/api/backend/vignette" + base_api_path
     ret = VignetteResponse(data=api_vignettes, folder=base_dir)
     return ret
 
