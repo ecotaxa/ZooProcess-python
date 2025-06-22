@@ -37,7 +37,7 @@ class ManuallySeparatedToEcoTaxa(Job):
         fs = ModernScanFileSystem(subsample_dir)
         thumbs_dir = fs.cut_dir()
         # TODO, including some force option for dev
-        # All separated vignettes should be processed and fresher than corresponding vignette (i.e. ack-ed by someone)
+        # All separated vignettes should be processed, i.e. written after marker file
 
     def run(self):
         # self._cleanup_work()

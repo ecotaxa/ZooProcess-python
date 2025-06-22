@@ -161,6 +161,8 @@ class BackgroundAndScanToAutoSeparated(Job):
             show_separations_in_images(thumbs_dir, results, multiples_vis_dir)
             processed += len(a_chunk.get_images())
             self.logger.info(f"Processed {processed}/{to_process} images")
+        # Add some marker that all went fine
+        fs.mark_ML_separation_done()
 
     def _cleanup_work(self):
         """Cleanup the files that present process is going to (re) create"""

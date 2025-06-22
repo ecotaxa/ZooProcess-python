@@ -3,13 +3,15 @@ import datetime
 import os
 import shutil
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
 V10_THUMBS_TO_CHECK_SUBDIR = (
     "v10_multiples"  # Where and how ML determined we should separate, RGB PNGs
 )
-V10_METADATA_SUBDIR = "v10_meta"  # For indexes
+V10_METADATA_SUBDIR = "v10_meta"  # For unique files
+
+ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
 
 
 class ModernScanFileSystem:
@@ -81,6 +83,49 @@ class ModernScanFileSystem:
             shutil.rmtree(multiples_dir)
         os.makedirs(multiples_dir, exist_ok=True)
         return multiples_dir
+
+    def mark_ML_separation_done(self):
+        """
+        Mark the ML separation process as done by creating an empty file
+        named "separation_done.txt" in the metadata directory.
+        """
+        metadata_dir = self.meta_dir()
+        os.makedirs(metadata_dir, exist_ok=True)
+        separation_done_file = metadata_dir / ML_SEPARATION_DONE_TXT
+        separation_done_file.touch()
+
+    def get_multiples_files_modified_before_separation_done(self) -> List[str]:
+        """
+        Get all files in the multiples visualization directory that were last modified
+        before the separation_done.txt file was created.
+
+        Returns:
+            List[Path]: A list of Path objects representing files modified before separation_done.txt
+        """
+        # Get the separation_done.txt file path
+        separation_done_file = self.meta_dir() / ML_SEPARATION_DONE_TXT
+        assert separation_done_file.exists()
+
+        # Get the modification time of separation_done.txt
+        separation_done_time = datetime.datetime.fromtimestamp(
+            separation_done_file.stat().st_mtime
+        )
+
+        # Get the multiples visualization directory
+        multiples_dir = self.multiples_vis_dir()
+        assert multiples_dir.exists() and multiples_dir.is_dir()
+
+        # Get all files in the directory that were modified before separation_done.txt
+        files_before_separation = []
+        for file_path in multiples_dir.iterdir():
+            if not file_path.is_file():
+                continue
+
+            file_mod_time = datetime.datetime.fromtimestamp(file_path.stat().st_mtime)
+            if file_mod_time < separation_done_time:
+                files_before_separation.append(file_path.name)
+
+        return files_before_separation
 
 
 def get_directory_date_range(
