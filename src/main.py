@@ -239,6 +239,40 @@ def login_get(email: str, password: str, db: Session = Depends(get_db)):
     return response
 
 
+@app.post("/logout")
+async def logout(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user_from_credentials),
+):
+    """
+    Logout endpoint that invalidates the current JWT token.
+
+    This endpoint requires authentication using a JWT token obtained from the /login endpoint.
+    It adds the token to a blacklist (burnt list) to prevent its further use and returns an invalid session cookie.
+    """
+    token = None
+
+    # Try to extract token from the authorization header
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "")
+
+    # If no token from header, try to get it from the session cookie
+    if not token:
+        token = request.cookies.get(SESSION_COOKIE_NAME)
+
+    # If we have a token, blacklist it
+    if token:
+        blacklist_token(token, db)
+
+    # Set an invalid session cookie instead of deleting it
+    response.set_cookie(key=SESSION_COOKIE_NAME, value="invalid", httponly=True)
+
+    return {"message": "Successfully logged out"}
+
+
 @app.get("/users/me")
 def get_current_user(
     user=Depends(get_current_user_from_credentials),

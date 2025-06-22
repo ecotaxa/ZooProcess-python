@@ -9,7 +9,7 @@ from starlette.requests import Request
 
 from config_rdr import config
 from local_DB.db_dependencies import get_db
-from local_DB.models import User
+from local_DB.models import User, BlacklistedToken
 
 
 class CustomHTTPBearer(HTTPBearer):
@@ -73,19 +73,32 @@ ALGORITHM = "HS256"
 SESSION_COOKIE_NAME = "zoopp_session"
 
 
-def decode_jwt_token(token: str) -> Dict:
+def decode_jwt_token(token: str, db: Optional[Session] = None) -> Dict:
     """
     Decode and validate a JWT token.
 
     Args:
         token: The JWT token to decode and validate
+        db: Optional database session for checking token blacklist
 
     Returns:
         The decoded token payload if valid
 
     Raises:
-        HTTPException: If the token is invalid or expired
+        HTTPException: If the token is invalid, expired, or blacklisted
     """
+    # Check if token is blacklisted
+    if db is not None:
+        blacklisted = (
+            db.query(BlacklistedToken).filter(BlacklistedToken.token == token).first()
+        )
+        if blacklisted:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been invalidated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     try:
         # Decode the JWT token
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
@@ -130,17 +143,18 @@ def create_jwt_token(data: Dict, expires_delta: Optional[int] = None) -> str:
     return encoded_jwt
 
 
-def get_user_from_token(token: str) -> Dict:
+def get_user_from_token(token: str, db: Optional[Session] = None) -> Dict:
     """
     Extract user information from a JWT token.
 
     Args:
         token: The JWT token
+        db: Optional database session for checking token blacklist
 
     Returns:
         User information extracted from the token
     """
-    payload = decode_jwt_token(token)
+    payload = decode_jwt_token(token, db)
 
     # In a real application, you might want to validate the user exists in your database
     # or fetch additional user information
@@ -165,6 +179,67 @@ def get_user_from_db(email: str, db):
     """
 
     return db.query(User).filter(User.email == email).first()
+
+
+def blacklist_token(token: str, db: Session):
+    """
+    Add a token to the blacklist.
+
+    Args:
+        token: The JWT token to blacklist
+        db: The database session
+
+    Returns:
+        The blacklisted token object
+    """
+    # Decode the token to get its expiration time
+    try:
+        payload = jwt.decode(
+            token,
+            config.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_signature": True},
+        )
+        if "exp" in payload:
+            # Convert exp timestamp to datetime
+            expires_at = datetime.datetime.fromtimestamp(
+                payload["exp"], tz=datetime.timezone.utc
+            )
+        else:
+            # If no expiration in token, set a default (e.g., 30 days from now)
+            expires_at = datetime.datetime.now(
+                datetime.timezone.utc
+            ) + datetime.timedelta(days=30)
+    except (jwt.PyJWTError, Exception):
+        # If token is invalid or can't be decoded, set a default expiration
+        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            days=30
+        )
+
+    # Create a new blacklisted token entry
+    blacklisted_token = BlacklistedToken(token=token, expires_at=expires_at)
+
+    # Add to database
+    db.add(blacklisted_token)
+    db.commit()
+    db.refresh(blacklisted_token)
+
+    # Clean up expired tokens
+    cleanup_expired_tokens(db)
+
+    return blacklisted_token
+
+
+def cleanup_expired_tokens(db: Session):
+    """
+    Remove expired tokens from the blacklist to keep the table size manageable.
+
+    Args:
+        db: The database session
+    """
+    now = datetime.datetime.now(datetime.timezone.utc)
+    db.query(BlacklistedToken).filter(BlacklistedToken.expires_at < now).delete()
+    db.commit()
 
 
 def authenticate_user(email: str, password: str, db) -> str:
@@ -245,7 +320,7 @@ async def get_current_user_from_credentials(
         )
 
     # Validate the JWT token and extract user information
-    user_data = get_user_from_token(token)
+    user_data = get_user_from_token(token, db)
 
     # Get the user from the database to ensure they exist
     user = get_user_from_db(user_data["email"], db)

@@ -1,7 +1,7 @@
 import os
 from typing import Optional, Dict, Any
 
-from sqlalchemy import Integer, String, create_engine, JSON
+from sqlalchemy import Integer, String, create_engine, JSON, DateTime
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, Mapped
 
 from config_rdr import config
@@ -82,6 +82,24 @@ class ScanBackground(Base):
 
     def __repr__(self):
         return f"<ScanBackground(scan_id='{self.scan_id}', project_name='{self.project_name}', drive_name='{self.drive_name}')>"
+
+
+# Define the BlacklistedToken model
+class BlacklistedToken(Base):
+    """
+    SQLAlchemy model for the blacklisted_tokens table.
+
+    This table stores JWT tokens that have been invalidated (logged out).
+    Tokens in this table are considered invalid even if they haven't expired yet.
+    """
+
+    __tablename__ = "blacklisted_tokens"
+
+    token = mapped_column(String, primary_key=True)
+    expires_at = mapped_column(DateTime, nullable=False)
+
+    def __repr__(self):
+        return f"<BlacklistedToken(token='{self.token[:10]}...', expires_at='{self.expires_at}')>"
 
 
 # Database connection and session management
