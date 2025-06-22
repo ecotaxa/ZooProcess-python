@@ -6,6 +6,7 @@ requests==2.32.3
 numpy==2.2.6
 python-multipart==0.0.20
 aiofiles==24.1.0
+jinja2==3.1.6 # For HTML templates
 # For ObjectId generation
 pymongo==4.13.0
 # pandas

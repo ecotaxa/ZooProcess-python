@@ -1,10 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-from pytest_mock import MockFixture
-
-from main import app
-
-
 def test_favicon_endpoint(app_client):
     """Test that the /favicon.ico endpoint returns a favicon with the correct content type"""
     # Make request to the /favicon.ico endpoint

@@ -66,26 +66,6 @@ from modern.utils import (
 )
 
 
-def find_latest_modification_time(path: Path) -> datetime:
-    """
-    Find the latest modification time for a file or directory.
-
-    Args:
-        path: The path to check
-
-    Returns:
-        The latest modification time as a datetime object
-    """
-    if not path.exists():
-        return datetime.now()
-
-    try:
-        mtime = os.path.getmtime(str(path))
-        return datetime.fromtimestamp(mtime)
-    except (OSError, PermissionError):
-        return datetime.now()
-
-
 def drives_from_legacy() -> list[Drive]:
     """
     Retrieve a list of Drive objects from the legacy configuration.

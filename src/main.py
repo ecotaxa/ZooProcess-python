@@ -5,10 +5,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import Response
@@ -22,12 +23,13 @@ from Models import (
     ImageUrl,
     ForInstrumentBackgroundIn,
 )
-from helpers.auth import SESSION_COOKIE_NAME, authenticate_user
+from helpers.auth import SESSION_COOKIE_NAME, authenticate_user, blacklist_token
 from helpers.auth import get_current_user_from_credentials
 from helpers.web import (
     internal_server_error_handler,
     TimingMiddleware,
     validation_exception_handler,
+    unauthorized_exception_handler,
     raise_500,
     raise_501,
 )
@@ -50,6 +52,7 @@ from routers.images import router as images_router
 from routers.instruments import (
     router as instruments_router,
 )
+from routers.pages import router as pages_router
 from routers.projects import router as projects_router
 from routers.samples import router as samples_router
 from routers.subsamples import router as subsamples_router
@@ -80,12 +83,15 @@ async def lifespan(_app: FastAPI):
 # Initialize FastAPI with lifespan event handler
 app = FastAPI(lifespan=lifespan)
 
-# Add exception handler for 500 and 422 (validation) errors
+# Add exception handlers for 500, 422 (validation), and 401 (unauthorized) errors
 app.add_exception_handler(
     status.HTTP_500_INTERNAL_SERVER_ERROR, internal_server_error_handler
 )
 app.add_exception_handler(
     RequestValidationError, validation_exception_handler  # type:ignore
+)
+app.add_exception_handler(
+    status.HTTP_401_UNAUTHORIZED, unauthorized_exception_handler  # type:ignore
 )
 # https://github.com/encode/starlette/pull/2403
 
@@ -112,6 +118,13 @@ app.add_middleware(
 # Add timing middleware to log execution time of all endpoints
 app.add_middleware(TimingMiddleware)
 
+# Mount the static directory to serve static files
+app.mount(
+    "/static",
+    StaticFiles(directory=str(Path(__file__).parent / "static")),
+    name="static",
+)
+
 # Include the routers
 app.include_router(projects_router)
 app.include_router(samples_router)
@@ -120,6 +133,7 @@ app.include_router(instruments_router)
 app.include_router(images_router)
 app.include_router(tasks_router)
 app.include_router(vignettes_router)
+app.include_router(pages_router)
 
 
 @app.get("/favicon.ico")
@@ -215,28 +229,6 @@ def login_post(login_req: LoginReq, db: Session = Depends(get_db)):
 
     # Return the token as a JSON response
     return JSONResponse(content=token)
-
-
-@app.get("/login")
-def login_get(email: str, password: str, db: Session = Depends(get_db)):
-    """
-    GET variant of the login endpoint
-
-    If successful, return a JWT token which will have to be used in bearer authentication scheme for subsequent calls.
-
-    Note: While this endpoint is provided for convenience, using POST /login is recommended for better security
-    as it doesn't expose credentials in URL or server logs.
-    """
-    # Authenticate user and get token
-    token = authenticate_user(email, password, db)
-
-    # Create a response with the token in the body
-    response = JSONResponse(content=token)
-
-    # Set the token in a session cookie
-    response.set_cookie(key=SESSION_COOKIE_NAME, value=token, httponly=True)
-
-    return response
 
 
 @app.post("/logout")

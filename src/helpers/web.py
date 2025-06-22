@@ -5,14 +5,14 @@ import time
 import traceback
 from os import fstat
 from pathlib import Path
-from typing import Tuple, BinaryIO, Any
+from typing import Tuple, BinaryIO, Any, Coroutine
 
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, JSONResponse
+from starlette.responses import PlainTextResponse, JSONResponse, RedirectResponse
 
 from logger import logger
 
@@ -178,4 +178,37 @@ async def validation_exception_handler(
     return JSONResponse(
         status_code=422,
         content={"detail": str(exc.errors())},
+    )
+
+
+async def unauthorized_exception_handler(
+    request: Request, exc: HTTPException
+) -> RedirectResponse | JSONResponse:
+    """
+    Handle 401 Unauthorized errors for UI endpoints by redirecting to the login page.
+    For API endpoints, return the standard 401 response.
+
+    Args:
+        request (Request): The request that caused the exception
+        exc (HTTPException): The exception that was raised
+
+    Returns:
+        JSONResponse: Either a redirect response or the standard 401 response
+    """
+    # Check if this is a UI endpoint (starts with /ui)
+    if request.url.path.startswith("/ui"):
+        logger.info(
+            f"Redirecting unauthorized UI request to login page: {request.url.path}"
+        )
+        # Create a redirect response to the login page
+        from starlette.responses import RedirectResponse
+
+        return RedirectResponse(url="/ui/login", status_code=302)
+
+    # For non-UI endpoints, return the standard 401 response
+    logger.info(f"Unauthorized API request: {request.url.path}")
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"detail": exc.detail},
+        headers=exc.headers,
     )

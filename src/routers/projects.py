@@ -37,7 +37,7 @@ def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]
 
     Args:
         db: Database session
-        drives_to_check: Optional list of drive paths to check. If None, uses config.get_drives().
+        drives_to_check: List of drive paths to check.
 
     Returns:
         List of Project objects.

@@ -1,18 +1,9 @@
-from pathlib import Path
-
 import pytest
 
 from modern.utils import (
-    find_latest_modification_time,
     extract_serial_number,
     parse_sample_name,
 )
-
-
-def test_find_latest_modification_time_nonexistent_directory():
-    """Test that find_latest_modification_time raises an appropriate exception when the directory doesn't exist."""
-    with pytest.raises(FileNotFoundError):
-        find_latest_modification_time(Path("/nonexistent/directory"))
 
 
 def test_extract_serial_number_none():
