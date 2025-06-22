@@ -127,6 +127,12 @@ class ModernScanFileSystem:
 
         return files_before_separation
 
+    def ensure_meta_dir(self) -> Path:
+        meta_dir = self.meta_dir()
+        if not meta_dir.exists():
+            os.makedirs(meta_dir)
+        return meta_dir
+
 
 def get_directory_date_range(
     directory_path: str,

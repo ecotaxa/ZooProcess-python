@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from starlette.responses import RedirectResponse
 
 from helpers.auth import get_current_user_from_credentials
 from local_DB.db_dependencies import get_db
@@ -19,7 +20,7 @@ def export_scan(
     subsample_id: str = Form(...),
     _user: User = Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
-) -> HTMLResponse:
+) -> RedirectResponse:
     """
     Export corresponding scan to EcoTaxa.
 

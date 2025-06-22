@@ -1,9 +1,13 @@
+from typing import Optional
+
 import requests
 from .EcoTaxaProjectModel import ProjectModel
 from config_rdr import config
 
 
-def get_project(project_id: int, bearer: str, api_base_url: str = None) -> ProjectModel:
+def get_project(
+    project_id: int, bearer: str, api_base_url: Optional[str] = None
+) -> ProjectModel:
     """
     Fetch project details from EcoTaxa API and return as ProjectModel
     """

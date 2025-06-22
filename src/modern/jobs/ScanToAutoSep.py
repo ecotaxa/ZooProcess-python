@@ -1,6 +1,5 @@
 # Process a scan from its background+scan until auto separation
 import os
-import shutil
 from pathlib import Path
 from typing import List
 
@@ -9,17 +8,17 @@ from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ROI import ROI, unique_visible_key
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
 from ZooProcess_lib.img_tools import get_creation_date
-from legacy.ids import measure_file_name
+from legacy.ids import measure_file_name, mask_file_name
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
+from providers.ImageList import ImageList
 from providers.ML_multiple_classifier import classify_all_images_from
 from providers.ML_multiple_separator import (
     separate_all_images_from,
     show_separations_in_images,
 )
-from providers.ImageList import ImageList
 
 
 class BackgroundAndScanToAutoSeparated(Job):
@@ -32,6 +31,11 @@ class BackgroundAndScanToAutoSeparated(Job):
         self.sample_name = sample_name
         self.subsample_name = subsample_name
         self.scan_name = scan_name_from_subsample_name(subsample_name)
+        # Modern side
+        subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
+            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+        )
+        self.modern_fs = ModernScanFileSystem(subsample_dir)
         # Image inputs
         self.raw_scan: Path = Path("xyz")  # Just to keep mypy happy
         self.bg_scans: List[Path] = []
@@ -108,9 +112,9 @@ class BackgroundAndScanToAutoSeparated(Job):
         # Mask generation
         self.logger.info(f"Generating MSK")
         mask = processor.segmenter.get_mask_from_image(scan_without_background)
-        save_mask_image(
-            self.logger, mask, self.zoo_project.zooscan_scan.work, self.subsample_name
-        )
+        msk_file_name = mask_file_name(self.subsample_name)
+        msk_dir = self.modern_fs.ensure_meta_dir()
+        save_mask_image(self.logger, mask, msk_dir / msk_file_name)
 
         # Segmentation
         self.logger.info(f"Segmenting")
