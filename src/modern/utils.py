@@ -1,44 +1,48 @@
 import os
 import re
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from Models import TaskRsp
 from .tasks import Job, JobStateEnum
 
 
-def find_latest_modification_time(directory_path: Path) -> datetime:
+def min_max_dates(paths: List[Path]) -> Tuple[datetime, datetime]:
     """
-    Find the most recent modification time of any file in the directory tree.
+    Find the minimum and maximum modification times for a list of Path objects.
 
     Args:
-        directory_path: The path to the directory to search
+        paths: A list of Path objects to check
 
     Returns:
-        The most recent modification time as a datetime object
+        A tuple of (min_time, max_time) as datetime objects
     """
-    latest_time = 0.0
+    min_time = float("inf")
+    max_time = 0.0
 
-    # Walk through all directories and files
-    join, getmtime = os.path.join, os.path.getmtime
-    for root, _, files in os.walk(str(directory_path)):
-        for file in files:
-            file_path = join(root, file)
-            try:
-                # Get the modification time of the file
-                mtime = getmtime(file_path)
-                if mtime > latest_time:
-                    latest_time = mtime
-            except (OSError, PermissionError):
-                # Skip files that can't be accessed
-                continue
+    # Process each path in the list
+    for path in paths:
+        if not path.exists():
+            continue
 
-    # If no files were found, return the directory's modification time
-    if latest_time == 0:
-        latest_time = os.path.getmtime(str(directory_path))
+        try:
+            # Get the modification time of the file or directory
+            mtime = os.path.getmtime(str(path))
+            min_time = min(min_time, mtime)
+            max_time = max(max_time, mtime)
+        except (OSError, PermissionError):
+            # Skip files that can't be accessed
+            continue
 
-    return datetime.fromtimestamp(latest_time)
+    # If no files were found, use the current time for both min and max
+    if min_time == float("inf") or max_time == 0.0:
+        current_time = time.time()
+        min_time = current_time
+        max_time = current_time
+
+    return datetime.fromtimestamp(min_time), datetime.fromtimestamp(max_time)
 
 
 def extract_serial_number(project_name: str) -> str:

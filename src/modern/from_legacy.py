@@ -61,9 +61,29 @@ from modern.subsample import get_project_scans_metadata, get_project_scans, pars
 from modern.users import get_mock_user, user_with_name, SYSTEM_USER
 from modern.utils import (
     extract_serial_number,
-    find_latest_modification_time,
     convert_ddm_to_decimal_degrees,
+    min_max_dates,
 )
+
+
+def find_latest_modification_time(path: Path) -> datetime:
+    """
+    Find the latest modification time for a file or directory.
+
+    Args:
+        path: The path to check
+
+    Returns:
+        The latest modification time as a datetime object
+    """
+    if not path.exists():
+        return datetime.now()
+
+    try:
+        mtime = os.path.getmtime(str(path))
+        return datetime.fromtimestamp(mtime)
+    except (OSError, PermissionError):
+        return datetime.now()
 
 
 def drives_from_legacy() -> list[Drive]:
@@ -105,15 +125,16 @@ def project_from_legacy(
     # Get the creation time of the directory
     creation_time = datetime.fromtimestamp(os.path.getmtime(a_prj_path))
 
-    # Find the most recent modification time of any file in the project directory
-    latest_mtime = find_latest_modification_time(a_prj_path)
-
     instrument_model = get_instrument_by_id(serial_number)
     if instrument_model is None:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
 
     sample_models = samples_from_legacy_project(db, zoo_project)
     project_hash = hash_from_project(a_prj_path)
+    crea_dates = [creation_time] + [a_sub.createdAt for a_sub in sample_models]
+    created_at = min(crea_dates)
+    upd_dates = [datetime.now()] + [a_sub.updatedAt for a_sub in sample_models]
+    updated_at = max(upd_dates)
 
     project = Project(
         path=str(a_prj_path),
@@ -124,8 +145,8 @@ def project_from_legacy(
         instrument=instrument_model,
         drive=drive_model,
         samples=sample_models,
-        createdAt=creation_time,
-        updatedAt=latest_mtime,
+        createdAt=created_at,
+        updatedAt=updated_at,
     )
     return project
 
@@ -215,7 +236,10 @@ def sample_from_legacy(
         ]
     )
     fractions_str = ", ".join(fractions)
-    created_at = parse_legacy_date(modern_metadata["sampling_date"], "-")
+    crea_dates = [datetime.now()] + [a_sub.createdAt for a_sub in subsample_models]
+    created_at = min(crea_dates)
+    upd_dates = [datetime.now()] + [a_sub.updatedAt for a_sub in subsample_models]
+    updated_at = max(upd_dates)
     ret = Sample(
         id=hash_from_sample_name(sample_name),
         name=sample_name,
@@ -224,6 +248,7 @@ def sample_from_legacy(
         nbScans=nb_scans,
         nbFractions=fractions_str,
         createdAt=created_at,
+        updatedAt=updated_at,
     )
     return ret
 
@@ -277,7 +302,17 @@ def subsample_from_legacy(
 ) -> SubSample:
     modern_metadata = scan_from_legacy_meta(zoo_scan_metadata)
     metadata = to_api_meta(modern_metadata)
-    created_at = updated_at = datetime.now()
+    subsample_paths = [
+        zoo_project.zooscan_scan.work.get_sub_directory(
+            subsample_name, THE_SCAN_PER_SUBSAMPLE
+        )
+    ]
+    subsample_paths.extend(
+        zoo_project.zooscan_scan.work.get_files(
+            subsample_name, THE_SCAN_PER_SUBSAMPLE
+        ).values()  # type:ignore
+    )
+    created_at, updated_at = min_max_dates(subsample_paths)
     user = user_with_name(modern_metadata["operator"])
     # Extract scans from the legacy project folder
     parent = [
