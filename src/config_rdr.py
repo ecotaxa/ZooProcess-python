@@ -29,6 +29,8 @@ _SECRET_KEY = os.environ.get("SECRET", "your-secret-key")
 _SEPARATOR_SERVER = os.environ.get("SEPARATOR_SERVER", "http://localhost:55000/")
 # Get the classifier server URL from the environment variable or use a default
 _CLASSIFIER_SERVER = os.environ.get("CLASSIFIER_SERVER", "http://localhost:55001/")
+# Get the EcoTaxa server URL from the environment variable or use a default
+_ECOTAXA_SERVER = os.environ.get("ECOTAXA_SERVER", "https://ecotaxa.obs-vlfr.fr/api")
 
 
 # Configuration class
@@ -45,6 +47,7 @@ class Config:
         SECRET_KEY: str,
         SEPARATOR_SERVER: str,
         CLASSIFIER_SERVER: str,
+        ECOTAXA_SERVER: str,
     ):
         """
         Initialize the Config class with typed members.
@@ -58,6 +61,7 @@ class Config:
             SECRET_KEY (str): The secret key for JWT token signing and verification
             SEPARATOR_SERVER (str): The separator server URL
             CLASSIFIER_SERVER (str): The classifier server URL
+            ECOTAXA_SERVER (str): The EcoTaxa server URL
         """
         self.WORKING_DIR: str = WORKING_DIR
         self.DB_NAME: str = DB_NAME
@@ -67,6 +71,7 @@ class Config:
         self.SECRET_KEY: str = SECRET_KEY
         self.SEPARATOR_SERVER: str = SEPARATOR_SERVER
         self.CLASSIFIER_SERVER: str = CLASSIFIER_SERVER
+        self.ECOTAXA_SERVER: str = ECOTAXA_SERVER
 
     def get_drives(self) -> List[Path]:
         return self._DRIVES
@@ -82,4 +87,5 @@ config = Config(
     SECRET_KEY=_SECRET_KEY,
     SEPARATOR_SERVER=_SEPARATOR_SERVER,
     CLASSIFIER_SERVER=_CLASSIFIER_SERVER,
+    ECOTAXA_SERVER=_ECOTAXA_SERVER,
 )

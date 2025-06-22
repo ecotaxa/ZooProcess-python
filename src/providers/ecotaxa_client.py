@@ -1,13 +1,14 @@
 import requests
 from .EcoTaxaProjectModel import ProjectModel
+from config_rdr import config
 
 
-def get_project(
-    project_id: int, bearer: str, api_base_url: str = "https://ecotaxa.obs-vlfr.fr/api"
-) -> ProjectModel:
+def get_project(project_id: int, bearer: str, api_base_url: str = None) -> ProjectModel:
     """
     Fetch project details from EcoTaxa API and return as ProjectModel
     """
+    if api_base_url is None:
+        api_base_url = config.ECOTAXA_SERVER
 
     headers = {"Authorization": f"Bearer {bearer}"}
 
