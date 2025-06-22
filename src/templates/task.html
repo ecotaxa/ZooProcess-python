@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZooProcess - Task Details</title>
+    <link rel="stylesheet" href="/static/ui.css">
+    <style>
+        .task-details {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .task-details th, .task-details td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .task-details th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            width: 200px;
+        }
+
+        .task-details tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .task-details tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .status-pending {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .status-running {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .status-finished {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-failed {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            height: 20px;
+            margin-top: 5px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            width: 0%;
+        }
+
+        .params-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ZooProcess Task Details</h1>
+        </header>
+
+        <div class="user-info">
+            <h2>User Information</h2>
+            <p>Name: {{ user.name }}</p>
+            <p>Email: {{ user.email }}</p>
+            <a href="/ui/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content">
+            <h2>Task #{{ task.id }}</h2>
+
+            <table class="task-details">
+                <tr>
+                    <th>ID</th>
+                    <td>{{ task.id }}</td>
+                </tr>
+                <tr>
+                    <th>Execution Type</th>
+                    <td>{{ task.exec }}</td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>
+                        <span class="status-{{ task.status.lower() }}">{{ task.status }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Progress</th>
+                    <td>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-bar-fill">{{ task.percent }}%</div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Created At</th>
+                    <td>{{ task.createdAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                <tr>
+                    <th>Updated At</th>
+                    <td>{{ task.updatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% if task.log %}
+                <tr>
+                    <th>Log</th>
+                    <td>
+                        <pre>{{ task.log }}</pre>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+
+            <div class="actions">
+                <a href="/ui/" class="home-link">Back to Home</a>
+                <a href="/ui/projects" class="home-link">View Projects</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 ZooProcess. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = '{{ task.percent }}%';
+
+            // Auto-refresh the page if task is not finished
+            const taskStatus = '{{ task.status }}';
+            if (taskStatus === '{{ task_statuses.PENDING }}' || taskStatus === '{{ task_statuses.RUNNING }}') {
+                setTimeout(function() {
+                    window.location.reload();
+                }, 5000); // Reload after 5 seconds
+            }
+        });
+    </script>
+</body>
+</html>

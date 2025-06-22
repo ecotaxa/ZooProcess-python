@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZooProcess - Submission</title>
+    <link rel="stylesheet" href="/static/ui.css">
+    <style>
+        .submission-details {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .submission-details h3 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+
+        .submission-details p {
+            margin: 10px 0;
+        }
+
+        .submission-details .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .submission-details .value {
+            color: #28a745;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 16px;
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .back-link:hover {
+            background-color: #003d82;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ZooProcess Submission</h1>
+        </header>
+
+        <div class="user-info">
+            <h2>User Information</h2>
+            <p>Name: {{ user.name }}</p>
+            <p>Email: {{ user.email }}</p>
+            <a href="/ui/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content">
+            <h2>Submission Details</h2>
+
+            <div class="submission-details">
+                <h3>Line IDs</h3>
+                <p><span class="label">Project ID:</span> <span class="value">{{ project_id }}</span></p>
+                <p><span class="label">Sample ID:</span> <span class="value">{{ sample_id }}</span></p>
+                <p><span class="label">Subsample ID:</span> <span class="value">{{ subsample_id }}</span></p>
+            </div>
+
+            <a href="/ui/projects" class="back-link">Back to Projects</a>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 ZooProcess. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

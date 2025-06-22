@@ -70,7 +70,7 @@ def test_ui_login_endpoint(app_client, local_db):
     response = app_client.post(
         "/ui/login",
         data={"email": email, "password": password},
-        allow_redirects=False,  # Don't follow redirects
+        follow_redirects=False,  # Don't follow redirects
     )
 
     # Check that the response is a redirect

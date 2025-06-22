@@ -47,6 +47,20 @@
         .scan-name {
             color: #dc3545;
         }
+
+        .submit-btn {
+            padding: 4px 8px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .submit-btn:hover {
+            background-color: #003d82;
+        }
     </style>
 </head>
 <body>
@@ -79,7 +93,12 @@
                         <tr>
                             <td class="scan-name">
                                 {% if item.scan > 0 %}
-                                    {{ item.scan }}
+                                    <form action="/ui/export" method="post" style="display: inline; margin-left: 10px;">
+                                        <input type="hidden" name="project_id" value="{{ item.project.id }}">
+                                        <input type="hidden" name="sample_id" value="{{ item.sample.id }}">
+                                        <input type="hidden" name="subsample_id" value="{{ item.subsample.id }}">
+                                        <button type="submit" class="submit-btn">Export</button>
+                                    </form>
                                 {% else %}
                                     No scans available
                                 {% endif %}

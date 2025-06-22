@@ -1,6 +1,6 @@
-from datetime import datetime
+from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, status, Query
 from sqlalchemy.orm import Session
 
 from Models import TaskRsp, TaskReq
@@ -90,6 +90,56 @@ def create_task(
         return job_to_task_rsp(manu2ecotaxa_task)
     raise_501(f"Task.exec not implemented: {task.exec}")
     assert False
+
+
+@router.get("")
+def create_task_get(
+    exec: str = Query(
+        ..., description="The execution type (e.g., 'PROCESS', 'UPLOAD')"
+    ),
+    project: str = Query(..., description="The project hash"),
+    sample: str = Query(..., description="The sample hash"),
+    subsample: str = Query(..., description="The subsample hash"),
+    scan_id: Optional[str] = Query(None, description="The scan ID (optional)"),
+    _user: User = Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
+) -> TaskRsp:
+    """
+    Create a new task using GET parameters.
+
+    This endpoint receives task parameters as query parameters and creates a TaskReq object.
+    It then processes the task in the same way as the POST endpoint.
+
+    Args:
+        exec (str): The execution type (e.g., 'PROCESS', 'UPLOAD')
+        project (str): The project hash
+        sample (str): The sample hash
+        subsample (str): The subsample hash
+        scan_id (Optional[str]): The scan ID (optional)
+        _user (User): The authenticated user
+        db (Session): The database session
+
+    Returns:
+        TaskRsp: The task response
+    """
+    # Create params dictionary
+    params: Dict[str, Any] = {
+        "project": project,
+        "sample": sample,
+        "subsample": subsample,
+    }
+
+    # Add scan_id if provided
+    if scan_id:
+        params["scanId"] = scan_id
+
+    # Create TaskReq object
+    task = TaskReq(exec=exec, params=params)
+
+    logger.info(f"Received task via GET: {task}")
+
+    # Call the POST endpoint handler with the created task
+    return create_task(task, _user, db)
 
 
 COUNTER = 0
