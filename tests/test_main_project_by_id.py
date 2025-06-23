@@ -69,12 +69,6 @@ def test_project_by_id_endpoint_with_valid_token(
     mock_getmtime = mocker.patch("os.path.getmtime")
     mock_getmtime.return_value = 1625097600  # July 1, 2021
 
-    # Mock find_latest_modification_time to return a fixed timestamp
-    from datetime import datetime
-
-    mock_find_latest = mocker.patch("modern.from_legacy.find_latest_modification_time")
-    mock_find_latest.return_value = datetime.fromtimestamp(1625097600)  # July 1, 2021
-
     # Mock extract_serial_number to return TEST123
     mock_extract_serial = mocker.patch("modern.from_legacy.extract_serial_number")
     mock_extract_serial.return_value = "TEST123"

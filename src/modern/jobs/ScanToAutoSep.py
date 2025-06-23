@@ -92,7 +92,7 @@ class BackgroundAndScanToAutoSeparated(Job):
             scan_resolution,
             self.scan_name,
         )
-        thumbs_dir = modern_fs.cut_dir()
+        thumbs_dir = modern_fs.cut_dir
 
         self.logger.info(f"Determining multiples")
         # First ML step, send all images to the multiples classifier
@@ -230,6 +230,6 @@ def segment_image_and_produce_cuts(
         scan_name,
     )
     # Index generation
-    meta_dir = modern_fs.meta_dir()
+    meta_dir = modern_fs.meta_dir
     os.makedirs(meta_dir, exist_ok=True)
     generate_box_measures(rois, scan_name, meta_dir / measure_file_name(scan_name))

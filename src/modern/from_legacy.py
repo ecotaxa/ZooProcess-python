@@ -111,9 +111,13 @@ def project_from_legacy(
 
     sample_models = samples_from_legacy_project(db, zoo_project)
     project_hash = hash_from_project(a_prj_path)
-    crea_dates = [creation_time] + [a_sub.createdAt for a_sub in sample_models]
+    crea_dates = [creation_time] + [
+        a_sub.createdAt for a_sub in sample_models if a_sub.createdAt
+    ]
     created_at = min(crea_dates)
-    upd_dates = [datetime.now()] + [a_sub.updatedAt for a_sub in sample_models]
+    upd_dates = [datetime.now()] + [
+        a_sub.updatedAt for a_sub in sample_models if a_sub.updatedAt
+    ]
     updated_at = max(upd_dates)
 
     project = Project(

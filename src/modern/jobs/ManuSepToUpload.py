@@ -8,6 +8,7 @@ from ZooProcess_lib.img_tools import load_image, add_separated_mask
 from img_proc.generate import generate_separator_gif
 from legacy.ids import separator_file_name, mask_file_name, measure_file_name
 from modern.filesystem import ModernScanFileSystem
+from helpers.paths import file_date, directory_date_range
 from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
 from modern.jobs.ScanToAutoSep import (
     get_scan_and_backgrounds,
@@ -46,7 +47,7 @@ class ManuallySeparatedToEcoTaxa(Job):
             f"Starting post-manual processing for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
         )
         # All vignettes should be generated and fresher than origin data
-        thumbs_dir = self.modern_fs.cut_dir()
+        thumbs_dir = self.modern_fs.cut_dir
         # TODO, including some force option for dev
         # All separated vignettes should be processed, i.e. written after marker file
 
@@ -59,12 +60,13 @@ class ManuallySeparatedToEcoTaxa(Job):
         )
         # Generate SEP with post-processed vignettes
         # Generate with the same name as Legacy, for practicality, but in modern subdirectory
-        meta_dir = modern_fs.meta_dir()
+        meta_dir = modern_fs.meta_dir
         sep_file_name = separator_file_name(self.subsample_name)
         sep_file_path = meta_dir / sep_file_name
         if sep_file_path.exists():
-            # TODO: All files in cut_dir should be more recent than the separator
-            pass
+            sep_file_date = file_date(sep_file_path)
+            first, last = directory_date_range(modern_fs.cut_dir)
+            assert first > sep_file_date, "Filesystem desync"
         else:
             msk_file_name = mask_file_name(self.subsample_name)
             msk_file_path = meta_dir / msk_file_name
@@ -72,14 +74,14 @@ class ManuallySeparatedToEcoTaxa(Job):
             generate_separator_gif(
                 self.logger,
                 measures,
-                modern_fs.multiples_vis_dir(),
-                modern_fs.cut_dir(),
+                modern_fs.multiples_vis_dir,
+                modern_fs.cut_dir,
                 msk_file_path,
                 sep_file_path,
             )
             # Snapshot images for stats
             before_cuts = modern_fs.images_in_cut_dir()
-            # Re-segment from orignal files
+            # Re-segment from orignal files and add separators
             raw_scan, bg_scans = get_scan_and_backgrounds(
                 self.logger, self.zoo_project, self.subsample_name
             )
@@ -90,10 +92,6 @@ class ManuallySeparatedToEcoTaxa(Job):
             processed_scan_image = add_separated_mask(
                 scan_without_background, sep_image
             )
-            # for_deb = np.copy(scan_without_background)
-            # for_deb = cv2.cvtColor(for_deb, cv2.COLOR_GRAY2RGB)
-            # for_deb[sep_image == 255] = RGB_RED_COLOR
-            # saveimage(for_deb, "/tmp/processed_scan_image.png")
             segment_image_and_produce_cuts(
                 self.logger,
                 processor,

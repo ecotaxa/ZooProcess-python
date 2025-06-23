@@ -76,7 +76,7 @@ def processing_context(
         zoo_project.zooscan_config.read_lut(),
     )
     fs = ModernScanFileSystem(subsample_dir)
-    return processor, fs.cut_dir(), fs.multiples_vis_dir(), fs.meta_dir()
+    return processor, fs.cut_dir, fs.multiples_vis_dir, fs.meta_dir
 
 
 @router.get("/vignettes/{project_hash}/{sample_hash}/{subsample_hash}")
