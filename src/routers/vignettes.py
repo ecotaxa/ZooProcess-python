@@ -220,7 +220,9 @@ def check_mask_sanity(
     meta_dir: Path,
 ):
     """Ensure we are in sync with global image for future re-generation"""
-    measure = Measurements().read(meta_dir / measure_file_name(subsample_name))
+    measure = Measurements().read(
+        meta_dir / measure_file_name(scan_name_from_subsample_name(subsample_name))
+    )
     line_for_image = measure.find(img_basename)
     if line_for_image is None:
         raise_500("Could not locate image from its mask")

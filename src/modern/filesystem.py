@@ -133,6 +133,9 @@ class ModernScanFileSystem:
             os.makedirs(meta_dir)
         return meta_dir
 
+    def images_in_cut_dir(self):
+        return [a_file.name for a_file in self.cut_dir().iterdir()]
+
 
 def get_directory_date_range(
     directory_path: str,

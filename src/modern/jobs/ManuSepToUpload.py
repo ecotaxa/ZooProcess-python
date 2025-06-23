@@ -1,11 +1,19 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
+import cv2
 
+from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from ZooProcess_lib.img_tools import load_image, add_separated_mask
 from img_proc.generate import generate_separator_gif
-from legacy.ids import separator_file_name, mask_file_name
+from legacy.ids import separator_file_name, mask_file_name, measure_file_name
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
+from modern.jobs.ScanToAutoSep import (
+    get_scan_and_backgrounds,
+    convert_scan_and_backgrounds,
+    segment_image_and_produce_cuts,
+)
 from modern.tasks import Job
 
 
@@ -44,20 +52,101 @@ class ManuallySeparatedToEcoTaxa(Job):
 
     def run(self):
         # self._cleanup_work()
+        modern_fs = self.modern_fs
         processor = Processor.from_legacy_config(
             self.zoo_project.zooscan_config.read(),
             self.zoo_project.zooscan_config.read_lut(),
         )
         # Generate SEP with post-processed vignettes
-        # Generate with the same name as Legacy, for practicality, but modern subdirectory
+        # Generate with the same name as Legacy, for practicality, but in modern subdirectory
+        meta_dir = modern_fs.meta_dir()
         sep_file_name = separator_file_name(self.subsample_name)
-        msk_file_name = mask_file_name(self.subsample_name)
-        msk_file_path = self.modern_fs.meta_dir() / msk_file_name
-        sep_file_path = self.modern_fs.meta_dir() / sep_file_name
-        generate_separator_gif(self.modern_fs.cut_dir(), msk_file_path, sep_file_path)
+        sep_file_path = meta_dir / sep_file_name
+        if sep_file_path.exists():
+            # TODO: All files in cut_dir should be more recent than the separator
+            pass
+        else:
+            msk_file_name = mask_file_name(self.subsample_name)
+            msk_file_path = meta_dir / msk_file_name
+            measures = Measurements().read(meta_dir / measure_file_name(self.scan_name))
+            generate_separator_gif(
+                self.logger,
+                measures,
+                modern_fs.multiples_vis_dir(),
+                modern_fs.cut_dir(),
+                msk_file_path,
+                sep_file_path,
+            )
+            # Snapshot images for stats
+            before_cuts = modern_fs.images_in_cut_dir()
+            # Re-segment from orignal files
+            raw_scan, bg_scans = get_scan_and_backgrounds(
+                self.logger, self.zoo_project, self.subsample_name
+            )
+            scan_resolution, scan_without_background = convert_scan_and_backgrounds(
+                self.logger, processor, raw_scan, bg_scans
+            )
+            sep_image = load_image(sep_file_path, imread_mode=cv2.IMREAD_GRAYSCALE)
+            processed_scan_image = add_separated_mask(
+                scan_without_background, sep_image
+            )
+            # for_deb = np.copy(scan_without_background)
+            # for_deb = cv2.cvtColor(for_deb, cv2.COLOR_GRAY2RGB)
+            # for_deb[sep_image == 255] = RGB_RED_COLOR
+            # saveimage(for_deb, "/tmp/processed_scan_image.png")
+            segment_image_and_produce_cuts(
+                self.logger,
+                processor,
+                modern_fs,
+                processed_scan_image,
+                scan_resolution,
+                self.scan_name,
+            )
+            after_cuts = modern_fs.images_in_cut_dir()
+            self.log_image_diffs(before_cuts, after_cuts)
         # Generate features
         # Generate EcoTaxa data
         # Upload to EcoTaxa
+
+    def log_image_diffs(self, before_cuts, after_cuts):
+        """
+        Log the differences between two sets of images.
+
+        Args:
+            before_cuts: List of image filenames before processing
+            after_cuts: List of image filenames after processing
+        """
+        # Convert lists to sets for efficient comparison
+        before_set = set(before_cuts)
+        after_set = set(after_cuts)
+
+        # Find common images (present in both before and after)
+        common_images = before_set.intersection(after_set)
+
+        # Find appearing images (present in after but not in before)
+        appearing_images = after_set - before_set
+        appearing_msg = ",".join(appearing_images)[:256]
+
+        # Find disappearing images (present in before but not in after)
+        gone_images = before_set - after_set
+        gone_msg = ",".join(gone_images)[:256]
+
+        # Log the results
+        self.logger.info(f"Image differences summary:")
+        self.logger.info(f"  - Common images: {len(common_images)} images")
+        self.logger.info(f"  - Appearing images: {appearing_msg}")
+        self.logger.info(f"  - Disappearing images: {gone_msg} ")
+
+        # Log detailed lists if there are differences
+        # if appearing_images:
+        #     self.logger.info(f"New images appearing after processing:")
+        #     for img in sorted(appearing_images):
+        #         self.logger.info(f"  + {img}")
+        #
+        # if gone_images:
+        #     self.logger.info(f"Images that disappeared after processing:")
+        #     for img in sorted(gone_images):
+        #         self.logger.info(f"  - {img}")
 
     def _cleanup_work(self):
         """Cleanup the files that present process is going to (re) create"""

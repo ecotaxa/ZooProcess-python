@@ -1,7 +1,10 @@
 # Process a scan from its background+scan until auto separation
 import os
+from logging import Logger
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
+
+import numpy as np
 
 from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
@@ -48,7 +51,6 @@ class BackgroundAndScanToAutoSeparated(Job):
             - 1 RAW scan
         Process a scan from its background until first segmentation and automatic separation.
         """
-        prj_path = self.zoo_project.path
         # Mark the job as started
         self.mark_started()
 
@@ -57,56 +59,18 @@ class BackgroundAndScanToAutoSeparated(Job):
             f"Starting processing for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
         )
 
-        # Get RAW scan file path, root of all dependencies
-        raw_scan = self.zoo_project.zooscan_scan.raw.get_file(
-            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+        self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
+            self.logger, self.zoo_project, self.subsample_name
         )
-        assert raw_scan.exists()
-        raw_scan_date = get_creation_date(raw_scan)
-        for_msg = raw_scan.relative_to(prj_path)
-        self.logger.info(f"Raw scan file {for_msg} dated {raw_scan_date}")
-        self.raw_scan = raw_scan
-
-        zooscan_back = self.zoo_project.zooscan_back
-        # We should have 2 RAW backgrounds
-        # TODO: Use manual association, if relevant
-        bg_raw_files = zooscan_back.get_last_raw_backgrounds_before(raw_scan_date)
-        for a_bg in bg_raw_files:
-            assert a_bg.exists()
-            bg_scan_date = get_creation_date(a_bg)
-            for_msg = a_bg.relative_to(prj_path)
-            self.logger.info(f"Raw background file {for_msg} dated {bg_scan_date}")
-            assert (
-                bg_scan_date < raw_scan_date
-            ), f"Background scan {for_msg} date is _after_ raw background date"
-            self.bg_scans.append(a_bg)
 
     def run(self):
-        self._cleanup_work()
+        # self._cleanup_work()
         processor = Processor.from_legacy_config(
             self.zoo_project.zooscan_config.read(),
             self.zoo_project.zooscan_config.read_lut(),
         )
-        self.logger.info(f"Converting backgrounds")
-        bg_converted_files = [
-            processor.converter.do_file_to_image(a_raw_bg_file)
-            for a_raw_bg_file in self.bg_scans
-        ]
-        self.logger.info(f"Combining backgrounds")
-        combined_bg_image, bg_resolution = processor.bg_combiner.do_from_images(
-            bg_converted_files
-        )
-
-        # Scan pre-processing
-        self.logger.info(f"Converting scan")
-        eight_bit_scan_image, scan_resolution = processor.converter.do_file_to_image(
-            self.raw_scan
-        )
-
-        # Background removal
-        self.logger.info(f"Removing background")
-        scan_without_background = processor.bg_remover.do_from_images(
-            combined_bg_image, bg_resolution, eight_bit_scan_image, scan_resolution
+        scan_resolution, scan_without_background = convert_scan_and_backgrounds(
+            self.logger, processor, self.raw_scan, self.bg_scans
         )
 
         # Mask generation
@@ -116,35 +80,19 @@ class BackgroundAndScanToAutoSeparated(Job):
         msk_dir = self.modern_fs.ensure_meta_dir()
         save_mask_image(self.logger, mask, msk_dir / msk_file_name)
 
-        # Segmentation
-        self.logger.info(f"Segmenting")
-        rois, stats = processor.segmenter.find_ROIs_in_image(
-            scan_without_background,
-            scan_resolution,
-        )
-        self.logger.info(f"Segmentation stats: {stats}")
-
-        # Thumbnail generation
-        self.logger.info(f"Extracting")
         subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
-        fs = ModernScanFileSystem(subsample_dir)
-        thumbs_dir = fs.fresh_empty_cut_dir()
-        processor.extractor.extract_all_with_border_to_dir(
+        modern_fs = ModernScanFileSystem(subsample_dir)
+        segment_image_and_produce_cuts(
+            self.logger,
+            processor,
+            modern_fs,
             scan_without_background,
             scan_resolution,
-            rois,
-            thumbs_dir,
             self.scan_name,
         )
-
-        # Index generation
-        meta_dir = fs.meta_dir()
-        os.makedirs(meta_dir, exist_ok=True)
-        generate_box_measures(
-            rois, self.scan_name, meta_dir / measure_file_name(self.subsample_name)
-        )
+        thumbs_dir = modern_fs.cut_dir()
 
         self.logger.info(f"Determining multiples")
         # First ML step, send all images to the multiples classifier
@@ -153,7 +101,7 @@ class BackgroundAndScanToAutoSeparated(Job):
 
         self.logger.info(f"Separating multiples (auto)")
         # Second ML step, send potential multiples to the separator
-        multiples_vis_dir = fs.fresh_empty_multiples_vis_dir()
+        multiples_vis_dir = modern_fs.fresh_empty_multiples_vis_dir()
         image_list = ImageList(thumbs_dir, [m.name for m in maybe_multiples])
         # Send files by chunks to avoid the operator waiting too long with no feedback
         processed = 0
@@ -166,7 +114,7 @@ class BackgroundAndScanToAutoSeparated(Job):
             processed += len(a_chunk.get_images())
             self.logger.info(f"Processed {processed}/{to_process} images")
         # Add some marker that all went fine
-        fs.mark_ML_separation_done()
+        modern_fs.mark_ML_separation_done()
 
     def _cleanup_work(self):
         """Cleanup the files that present process is going to (re) create"""
@@ -201,3 +149,87 @@ def generate_box_measures(rois: List[ROI], scan_name: str, meta_file: Path) -> N
     out.header_row = ["", "Label", "BX", "BY", "Width", "Height"]
     out.data_rows = rows
     out.write(meta_file)
+
+
+def get_scan_and_backgrounds(
+    logger: Logger, zoo_project: ZooscanProjectFolder, subsample_name: str
+) -> Tuple[Path, List[Path]]:
+    # Get RAW scan file path, root of all dependencies
+    raw_scan = zoo_project.zooscan_scan.raw.get_file(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+    assert raw_scan.exists()
+    raw_scan_date = get_creation_date(raw_scan)
+    for_msg = raw_scan.relative_to(zoo_project.path)
+    logger.info(f"Raw scan file {for_msg} dated {raw_scan_date}")
+    zooscan_back = zoo_project.zooscan_back
+    # We should have 2 RAW backgrounds
+    # TODO: Use manual association, if relevant
+    bg_raw_files = zooscan_back.get_last_raw_backgrounds_before(raw_scan_date)
+    bg_scans = []
+    for a_bg in bg_raw_files:
+        assert a_bg.exists()
+        bg_scan_date = get_creation_date(a_bg)
+        for_msg = a_bg.relative_to(zoo_project.path)
+        logger.info(f"Raw background file {for_msg} dated {bg_scan_date}")
+        assert (
+            bg_scan_date < raw_scan_date
+        ), f"Background scan {for_msg} date is _after_ raw background date"
+        bg_scans.append(a_bg)
+    return raw_scan, bg_scans
+
+
+def convert_scan_and_backgrounds(
+    logger: Logger, processor: Processor, raw_scan: Path, bg_scans: List[Path]
+):
+    logger.info(f"Converting backgrounds")
+    bg_converted_files = [
+        processor.converter.do_file_to_image(a_raw_bg_file)
+        for a_raw_bg_file in bg_scans
+    ]
+    logger.info(f"Combining backgrounds")
+    combined_bg_image, bg_resolution = processor.bg_combiner.do_from_images(
+        bg_converted_files
+    )
+    # Scan pre-processing
+    logger.info(f"Converting scan")
+    eight_bit_scan_image, scan_resolution = processor.converter.do_file_to_image(
+        raw_scan
+    )
+    # Background removal
+    logger.info(f"Removing background")
+    scan_without_background = processor.bg_remover.do_from_images(
+        combined_bg_image, bg_resolution, eight_bit_scan_image, scan_resolution
+    )
+    return scan_resolution, scan_without_background
+
+
+def segment_image_and_produce_cuts(
+    logger: Logger,
+    processor: Processor,
+    modern_fs: ModernScanFileSystem,
+    image: np.ndarray,
+    image_resolution: int,
+    scan_name: str,
+) -> None:
+    # Segmentation
+    logger.info(f"Segmenting")
+    rois, stats = processor.segmenter.find_ROIs_in_image(
+        image,
+        image_resolution,
+    )
+    logger.info(f"Segmentation stats: {stats}")
+    # Thumbnail generation
+    logger.info(f"Extracting")
+    thumbs_dir = modern_fs.fresh_empty_cut_dir()
+    processor.extractor.extract_all_with_border_to_dir(
+        image,
+        image_resolution,
+        rois,
+        thumbs_dir,
+        scan_name,
+    )
+    # Index generation
+    meta_dir = modern_fs.meta_dir()
+    os.makedirs(meta_dir, exist_ok=True)
+    generate_box_measures(rois, scan_name, meta_dir / measure_file_name(scan_name))

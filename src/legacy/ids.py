@@ -8,8 +8,8 @@ def raw_file_name(scan_name: str) -> str:
     return f"{subsample_name}_raw_{THE_SCAN_PER_SUBSAMPLE}.tif"
 
 
-def measure_file_name(subsample_name: str) -> str:
-    return f"{subsample_name}_{THE_SCAN_PER_SUBSAMPLE}{MEASURE_ENDING}"
+def measure_file_name(scan_name: str) -> str:
+    return f"{scan_name}{MEASURE_ENDING}"
 
 
 def separator_file_name(subsample_name: str) -> str:
