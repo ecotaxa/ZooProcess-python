@@ -2,7 +2,7 @@
 import os
 from logging import Logger
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 
@@ -93,7 +93,8 @@ class BackgroundAndScanToAutoSeparated(Job):
         produce_cuts_and_index(
             self.logger,
             processor,
-            modern_fs,
+            modern_fs.fresh_empty_cut_dir(),
+            modern_fs.meta_dir,
             scan_without_background,
             scan_resolution,
             rois,
@@ -214,7 +215,8 @@ def convert_scan_and_backgrounds(
 def produce_cuts_and_index(
     logger: Logger,
     processor: Processor,
-    modern_fs: ModernScanFileSystem,
+    thumbs_dir: Path,
+    meta_dir: Optional[Path],
     image: np.ndarray,
     image_resolution: int,
     rois: List[ROI],
@@ -222,7 +224,6 @@ def produce_cuts_and_index(
 ) -> None:
     # Thumbnail generation
     logger.info(f"Extracting")
-    thumbs_dir = modern_fs.fresh_empty_cut_dir()
     processor.extractor.extract_all_with_border_to_dir(
         image,
         image_resolution,
@@ -231,6 +232,6 @@ def produce_cuts_and_index(
         scan_name,
     )
     # Index generation
-    meta_dir = modern_fs.meta_dir
-    os.makedirs(meta_dir, exist_ok=True)
-    generate_box_measures(rois, scan_name, meta_dir / measure_file_name(scan_name))
+    if meta_dir is not None:
+        os.makedirs(meta_dir, exist_ok=True)
+        generate_box_measures(rois, scan_name, meta_dir / measure_file_name(scan_name))

@@ -10,6 +10,9 @@ V10_THUMBS_TO_CHECK_SUBDIR = (
     "v10_multiples"  # Where and how ML determined we should separate, RGB PNGs
 )
 V10_METADATA_SUBDIR = "v10_meta"  # For unique files
+V10_THUMBS_AFTER_SUBDIR = (
+    "v10_cut_after"  # Output of full image segmented, after separation
+)
 
 ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
 
@@ -50,6 +53,16 @@ class ModernScanFileSystem:
         return self.work_dir / V10_THUMBS_SUBDIR
 
     @property
+    def cut_dir_after(self) -> Path:
+        """
+        Get the cut/thumbnails directory path.
+
+        Returns:
+            Path to the cut/thumbnails directory
+        """
+        return self.work_dir / V10_THUMBS_AFTER_SUBDIR
+
+    @property
     def multiples_vis_dir(self) -> Path:
         """
         Get the multiples visualization directory path.
@@ -68,6 +81,20 @@ class ModernScanFileSystem:
             Path to a new and empty cut/thumbnails directory
         """
         thumbs_dir = self.cut_dir
+        if thumbs_dir.exists():
+            shutil.rmtree(thumbs_dir)
+        os.makedirs(thumbs_dir, exist_ok=True)
+        return thumbs_dir
+
+    def fresh_empty_cut_after_dir(self) -> Path:
+        """
+        Get the cut/thumbnails directory path, ensuring it's new and empty.
+        If the directory exists, it will be removed and recreated.
+
+        Returns:
+            Path to a new and empty cut/thumbnails directory
+        """
+        thumbs_dir = self.cut_dir_after
         if thumbs_dir.exists():
             shutil.rmtree(thumbs_dir)
         os.makedirs(thumbs_dir, exist_ok=True)
@@ -138,3 +165,6 @@ class ModernScanFileSystem:
 
     def images_in_cut_dir(self):
         return [a_file.name for a_file in self.cut_dir.iterdir()]
+
+    def images_in_cut_after_dir(self):
+        return [a_file.name for a_file in self.cut_dir_after.iterdir()]

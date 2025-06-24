@@ -73,26 +73,17 @@ class ManuallySeparatedToEcoTaxa(Job):
         sep_file_name = separator_file_name(self.subsample_name)
         sep_file_path = meta_dir / sep_file_name
 
-        do_cuts_production = True
-        if sep_file_path.exists():
-            sep_file_date = file_date(sep_file_path)
-            first, last = directory_date_range(modern_fs.cut_dir)
-            assert first is not None and first > sep_file_date, "Filesystem desync"
-            do_cuts_production = False
-        else:
-            msk_file_name = mask_file_name(self.subsample_name)
-            msk_file_path = meta_dir / msk_file_name
-            measures = Measurements().read(meta_dir / measure_file_name(self.scan_name))
-            generate_separator_gif(
-                self.logger,
-                measures,
-                modern_fs.multiples_vis_dir,
-                modern_fs.cut_dir,
-                msk_file_path,
-                sep_file_path,
-            )
-        # Snapshot images for (eventual) stats
-        before_cuts = modern_fs.images_in_cut_dir()
+        msk_file_name = mask_file_name(self.subsample_name)
+        msk_file_path = meta_dir / msk_file_name
+        measures = Measurements().read(meta_dir / measure_file_name(self.scan_name))
+        generate_separator_gif(
+            self.logger,
+            measures,
+            modern_fs.multiples_vis_dir,
+            modern_fs.cut_dir,
+            msk_file_path,
+            sep_file_path,
+        )
         # Re-segment from orignal files and add separators
         raw_scan, bg_scans = get_scan_and_backgrounds(
             self.logger, self.zoo_project, self.subsample_name
@@ -104,22 +95,23 @@ class ManuallySeparatedToEcoTaxa(Job):
         processed_scan_image = add_separated_mask(scan_without_background, sep_image)
         self.logger.info(f"Segmenting")
         rois, stats = processor.segmenter.find_ROIs_in_image(
-            scan_without_background,
+            processed_scan_image,
             scan_resolution,
         )
         self.logger.info(f"Segmentation stats: {stats}")
-        if do_cuts_production:
-            produce_cuts_and_index(
-                self.logger,
-                processor,
-                modern_fs,
-                processed_scan_image,
-                scan_resolution,
-                rois,
-                self.scan_name,
-            )
-            after_cuts = modern_fs.images_in_cut_dir()
-            self.log_image_diffs(before_cuts, after_cuts)
+        produce_cuts_and_index(
+            self.logger,
+            processor,
+            modern_fs.fresh_empty_cut_after_dir(),
+            None,  # No meta needed
+            processed_scan_image,
+            scan_resolution,
+            rois,
+            self.scan_name,
+        )
+        before_cuts = modern_fs.images_in_cut_after_dir()
+        after_cuts = modern_fs.images_in_cut_dir()
+        self.log_image_diffs(before_cuts, after_cuts)
         # Generate features
         self.logger.info(f"Generating features")
         features = processor.calculator.ecotaxa_measures_list_from_roi_list(
@@ -143,7 +135,7 @@ class ManuallySeparatedToEcoTaxa(Job):
         )
         tsv_gen.generate_into(tsv_file_path)
         # Build images zip
-        images_zip = ImageList(modern_fs.cut_dir)
+        images_zip = ImageList(modern_fs.cut_dir_after)
         zip_file = images_zip.zipped(self.logger, force_RGB=False)
         # Add the TSV file to the zip
         with zipfile.ZipFile(zip_file, "a") as zip_ref:
