@@ -1,21 +1,30 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
+
 import cv2
+import zipfile
 
 from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from ZooProcess_lib.img_tools import load_image, add_separated_mask
-from img_proc.generate import generate_separator_gif
-from legacy.ids import separator_file_name, mask_file_name, measure_file_name
-from modern.filesystem import ModernScanFileSystem
 from helpers.paths import file_date, directory_date_range
+from img_proc.generate import generate_separator_gif
+from legacy.ids import (
+    separator_file_name,
+    mask_file_name,
+    measure_file_name,
+    ecotaxa_tsv_file_name,
+)
+from modern.filesystem import ModernScanFileSystem
 from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
 from modern.jobs.ScanToAutoSep import (
     get_scan_and_backgrounds,
     convert_scan_and_backgrounds,
-    segment_image_and_produce_cuts,
+    produce_cuts_and_index,
 )
 from modern.tasks import Job
+from providers.ImageList import ImageList
+from providers.ecotaxa_tsv import EcoTaxaTSV
 
 
 class ManuallySeparatedToEcoTaxa(Job):
@@ -63,10 +72,13 @@ class ManuallySeparatedToEcoTaxa(Job):
         meta_dir = modern_fs.meta_dir
         sep_file_name = separator_file_name(self.subsample_name)
         sep_file_path = meta_dir / sep_file_name
+
+        do_cuts_production = True
         if sep_file_path.exists():
             sep_file_date = file_date(sep_file_path)
             first, last = directory_date_range(modern_fs.cut_dir)
-            assert first > sep_file_date, "Filesystem desync"
+            assert first is not None and first > sep_file_date, "Filesystem desync"
+            do_cuts_production = False
         else:
             msk_file_name = mask_file_name(self.subsample_name)
             msk_file_path = meta_dir / msk_file_name
@@ -79,31 +91,64 @@ class ManuallySeparatedToEcoTaxa(Job):
                 msk_file_path,
                 sep_file_path,
             )
-            # Snapshot images for stats
-            before_cuts = modern_fs.images_in_cut_dir()
-            # Re-segment from orignal files and add separators
-            raw_scan, bg_scans = get_scan_and_backgrounds(
-                self.logger, self.zoo_project, self.subsample_name
-            )
-            scan_resolution, scan_without_background = convert_scan_and_backgrounds(
-                self.logger, processor, raw_scan, bg_scans
-            )
-            sep_image = load_image(sep_file_path, imread_mode=cv2.IMREAD_GRAYSCALE)
-            processed_scan_image = add_separated_mask(
-                scan_without_background, sep_image
-            )
-            segment_image_and_produce_cuts(
+        # Snapshot images for (eventual) stats
+        before_cuts = modern_fs.images_in_cut_dir()
+        # Re-segment from orignal files and add separators
+        raw_scan, bg_scans = get_scan_and_backgrounds(
+            self.logger, self.zoo_project, self.subsample_name
+        )
+        scan_resolution, scan_without_background = convert_scan_and_backgrounds(
+            self.logger, processor, raw_scan, bg_scans
+        )
+        sep_image = load_image(sep_file_path, imread_mode=cv2.IMREAD_GRAYSCALE)
+        processed_scan_image = add_separated_mask(scan_without_background, sep_image)
+        self.logger.info(f"Segmenting")
+        rois, stats = processor.segmenter.find_ROIs_in_image(
+            scan_without_background,
+            scan_resolution,
+        )
+        self.logger.info(f"Segmentation stats: {stats}")
+        if do_cuts_production:
+            produce_cuts_and_index(
                 self.logger,
                 processor,
                 modern_fs,
                 processed_scan_image,
                 scan_resolution,
+                rois,
                 self.scan_name,
             )
             after_cuts = modern_fs.images_in_cut_dir()
             self.log_image_diffs(before_cuts, after_cuts)
         # Generate features
+        self.logger.info(f"Generating features")
+        features = processor.calculator.ecotaxa_measures_list_from_roi_list(
+            processed_scan_image, scan_resolution, rois
+        )
         # Generate EcoTaxa data
+        tsv_file_name = ecotaxa_tsv_file_name(self.subsample_name)
+        tsv_file_path = meta_dir / tsv_file_name
+        self.logger.info(f"Writing ecotaxa TSV into {tsv_file_path}")
+        tsv_gen = EcoTaxaTSV(
+            self.zoo_project,
+            self.sample_name,
+            self.subsample_name,
+            self.scan_name,
+            rois,
+            features,
+            self.created_at,
+            scan_resolution,
+            processor.segmenter,
+            bg_scans,
+        )
+        tsv_gen.generate_into(tsv_file_path)
+        # Build images zip
+        images_zip = ImageList(modern_fs.cut_dir)
+        zip_file = images_zip.zipped(self.logger, force_RGB=False)
+        # Add the TSV file to the zip
+        with zipfile.ZipFile(zip_file, "a") as zip_ref:
+            zip_ref.write(tsv_file_path, arcname=tsv_file_name)
+
         # Upload to EcoTaxa
 
     def log_image_diffs(self, before_cuts, after_cuts):

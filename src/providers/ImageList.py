@@ -115,7 +115,7 @@ class ImageList:
             # Create a new ImageList instance with the same directory_path but with only the images from the sublist
             yield ImageList(self.directory_path, images=sublist)
 
-    def zipped(self, logger: Logger) -> Path:
+    def zipped(self, logger: Logger, force_RGB=True) -> Path:
         """
         Zips flat all images from this ImageList to a temporary zip file.
         Images are converted to RGB if it's not their format.
@@ -155,7 +155,7 @@ class ImageList:
                 for image_name in image_names:
                     image_path = self.directory_path / image_name
                     pil_img = Image.open(image_path)
-                    if pil_img.mode != "RGB":
+                    if force_RGB and pil_img.mode != "RGB":
                         cvt_pil_img = pil_img.convert("RGB")
                         img_buffer = io.BytesIO()
                         cvt_pil_img.save(img_buffer, format="PNG")

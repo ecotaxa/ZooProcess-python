@@ -18,3 +18,7 @@ def separator_file_name(subsample_name: str) -> str:
 
 def mask_file_name(subsample_name: str) -> str:
     return f"{subsample_name}_{THE_SCAN_PER_SUBSAMPLE}{MSK1_ENDING}"
+
+
+def ecotaxa_tsv_file_name(subsample_name: str) -> str:
+    return f"ecotaxa_{subsample_name}_{THE_SCAN_PER_SUBSAMPLE}.tsv"

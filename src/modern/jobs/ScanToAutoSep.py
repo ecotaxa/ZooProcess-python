@@ -80,16 +80,23 @@ class BackgroundAndScanToAutoSeparated(Job):
         msk_dir = self.modern_fs.ensure_meta_dir()
         save_mask_image(self.logger, mask, msk_dir / msk_file_name)
 
+        self.logger.info(f"Segmenting")
+        rois, stats = processor.segmenter.find_ROIs_in_image(
+            scan_without_background,
+            scan_resolution,
+        )
+        self.logger.info(f"Segmentation stats: {stats}")
         subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
         modern_fs = ModernScanFileSystem(subsample_dir)
-        segment_image_and_produce_cuts(
+        produce_cuts_and_index(
             self.logger,
             processor,
             modern_fs,
             scan_without_background,
             scan_resolution,
+            rois,
             self.scan_name,
         )
         thumbs_dir = modern_fs.cut_dir
@@ -204,21 +211,15 @@ def convert_scan_and_backgrounds(
     return scan_resolution, scan_without_background
 
 
-def segment_image_and_produce_cuts(
+def produce_cuts_and_index(
     logger: Logger,
     processor: Processor,
     modern_fs: ModernScanFileSystem,
     image: np.ndarray,
     image_resolution: int,
+    rois: List[ROI],
     scan_name: str,
 ) -> None:
-    # Segmentation
-    logger.info(f"Segmenting")
-    rois, stats = processor.segmenter.find_ROIs_in_image(
-        image,
-        image_resolution,
-    )
-    logger.info(f"Segmentation stats: {stats}")
     # Thumbnail generation
     logger.info(f"Extracting")
     thumbs_dir = modern_fs.fresh_empty_cut_dir()
