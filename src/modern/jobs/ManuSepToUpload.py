@@ -1,13 +1,14 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
 
-import cv2
 import zipfile
+from typing import Optional
+
+import cv2
 
 from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from ZooProcess_lib.img_tools import load_image, add_separated_mask
-from helpers.paths import file_date, directory_date_range
 from img_proc.generate import generate_separator_gif
 from legacy.ids import (
     separator_file_name,
@@ -30,12 +31,19 @@ from providers.ecotaxa_tsv import EcoTaxaTSV
 class ManuallySeparatedToEcoTaxa(Job):
 
     def __init__(
-        self, zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
+        self,
+        zoo_project: ZooscanProjectFolder,
+        sample_name: str,
+        subsample_name: str,
+        token: Optional[str] = None,
+        dst_project_id: Optional[int] = None,
     ):
         super().__init__()
+        # Params
         self.zoo_project = zoo_project
         self.sample_name = sample_name
         self.subsample_name = subsample_name
+        # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
         subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(

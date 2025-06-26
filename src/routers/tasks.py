@@ -73,17 +73,18 @@ def create_task(
         return job_to_task_rsp(bg2auto_task)
     elif task.exec == "UPLOAD":
         params = task.params
-        # Note: params["scanId"] is ignored
-        project_hash, sample_hash, subsample_hash = (
+        project_hash, sample_hash, subsample_hash, token, dst_project_id = (
             params["project"],
             params["sample"],
             params["subsample"],
+            params.get("ecotaxa_token", None),
+            params.get("ecotaxa_project_id", None),
         )
         zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
             db, project_hash, sample_hash, subsample_hash
         )
         manu2ecotaxa_task = ManuallySeparatedToEcoTaxa(
-            zoo_project, sample_name, subsample_name
+            zoo_project, sample_name, subsample_name, token, dst_project_id
         )
         JobScheduler.submit(manu2ecotaxa_task)
         logger.info(f"Processing task: {task}")

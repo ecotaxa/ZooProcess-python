@@ -11,7 +11,10 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.samples import read_samples_metadata_table, find_sample_metadata
 from legacy.scans import find_scan_metadata, read_scans_metadata_table
 from modern.from_legacy import sample_from_legacy_meta
+from modern.ids import THE_SCAN_PER_SUBSAMPLE
 from version import version_hash
+
+SOFTWARE_FOR_TSVS = "ZooProcess v10"
 
 LEGACY_COLUMNS = (
     # Refs
@@ -47,6 +50,8 @@ LEGACY_COLUMNS = (
     "process_particle_min_size_mm,process_particle_max_size_mm,"
     # "process_particle_sep_mask,process_particle_bw_ratio,"
     "process_software,"
+    # Acquisition
+    "acq_id,acq_min_mesh,acq_max_mesh,acq_sub_part,acq_sub_method,acq_hardware,acq_software,acq_author,acq_imgtype,acq_scan_date,acq_scan_time,acq_quality,acq_bitpixel,acq_greyfrom,acq_scan_resolution,acq_rotation,acq_miror,acq_xsize,acq_ysize,acq_xoffset,acq_yoffset,acq_lut_color_balance,acq_lut_filter,acq_lut_min,acq_lut_max,acq_lut_odrange,acq_lut_ratio,acq_lut_16b_median,acq_instrument,acq_scan_comment,"
     # Sample
     "sample_id,sample_scan_operator,sample_ship,sample_program,sample_stationid,"
     "sample_bottomdepth,"
@@ -108,11 +113,17 @@ class EcoTaxaTSV:
     def generate_into(self, tsv_file_path: Path):
         tsv_refs = self.object_refs()
         tsv_geo = self.object_geo()
-        tsv_process = self.object_process()
         tsv_sample = self.object_sample()
+        tsv_acquisition = self.object_acquisition()
+        tsv_process = self.object_process()
         headers = TSV_HEADER
         lines = [
-            ref | round_for_tsv(feature) | tsv_geo | tsv_process | tsv_sample
+            ref
+            | round_for_tsv(feature)
+            | tsv_geo
+            | tsv_sample
+            | tsv_acquisition
+            | tsv_process
             for ref, feature in zip(tsv_refs, self.features)
         ]
         lines.sort(key=lambda l: (l["object_by"], l["object_bx"]))
@@ -145,9 +156,7 @@ class EcoTaxaTSV:
 
     def object_geo(self) -> Dict[str, Any]:
         csv_datetime = self.meta_for_sample["date"]
-        tsv_date, tsv_time = csv_datetime.split("-")
-        # 1200 -> 12:00:00.000
-        tsv_time = tsv_time[:2] + ":" + tsv_time[2:] + ":00.000"
+        tsv_date, tsv_time = self.ini_date_to_tsv_date_and_time(csv_datetime)
         modern_meta = sample_from_legacy_meta(self.meta_for_sample)
         return {
             "object_lat": modern_meta["latitude_start"],
@@ -160,36 +169,17 @@ class EcoTaxaTSV:
             "object_lon_end": modern_meta["longitude_end"],
         }
 
-    def object_process(self) -> Dict[str, Any]:
-        prc_id = f"zooprocess_{self.meta_for_sample["sampleid"]}"
-        prc_date = self.start_date.strftime("%y%m%d")
-        prc_time = self.start_date.strftime("%H:%M:%S.000")
-        pixel_size_mm = round(self.segmenter.pixel_size(self.resolution), 4)
-        background_image = self.backgrounds[0].name.replace("_1.", ".")
-        return {
-            "process_id": prc_id,
-            "process_date": prc_date,
-            "process_time": prc_time,
-            "process_img_software_version": version_hash(),
-            "process_img_resolution": self.resolution,
-            # "process_img_od_grey": "",
-            # "process_img_od_std": "",
-            "process_img_background_img": background_image,
-            "process_particle_version": version_hash(),
-            "process_particle_threshold": self.segmenter.threshold,
-            "process_particle_pixel_size_mm": pixel_size_mm,
-            "process_particle_min_size_mm": self.segmenter.minsize,
-            "process_particle_max_size_mm": self.segmenter.maxsize,
-            # "process_particle_sep_mask": "",
-            # "process_particle_bw_ratio": "",
-            "process_software": "ZooProcess v10",
-        }
+    def ini_date_to_tsv_date_and_time(self, csv_datetime):
+        tsv_date, tsv_time = csv_datetime.split("-")
+        # 1200 -> 12:00:00.000
+        tsv_time = tsv_time[:2] + ":" + tsv_time[2:] + ":00.000"
+        return tsv_date, tsv_time
 
     def object_sample(self) -> Dict[str, Any]:
         sample_meta = self.meta_for_sample
         scan_meta = self.meta_for_scan
         return {
-            "sample_id": sample_meta["sampleid"],
+            "sample_id": self.sample_name,
             "sample_scan_operator": scan_meta["scanop"],
             "sample_ship": sample_meta["ship"],
             "sample_program": sample_meta["scientificprog"],
@@ -218,4 +208,82 @@ class EcoTaxaTSV:
             "sample_nb_jar": float(sample_meta["nb_jar"]),
             # "sample_dataportal_descriptor": "",
             # "sample_open": "",
+        }
+
+    def object_acquisition(self) -> Dict[str, Any]:
+        scan_csv_meta = self.meta_for_scan
+        prj_work_path = self.zoo_project.zooscan_scan.work.get_sub_directory(
+            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+        )
+        scan_txt_meta = self.zoo_project.zooscan_scan.work.get_txt_meta(
+            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+        )
+        assert (
+            scan_txt_meta is not None
+        ), f"No _meta for {self.scan_name} in {prj_work_path}"
+        tsv_date, tsv_time = self.ini_date_to_tsv_date_and_time(scan_txt_meta.Date)
+        return {
+            "acq_id": self.scan_name,  # image name of the scanned image (fraction_id)
+            # "acq_instrument": "",  # zooscan serial number
+            "acq_min_mesh": scan_csv_meta[
+                "fracmin"
+            ],  # minimum mesh size for the sieving of the scanned fraction of the sample [µm]
+            "acq_max_mesh": scan_csv_meta[
+                "fracsup"
+            ],  # maximum mesh size for the sieving of the scanned fraction of the sample [µm]
+            "acq_sub_part": scan_csv_meta[
+                "fracsup"
+            ],  # subsampling division factor of the sieved fraction of the sample
+            "acq_sub_method": scan_csv_meta[
+                "submethod"
+            ],  # device utilized for the subsampling
+            "acq_hardware": "",  # zooscan model
+            "acq_software": SOFTWARE_FOR_TSVS,  # scanning application and version
+            "acq_author": scan_csv_meta["scanop"],  # image scanning operator
+            "acq_imgtype": "zooscan",  # type of instrument utilized to scan the image
+            "acq_scan_date": tsv_date,  # date of the scan of the fraction [YYYYMMDD]
+            "acq_scan_time": tsv_time,  # time of the scan of the fraction [HHMMSS]
+            "acq_quality": "",  # scanned image quality index for scaning applications version before 9.7.67
+            "acq_bitpixel": "",  # 16 bits raw image coded grey scale
+            "acq_greyfrom": "",  # index of the RGB chanel utilized to make the grey level image
+            "acq_scan_resolution": self.resolution,  # resolution of the scanned image in dot per inch [dpi]
+            "acq_rotation": "",  # rotation index to rotate the scanned image during the process
+            "acq_miror": "",  # miror index to flip the scanned image during the process
+            "acq_xsize": "",  # width of the scanned image [pixel]
+            "acq_ysize": "",  # height of the scanned image [pixels]
+            "acq_xoffset": "",  # x position of the scanned area [pixel]
+            "acq_yoffset": "",  # y position of the scanned area [pixel]
+            # "acq_lut_color_balance": "", # type of conversion of the scanned 16 bit image to 8 bit image for the process (manual indicates that the zooprocess default method is utilized)
+            # "acq_lut_filter": "", # na
+            # "acq_lut_min": "", # zooprocess calculated black point for the 16 bits to 8 bit conversion of the scanned image
+            # "acq_lut_max": "", # zooprocess calculated white point for the 16 bits to 8 bit conversion of the scanned image
+            # "acq_lut_odrange": "", # optical density set range for the computing of the black point from the white point
+            # "acq_lut_ratio": "", # multiplying factor to calculate the white point from the median grey level of the scanned image
+            # "acq_lut_16b_median": "", # median grey level of the scanned image
+            "acq_scan_comment": scan_csv_meta["observation"],  #
+        }
+
+    def object_process(self) -> Dict[str, Any]:
+        prc_id = f"zooprocess_{self.meta_for_sample["sampleid"]}"
+        prc_date = self.start_date.strftime("%y%m%d")
+        prc_time = self.start_date.strftime("%H:%M:%S.000")
+        pixel_size_mm = round(self.segmenter.pixel_size(self.resolution), 4)
+        background_image = self.backgrounds[0].name.replace("_1.", ".")
+        return {
+            "process_id": prc_id,
+            "process_date": prc_date,
+            "process_time": prc_time,
+            "process_img_software_version": version_hash(),
+            "process_img_resolution": self.resolution,
+            # "process_img_od_grey": "",
+            # "process_img_od_std": "",
+            "process_img_background_img": background_image,
+            "process_particle_version": version_hash(),
+            "process_particle_threshold": self.segmenter.threshold,
+            "process_particle_pixel_size_mm": pixel_size_mm,
+            "process_particle_min_size_mm": self.segmenter.minsize,
+            "process_particle_max_size_mm": self.segmenter.maxsize,
+            # "process_particle_sep_mask": "",
+            # "process_particle_bw_ratio": "",
+            "process_software": SOFTWARE_FOR_TSVS,
         }
