@@ -45,7 +45,7 @@ class ManuallySeparatedToEcoTaxa(Job):
         self.sample_name = sample_name
         self.subsample_name = subsample_name
         self.token = token
-        self.dst_project_id = dst_project_id
+        self.dst_project_id = int(dst_project_id)
         # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
@@ -158,6 +158,15 @@ class ManuallySeparatedToEcoTaxa(Job):
         client = EcoTaxaApiClient(self.logger, config.ECOTAXA_SERVER, "", "")
         client.token = self.token
         self.logger.info(f"Connected as {client.whoami()}")
+        # Upload the zip file
+        remote_ref = client.put_file(zip_file)
+        self.logger.info(f"Zip file uploaded as {remote_ref}")
+        # Start an import task with the file
+        job_id = client.import_my_file_into_project(self.dst_project_id, remote_ref)
+        self.logger.info(f"Waiting for job {job_id}")
+        final_job_state = client.wait_for_job_done(job_id)
+        if final_job_state.state != "F":
+            assert False, "Job failed:" + "\n".join(final_job_state.errors)
 
     def log_image_diffs(self, before_cuts, after_cuts):
         """

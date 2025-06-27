@@ -37,10 +37,14 @@ gen_main(
     ]
 )
 
+BAD_TYPE = "bodc_variables: Optional[Dict[str, str]]"
+GOOD_TYPE = "bodc_variables: Optional[Dict[str, Optional[str]]]"
+
 with open(FINAL_GEN, "w", encoding="utf-8") as fd_out:
     with open(TEMP_GEN, encoding="utf-8") as fd_in:
         for a_line in fd_in.readlines():
-            if "from __future__ import annotations" in a_line:
-                continue
+            if BAD_TYPE in a_line:
+                a_line = a_line.replace(BAD_TYPE, GOOD_TYPE)
+
             fd_out.write(a_line)
 unlink(TEMP_GEN)

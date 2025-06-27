@@ -1,6 +1,7 @@
 import time
 from logging import Logger
-from typing import List, IO, Optional, cast
+from pathlib import Path
+from typing import IO, cast
 
 from urllib3.exceptions import HTTPWarning
 
@@ -47,9 +48,9 @@ class EcoTaxaApiClient(SimpleClient):
         self.logger.info("Waiting for job #%d", job_id)
         while True:
             rsp: JobModel = self.get(JobModel, "/jobs/%d/" % job_id)
-            if rsp.state in ("E", "F"):  # Final state, Error or Finished
+            if rsp.state in ("E", "F"):  # Final states: Error or Finished
                 return rsp
-            time.sleep(1)
+            time.sleep(5)
 
     def get_task_file(self, job_id: int):
         rsp = self.get(IO, "/jobs/%d/file" % job_id, stream=False)
@@ -60,7 +61,7 @@ class EcoTaxaApiClient(SimpleClient):
         job_id = self.post(int, "/object_set/export", json=req)
         return job_id
 
-    def import_into_project(self, dst_prj, exp_file_path):
+    def import_FTP_into_project(self, dst_prj, exp_file_path):
         req = {
             "source_path": "/FTP/Ecotaxa_Exported_data/%s" % exp_file_path,
             "skip_existing_objects": True,
@@ -100,3 +101,21 @@ class EcoTaxaApiClient(SimpleClient):
         qry = f"/object_set/{prj}/query?fields={flds}&order_field={order}&window_start={pag_from}&window_size={pag_size}"
         rsp = self.post(ObjectSetQueryRsp, qry, json=filters)
         return cast(List[ObjectModel], rsp)
+
+    def put_file(self, zip_file: Path) -> str:
+        with open(zip_file, "rb") as fin:
+            upload_rsp = self.post(str, "/my_files/", files={"file": fin})
+            return cast(str, upload_rsp)
+
+    def import_my_file_into_project(
+        self, dst_prj_id: int, my_file_path: str, skip_existing_objects: bool = False
+    ) -> int:
+        req = {
+            "source_path": my_file_path,
+            "skip_existing_objects": skip_existing_objects,
+        }
+        job_status: ImportRsp = self.post(
+            ImportRsp, "/file_import/%d" % dst_prj_id, json=req
+        )
+        assert len(job_status.errors) == 0, job_status.errors
+        return job_status.job_id
