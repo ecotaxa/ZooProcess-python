@@ -1,7 +1,6 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
 
 import zipfile
-from typing import Optional
 
 import cv2
 
@@ -9,6 +8,7 @@ from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from ZooProcess_lib.img_tools import load_image, add_separated_mask
+from config_rdr import config
 from img_proc.generate import generate_separator_gif
 from legacy.ids import (
     separator_file_name,
@@ -25,6 +25,7 @@ from modern.jobs.ScanToAutoSep import (
 )
 from modern.tasks import Job
 from providers.ImageList import ImageList
+from providers.ecotaxa_client import EcoTaxaApiClient
 from providers.ecotaxa_tsv import EcoTaxaTSV
 
 
@@ -35,14 +36,16 @@ class ManuallySeparatedToEcoTaxa(Job):
         zoo_project: ZooscanProjectFolder,
         sample_name: str,
         subsample_name: str,
-        token: Optional[str] = None,
-        dst_project_id: Optional[int] = None,
+        token: str,
+        dst_project_id: int,
     ):
         super().__init__()
         # Params
         self.zoo_project = zoo_project
         self.sample_name = sample_name
         self.subsample_name = subsample_name
+        self.token = token
+        self.dst_project_id = dst_project_id
         # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
@@ -150,6 +153,11 @@ class ManuallySeparatedToEcoTaxa(Job):
             zip_ref.write(tsv_file_path, arcname=tsv_file_name)
 
         # Upload to EcoTaxa
+        assert self.token is not None, "No connection to EcoTaxa"
+
+        client = EcoTaxaApiClient(self.logger, config.ECOTAXA_SERVER, "", "")
+        client.token = self.token
+        self.logger.info(f"Connected as {client.whoami()}")
 
     def log_image_diffs(self, before_cuts, after_cuts):
         """

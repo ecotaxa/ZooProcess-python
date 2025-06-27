@@ -77,8 +77,8 @@ def create_task(
             params["project"],
             params["sample"],
             params["subsample"],
-            params.get("ecotaxa_token", None),
-            params.get("ecotaxa_project_id", None),
+            params["ecotaxa_token"],
+            params["ecotaxa_project_id"],
         )
         zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
             db, project_hash, sample_hash, subsample_hash

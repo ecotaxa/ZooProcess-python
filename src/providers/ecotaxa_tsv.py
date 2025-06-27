@@ -178,6 +178,7 @@ class EcoTaxaTSV:
     def object_sample(self) -> Dict[str, Any]:
         sample_meta = self.meta_for_sample
         scan_meta = self.meta_for_scan
+        assert scan_meta is not None  # mypy
         return {
             "sample_id": self.sample_name,
             "sample_scan_operator": scan_meta["scanop"],
@@ -212,6 +213,7 @@ class EcoTaxaTSV:
 
     def object_acquisition(self) -> Dict[str, Any]:
         scan_csv_meta = self.meta_for_scan
+        assert scan_csv_meta is not None  # mypy
         prj_work_path = self.zoo_project.zooscan_scan.work.get_sub_directory(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )

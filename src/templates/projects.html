@@ -93,7 +93,7 @@
                         <tr>
                             <td class="scan-name">
                                 {% if item.scan > 0 %}
-                                    <form action="/ui/export" method="post" style="display: inline; margin-left: 10px;">
+                                    <form action="/ui/export_form" method="get" style="display: inline; margin-left: 10px;">
                                         <input type="hidden" name="project_id" value="{{ item.project.id }}">
                                         <input type="hidden" name="sample_id" value="{{ item.sample.id }}">
                                         <input type="hidden" name="subsample_id" value="{{ item.subsample.id }}">

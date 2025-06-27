@@ -98,7 +98,7 @@ class ImageList:
 
     def split(self, size: int):
         """
-        Generator that splits the images into sublists of specified size and yields ImageList instances.
+        EcoTaxa that splits the images into sublists of specified size and yields ImageList instances.
 
         Args:
             size (int): Size of each sublist
