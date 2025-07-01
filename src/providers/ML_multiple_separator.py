@@ -9,9 +9,9 @@ import requests
 
 from Models import MultiplesSeparatorRsp
 from ZooProcess_lib.img_tools import load_image, saveimage
+from config_rdr import config
 from logger import logger
 from providers.ImageList import ImageList
-from config_rdr import config
 
 BGR_RED_COLOR = (0, 0, 255)
 RGB_RED_COLOR = (255, 0, 0)
@@ -179,7 +179,10 @@ def call_separate_server(
 
             # Make POST request with multipart/form-data
             response = requests.post(
-                url, files=file_dict, headers=headers, timeout=(10, 1200)
+                url,
+                files=file_dict,
+                headers=headers,
+                timeout=(10, 7200),  # TODO: Remove after ML fix
             )
             logger.info(f"Response status: {response.status_code}")
 

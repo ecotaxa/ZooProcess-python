@@ -60,7 +60,11 @@ class ImageList:
             return
 
         self.images = sorted(
-            [x for x in os.listdir(self.directory_path) if x.endswith(".png")]
+            [
+                x
+                for x in os.listdir(self.directory_path)
+                if x.endswith(".png") or x.endswith(".jpg")
+            ]
         )
 
     def get_images(self) -> List[str]:

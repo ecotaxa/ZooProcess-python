@@ -19,7 +19,7 @@ class NameAndScore(NamedTuple):
 
 
 def classify_all_images_from(
-    logger: Logger, img_path: Path, min_score: float
+    logger: Logger, img_path: Path, min_score: float, image_list: List[str] = None
 ) -> Tuple[List[NameAndScore], Optional[str]]:
     """
     Process multiple images using the classifier service and parse the JSON responses.
@@ -28,6 +28,7 @@ def classify_all_images_from(
         logger: Logger instance
         min_score: Minimum classification score, images above this score are discarded
         img_path: Directory containing the images
+        image_list: Only use specified images, by file name. If not provided all PNGs in img_path are used
 
     Returns:
         A tuple with:
@@ -37,7 +38,7 @@ def classify_all_images_from(
     logger.info(f"Classifying images for multiples in: {img_path}")
 
     # Create a zip file of images in a directory
-    image_list = ImageList(img_path)
+    image_list = ImageList(img_path, images=image_list)
     zip_path = image_list.zipped(logger)
 
     # Get JSON response from classifier
