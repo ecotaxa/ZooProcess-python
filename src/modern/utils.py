@@ -1,12 +1,15 @@
-import os
 import re
-import time
+from calendar import EPOCH
 from datetime import datetime
+from os.path import getmtime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 from Models import TaskRsp
 from .tasks import Job, JobStateEnum
+
+OLD_DATE = datetime(1970, 1, 1, 0, 0, 0)
+FAR_DATE = datetime(9999, 12, 31, 23, 59, 59)
 
 
 def min_max_dates(paths: List[Path]) -> Tuple[datetime, datetime]:
@@ -19,30 +22,20 @@ def min_max_dates(paths: List[Path]) -> Tuple[datetime, datetime]:
     Returns:
         A tuple of (min_time, max_time) as datetime objects
     """
-    min_time = float("inf")
-    max_time = 0.0
-
+    times = []
     # Process each path in the list
     for path in paths:
-        if not path.exists():
-            continue
-
         try:
             # Get the modification time of the file or directory
-            mtime = os.path.getmtime(str(path))
-            min_time = min(min_time, mtime)
-            max_time = max(max_time, mtime)
+            times.append(getmtime(path))
         except (OSError, PermissionError):
-            # Skip files that can't be accessed
+            # Skip files that can't be accessed or don't exist
             continue
 
-    # If no files were found, use the current time for both min and max
-    if min_time == float("inf") or max_time == 0.0:
-        current_time = time.time()
-        min_time = current_time
-        max_time = current_time
+    if len(times) == 0:
+        return OLD_DATE, FAR_DATE
 
-    return datetime.fromtimestamp(min_time), datetime.fromtimestamp(max_time)
+    return datetime.fromtimestamp(min(times)), datetime.fromtimestamp(max(times))
 
 
 def extract_serial_number(project_name: str) -> str:

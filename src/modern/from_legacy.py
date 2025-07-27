@@ -1,7 +1,6 @@
 #
 # Transformers from Legacy data to modern models
 #
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Union
@@ -63,6 +62,8 @@ from modern.utils import (
     extract_serial_number,
     convert_ddm_to_decimal_degrees,
     min_max_dates,
+    OLD_DATE,
+    FAR_DATE,
 )
 
 
@@ -102,8 +103,8 @@ def project_from_legacy(
     drive_model = drive_from_legacy(drive_path)
 
     zoo_project = ZooscanDrive(Path(drive_model.url)).get_project_folder(project_name)
-    # Get the creation time of the directory
-    creation_time = datetime.fromtimestamp(os.path.getmtime(a_prj_path))
+    # For creation time of the project, we have only _modification_ times
+    creation_time, _ = min_max_dates([a_prj_path] + zoo_project.zooscan_config.list())
 
     instrument_model = get_instrument_by_id(serial_number)
     if instrument_model is None:
@@ -115,7 +116,7 @@ def project_from_legacy(
         a_sub.createdAt for a_sub in sample_models if a_sub.createdAt
     ]
     created_at = min(crea_dates)
-    upd_dates = [datetime.now()] + [
+    upd_dates = [created_at] + [
         a_sub.updatedAt for a_sub in sample_models if a_sub.updatedAt
     ]
     updated_at = max(upd_dates)
@@ -220,9 +221,9 @@ def sample_from_legacy(
         ]
     )
     fractions_str = ", ".join(fractions)
-    crea_dates = [datetime.now()] + [a_sub.createdAt for a_sub in subsample_models]
+    crea_dates = [FAR_DATE] + [a_sub.createdAt for a_sub in subsample_models]
     created_at = min(crea_dates)
-    upd_dates = [datetime.now()] + [a_sub.updatedAt for a_sub in subsample_models]
+    upd_dates = [OLD_DATE] + [a_sub.updatedAt for a_sub in subsample_models]
     updated_at = max(upd_dates)
     ret = Sample(
         id=hash_from_sample_name(sample_name),

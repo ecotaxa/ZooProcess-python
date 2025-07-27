@@ -46,8 +46,8 @@ class Project(BaseModel):
     drive: "Drive"
     samples: Union[List["Sample"], None] = None
     instrument: "Instrument"
-    createdAt: Optional[datetime] = None
-    updatedAt: Optional[datetime] = None
+    createdAt: datetime
+    updatedAt: datetime
 
 
 class Sample(BaseModel):
@@ -60,8 +60,8 @@ class Sample(BaseModel):
     name: str
     subsample: List["SubSample"]
     metadata: List["MetadataModel"]
-    createdAt: Optional[datetime] = None
-    updatedAt: Optional[datetime] = None
+    createdAt: datetime
+    updatedAt: datetime
     nbScans: int
     nbFractions: str
     metadataModel: str = "foo"  # WIP on front side, but needed for form display
@@ -149,7 +149,7 @@ class Background(BaseModel):
     instrument: "Instrument"
     createdAt: datetime
     type: "ScanTypeEnum"
-    error: Optional[datetime] = None
+    error: datetime = None
     # path: str
     # bearer: str | None = None
     # bd: str | None = None
