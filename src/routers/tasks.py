@@ -54,14 +54,13 @@ def create_task(
     #     'background': ['http://localhost:5000/projects/zooscan_lov|Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/background/20240527_0759_fnl.jpg',
     #     'http://localhost:5000/projects/zooscan_lov|Zooscan_ptb_jb_1974_a_1979_LARGE_sn174/background/20240527_0759_fnl.jpg']
 
+    params = task.params
+    project_hash, sample_hash, subsample_hash = (
+        params["project"],
+        params["sample"],
+        params["subsample"],
+    )
     if task.exec == "PROCESS":
-        params = task.params
-        # Note: params["scanId"] is ignored
-        project_hash, sample_hash, subsample_hash = (
-            params["project"],
-            params["sample"],
-            params["subsample"],
-        )
         zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
             db, project_hash, sample_hash, subsample_hash
         )
@@ -72,11 +71,7 @@ def create_task(
         logger.info(f"Processing task: {task}")
         return job_to_task_rsp(bg2auto_task)
     elif task.exec == "UPLOAD":
-        params = task.params
-        project_hash, sample_hash, subsample_hash, token, dst_project_id = (
-            params["project"],
-            params["sample"],
-            params["subsample"],
+        token, dst_project_id = (
             params["ecotaxa_token"],
             params["ecotaxa_project_id"],
         )

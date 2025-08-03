@@ -29,6 +29,7 @@ from ZooProcess_lib.ZooscanFolder import (
     WRK_MSK1,
 )
 from config_rdr import config
+from legacy.ids import mask_file_name
 from legacy.samples import (
     find_sample_metadata,
     SampleCSVLine,
@@ -46,6 +47,7 @@ from modern.app_urls import (
     generate_background_url,
     generate_work_image_url,
 )
+from modern.filesystem import ModernScanFileSystem
 from modern.ids import (
     hash_from_project,
     subsample_name_from_scan_name,
@@ -330,6 +332,8 @@ def subsample_from_legacy(
         zoo_project, sample_name, subsample_name
     )
     scans.extend(extra_scans)
+    # Add modern unique scan files
+    scans.extend(modern_scans_for_subsample(zoo_project, sample_name, subsample_name))
     # Create the sample with metadata and scans
     ret = SubSample(
         id=hash_from_subsample_name(subsample_name),
@@ -341,6 +345,30 @@ def subsample_from_legacy(
         user=user,
     )
     return ret
+
+
+def modern_scans_for_subsample(zoo_project, sample_name, subsample_name) -> List[Scan]:
+    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+    modern_fs = ModernScanFileSystem(subsample_dir)
+    msk_file_name = mask_file_name(subsample_name)
+    if (modern_fs.meta_dir / msk_file_name).exists():
+        project_hash = hash_from_project(zoo_project.path)
+        sample_hash = hash_from_sample_name(sample_name)
+        subsample_hash = hash_from_subsample_name(subsample_name)
+        scan = Scan(
+            id=msk_file_name,
+            url=generate_work_image_url(
+                project_hash, sample_hash, subsample_hash, msk_file_name, True
+            ),
+            metadata=[],
+            type=ScanTypeEnum.V10_MASK,
+            user=SYSTEM_USER,
+            scanSubsamples=[],  # Quite sure it's unnecessary here
+        )
+        return [scan]
+    return []
 
 
 def scans_from_legacy_subsample(

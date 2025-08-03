@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pytest_mock import MockFixture
 
 from local_DB.db_dependencies import get_db
@@ -51,6 +53,8 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
             instrumentSerialNumber="TEST123",
             drive=drive_model,
             instrument=instrument_model,
+            createdAt=datetime.now(),
+            updatedAt=datetime.now(),
         ),
         Project(
             path="/path/to/drive1/Project2",
@@ -59,6 +63,8 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
             instrumentSerialNumber="TEST123",
             drive=drive_model,
             instrument=instrument_model,
+            createdAt=datetime.now(),
+            updatedAt=datetime.now(),
         ),
     ]
 

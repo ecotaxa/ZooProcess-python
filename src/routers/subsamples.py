@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List
+from typing import List, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from Models import (
     ScanToUrlReq,
     User,
     ScanPostRsp,
+    ProcessRsp,
 )
 from helpers.auth import get_current_user_from_credentials
 from helpers.logger import logger
@@ -23,13 +24,13 @@ from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
 from legacy.writers.scan import add_legacy_scan
 from local_DB.data_utils import set_background_id
 from local_DB.db_dependencies import get_db
-from logger import logger
 from modern.app_urls import (
     is_download_url,
     extract_file_id_from_download_url,
     SCAN_JPEG,
 )
 from modern.files import UPLOAD_DIR
+from modern.filesystem import ModernScanFileSystem
 from modern.from_legacy import (
     subsamples_from_legacy_project_and_sample,
     subsample_from_legacy,
@@ -39,7 +40,10 @@ from modern.ids import (
     scan_name_from_subsample_name,
     THE_SCAN_PER_SUBSAMPLE,
 )
+from modern.jobs.FreshScanCheck import FreshScanToCheck
 from modern.subsample import get_project_scans_metadata, add_subsample
+from modern.tasks import JobScheduler, Job
+from modern.utils import job_to_task_rsp
 from remote.DB import DB
 from .utils import validate_path_components
 
@@ -237,23 +241,23 @@ def delete_subsample(
     return {"message": f"Subsample {subsample_name} deleted successfully"}
 
 
-@router.get("/{subsample_hash}/process")
+@router.post("/{subsample_hash}/process")
 def process_subsample(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
     user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
-) -> dict:
+) -> ProcessRsp:
     """
-    Process a specific subsample.
+    Process a specific subsample. Returns a task ID if needed to process the subsample.
 
     Args:
-        user: User from authentication.
-        db: Database dependency.
         project_hash (str): The ID of the project.
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample to process.
+        user: User from authentication.
+        db: Database dependency.
 
     Returns:
         dict: A message indicating the subsample was processed.
@@ -265,24 +269,16 @@ def process_subsample(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-
-    logger.info(
-        f"Processing subsample {subsample_name} for sample {sample_name} in project {zoo_project.name}"
-    )
-
-    # Create a DB instance
-    db_instance = DB(bearer=user.id)
-
-    # Try to process the subsample
-    # This is a placeholder - in a real implementation, you would process the subsample
-    # For example: result = db_instance.get(f"/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/process")
-    # For now, we'll just return a success message
-    result = {
-        "status": "success",
-        "message": f"Subsample {subsample_name} processed successfully",
-    }
-
-    return result
+    ret: Job
+    with JobScheduler.jobs_lock:
+        bg2auto_task = FreshScanToCheck(zoo_project, sample_name, subsample_name)
+        there_task = JobScheduler.find_job(bg2auto_task)
+        if there_task is None:
+            JobScheduler.submit(bg2auto_task)
+            ret = bg2auto_task
+        else:
+            ret = there_task
+    return ProcessRsp(task=job_to_task_rsp(ret))
 
 
 @router.get("/{subsample_hash}/{img_name}")
@@ -313,7 +309,6 @@ async def get_subsample_scan(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-
     logger.info(
         f"Getting scan image for subsample {subsample_name} in sample {sample_name} in project {zoo_project.name}"
     )
@@ -345,6 +340,60 @@ async def get_subsample_scan(
         if not real_files:
             raise_404(f"Image {img_name} not found for subsample {subsample_name}")
         real_file = real_files[0]
+    returned_file = convert_image_for_display(real_file)
+
+    # Stream the file
+    file_like, length, media_type = get_stream(returned_file)
+    headers = {"content-length": str(length)}
+    return StreamingResponse(file_like, headers=headers, media_type=media_type)
+
+
+@router.get("/{subsample_hash}/v10/{img_name}")
+async def get_subsample_modern_scan(
+    project_hash: str,
+    sample_hash: str,
+    subsample_hash: str,
+    img_name: str,
+    # _user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
+    """
+    Get the v10 scan image for a specific subsample.
+
+    Args:
+        project_hash (str): The hash of the project.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample.
+        img_name (str): The name of the image to return.
+
+    Returns:
+        StreamingResponse: The scan image as a streaming response.
+
+    Raises:
+        HTTPException: If the project, sample, or subsample is not found, or the scan image is not found.
+    """
+    # Validate the project, sample, and subsample hashes
+    zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
+        db, project_hash, sample_hash, subsample_hash
+    )
+    logger.info(
+        f"Getting modern scan image {img_name} for subsample {subsample_name} in sample {sample_name} in project {zoo_project.name}"
+    )
+    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+    modern_fs = ModernScanFileSystem(subsample_dir)
+    real_files: List[Path] = list(
+        filter(
+            lambda p: p.name == img_name,
+            modern_fs.meta_dir.iterdir(),
+        )
+    )
+    if not real_files:
+        raise_404(
+            f"Image {img_name} not found for modern side of subsample {subsample_name}"
+        )
+    real_file = real_files[0]
     returned_file = convert_image_for_display(real_file)
 
     # Stream the file

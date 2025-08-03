@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pytest_mock import MockFixture
 
 from local_DB.db_dependencies import get_db
@@ -56,6 +58,8 @@ def test_project_by_id_endpoint_with_valid_token(
         instrumentSerialNumber="TEST123",
         drive=drive_model,
         instrument=instrument_model,
+        createdAt=datetime.now(),
+        updatedAt=datetime.now(),
     )
 
     # Mock the ZooscanDrive.get_project_folder method to prevent it from trying to read files

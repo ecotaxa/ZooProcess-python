@@ -1,11 +1,11 @@
 import pytest
-from Models import SubSampleData
+from Models import SubSampleInData
 
 
 def test_subsample_data_validation_success():
     """Test that SubSampleData validation succeeds when all fields are valid"""
     # This should succeed
-    subsample_data = SubSampleData(
+    subsample_data = SubSampleInData(
         scanning_operator="Test Operator",
         scan_id="test_scan_id",
         fraction_id="d1",
@@ -31,7 +31,7 @@ def test_subsample_data_validation_failure_mesh():
     with pytest.raises(
         ValueError, match="fraction_max_mesh must be larger than fraction_min_mesh"
     ):
-        SubSampleData(
+        SubSampleInData(
             scanning_operator="Test Operator",
             scan_id="test_scan_id",
             fraction_id="d1",
@@ -47,7 +47,7 @@ def test_subsample_data_validation_failure_mesh():
     with pytest.raises(
         ValueError, match="fraction_max_mesh must be larger than fraction_min_mesh"
     ):
-        SubSampleData(
+        SubSampleInData(
             scanning_operator="Test Operator",
             scan_id="test_scan_id",
             fraction_id="d1",
@@ -89,7 +89,7 @@ def test_subsample_data_validation_failure_empty_strings():
             # Set the current field to empty string
             valid_data[field] = ""
             # Try to create the model with the empty string
-            SubSampleData(**valid_data)
+            SubSampleInData(**valid_data)
 
     # Test with whitespace-only strings
     for field in non_empty_string_fields:
@@ -106,4 +106,4 @@ def test_subsample_data_validation_failure_empty_strings():
                 "submethod": "Test submethod",
             }
             valid_data[field] = "   "
-            SubSampleData(**valid_data)
+            SubSampleInData(**valid_data)

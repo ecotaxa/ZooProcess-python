@@ -78,7 +78,11 @@ def generate_background_url(project_hash: str, background_date: str) -> str:
 
 
 def generate_work_image_url(
-    project_hash: str, sample_hash: str, subsample_hash: str, image_name: str
+    project_hash: str,
+    sample_hash: str,
+    subsample_hash: str,
+    image_name: str,
+    modern: bool = False,
 ) -> str:
     """
     Generate a URL for a work image.
@@ -88,8 +92,10 @@ def generate_work_image_url(
         sample_hash (str): The sample hash
         subsample_hash (str): The subsample hash
         image_name (str): The image name e.g. pero2023_tha_bioness_013_st46_d_n4_d2_1_sur_2_1_vis1.zip
+        modern (bool): The image is in v10 subdir
 
     Returns:
         str: The full URL to the image
     """
-    return f"{config.PUBLIC_URL}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/{image_name}"
+    subdir = "v10/" if modern else ""
+    return f"{config.PUBLIC_URL}/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}/{subdir}{image_name}"

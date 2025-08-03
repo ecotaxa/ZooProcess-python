@@ -5,7 +5,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from Models import SubSampleIn, SubSampleData
+from Models import SubSampleIn, SubSampleInData
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.writers.scan import add_legacy_scan
 from legacy.scans import ScanCSVLine, SCAN_CSV_COLUMNS
@@ -39,7 +39,7 @@ def test_add_legacy_scan_with_add_subsample(local_db):
     subsample_name = f"{sample_name}_d1"
 
     # Create a SubSampleIn object
-    subsample_data = SubSampleData(
+    subsample_data = SubSampleInData(
         scan_id="1",
         scanning_operator="test_operator",
         fraction_id_suffix="1_sur_3",

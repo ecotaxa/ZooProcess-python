@@ -2,19 +2,16 @@
 # This file is part of Ecotaxa, see license.md in the application root directory for license informations.
 # Copyright (C) 2015-2021  Picheral, Colin, Irisson (UPMC-CNRS)
 #
-import json
 import logging
 import threading
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from threading import Thread, Event
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
-from config_rdr import config
-from logger import logger, logs_dir
+from helpers.logger import logger, logs_dir
 
 # Typings, to be clear that these are not e.g. task IDs
 JobIDT = int
@@ -29,8 +26,9 @@ class JobStateEnum(str, Enum):
 
 class Job(ABC):
     # Common Job traits
-    def __init__(self):
-        self.job_id = JobScheduler.get_new_id()
+    def __init__(self, params: Tuple = tuple()):
+        self.params = params
+        self.job_id = 0
         self.state: JobStateEnum = JobStateEnum.Pending
         self.created_at = datetime.now()
         self.updated_at = self.created_at
@@ -163,6 +161,8 @@ class JobScheduler:
     _next_id: int = 1
     # In-memory storage for jobs
     _jobs: list[Job] = []
+    # Mutex for _jobs access
+    jobs_lock: threading.Lock = threading.RLock()
 
     @classmethod
     def _run_one(cls) -> None:
@@ -178,10 +178,11 @@ class JobScheduler:
             cls.the_runner = None
         # Pick the first pending job from the in-memory storage
         the_job: Optional[Job] = None
-        for job in cls._jobs:
-            if job.state == JobStateEnum.Pending:
-                the_job = job
-                break
+        with cls.jobs_lock:
+            for job in cls._jobs:
+                if job.state == JobStateEnum.Pending:
+                    the_job = job
+                    break
         if the_job is None:
             return
         logger.info("Found job to run: %s", str(the_job))
@@ -258,9 +259,10 @@ class JobScheduler:
         Returns:
             The job with the specified ID, or None if no job with that ID is found.
         """
-        for job in cls._jobs:
-            if job.job_id == job_id:
-                return job
+        with cls.jobs_lock:
+            for job in cls._jobs:
+                if job.job_id == job_id:
+                    return job
         return None
 
     @classmethod
@@ -276,5 +278,26 @@ class JobScheduler:
         # Ensure the job state is Pending
         task.state = JobStateEnum.Pending
         # Add the job to the in-memory storage
-        cls._jobs.append(task)
+        with cls.jobs_lock:
+            cls._jobs.append(task)
         logger.info(f"Job #{task.job_id} submitted")
+
+    @classmethod
+    def find_job(cls, task: Job) -> Optional[Job]:
+        """
+        Find a job matching exactly the class and params of the provided job.
+
+        Args:
+            task: The job to match.
+
+        Returns:
+            A job matching the class and parameters of the provided job, or None if no match is found.
+        """
+        with cls.jobs_lock:
+            for job in cls._jobs:
+                # Check if the job is of the same class type
+                if isinstance(job, type(task)):
+                    if job.params == task.params:
+                        return job
+            else:
+                return None

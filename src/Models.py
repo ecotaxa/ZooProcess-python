@@ -89,8 +89,8 @@ class SubSample(BaseModel):
     user: User
 
 
-class SubSampleData(BaseModel):
-    """Data model for subsample information"""
+class SubSampleInData(BaseModel):
+    """Data model for subsample information update"""
 
     scanning_operator: str
     scan_id: str
@@ -130,7 +130,7 @@ class SubSampleIn(BaseModel):
 
     name: str
     metadataModelId: str  # TODO: Hardcoded on UI side
-    data: SubSampleData
+    data: SubSampleInData
 
 
 class Folder(BaseModel):
@@ -188,6 +188,8 @@ class ScanTypeEnum(str, Enum):
     CHECK_BACKGROUND = "CHECK_BACKGROUND"
     OUT = "OUT"
     SEP = "SEP"  # Separator GIF
+    # Equivalent of some, in v10 file hierarchy
+    V10_MASK = "V10MASK"
 
 
 class ScanPostRsp(BaseModel):
@@ -310,6 +312,10 @@ class TaskRsp(TaskReq):
     status: Literal["PENDING", "RUNNING", "FINISHED", "FAILED"]
     createdAt: datetime
     updatedAt: datetime
+
+
+class ProcessRsp(BaseModel):
+    task: Optional[TaskRsp]
 
 
 class MultiplesSeparatorPrediction(BaseModel):
