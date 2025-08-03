@@ -95,7 +95,7 @@ class ManuallySeparatedToEcoTaxa(Job):
             msk_file_path,
             sep_file_path,
         )
-        # Re-segment from orignal files and add separators
+        # Re-segment from original files and add separators
         raw_scan, bg_scans = get_scan_and_backgrounds(
             self.logger, self.zoo_project, self.subsample_name
         )

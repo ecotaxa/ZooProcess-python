@@ -1,4 +1,4 @@
-from logger import logger
+from helpers.logger import logger
 from remote.DB import DB
 
 

@@ -5,8 +5,7 @@ from pathlib import Path
 import pytest
 
 import config_rdr
-from logger import logger
-
+from helpers.logger import logger
 
 HERE = Path(__file__).parent
 
@@ -56,8 +55,16 @@ def test_separate_auto_directory_with_various_images(scan_dir):
 
     subsample_dir = base_dir / scan_dir
 
-    all_jpgs = [a_path.name for a_path in subsample_dir.glob("*_1_*.jpg")]
+    all_jpgs = sorted([a_path.name for a_path in subsample_dir.glob("*_1_*.jpg")])
     all_grey_jpgs = [e for e in all_jpgs if "_color_" not in e]
+    # all_grey_jpgs = [e for e in all_grey_jpgs if "_136" in e]  # dans d2_1_sur_4_1
+    # all_grey_jpgs = [e for e in all_grey_jpgs if "_84.jpg" in e]  # dans n7_d3_1
+    # all_grey_jpgs = [e for e in all_grey_jpgs if "_450.jpg" in e]  # dans n7_d3_1
+    quite_large = "n7_d1_2_sur_2_1_5.jpgXXXX"
+    very_large_jpgs = [
+        e for e in all_grey_jpgs if quite_large in e
+    ]  # Largest images, fails on my GPU
+    all_grey_jpgs = very_large_jpgs + [e for e in all_grey_jpgs if quite_large not in e]
     maybe_multiples, error = classify_all_images_from(
         logger, subsample_dir, 0.4, image_list=all_grey_jpgs
     )

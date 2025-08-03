@@ -40,7 +40,7 @@ from legacy.scans import (
     sub_scans_metadata_table_for_sample,
 )
 from local_DB.data_utils import get_background_id
-from logger import logger
+from helpers.logger import logger
 from modern.app_urls import (
     generate_scan_url,
     generate_background_url,

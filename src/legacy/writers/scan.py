@@ -3,9 +3,9 @@ import csv
 from sqlalchemy.orm import Session
 
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
-from legacy.scans import SCAN_CSV_COLUMNS, read_scans_metadata_table, find_scan_metadata
+from legacy.scans import SCAN_CSV_COLUMNS
 from local_DB.models import InFlightScan
-from logger import logger
+from helpers.logger import logger
 from modern.to_legacy import reconstitute_csv_line
 
 

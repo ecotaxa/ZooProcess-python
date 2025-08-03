@@ -10,7 +10,7 @@ import requests
 from Models import MultiplesSeparatorRsp
 from ZooProcess_lib.img_tools import load_image, saveimage
 from config_rdr import config
-from logger import logger
+from helpers.logger import logger
 from providers.ImageList import ImageList
 
 BGR_RED_COLOR = (0, 0, 255)

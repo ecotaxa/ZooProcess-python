@@ -40,7 +40,7 @@ from legacy.drives import validate_drives
 from legacy.writers.background import file_name_for_raw_background
 from local_DB.db_dependencies import get_db
 from local_DB.models import init_db
-from logger import logger
+from helpers.logger import logger
 from modern.app_urls import is_download_url, extract_file_id_from_download_url
 from modern.files import UPLOAD_DIR
 from modern.from_legacy import (

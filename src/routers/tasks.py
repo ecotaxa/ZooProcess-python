@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 
 from Models import TaskRsp, TaskReq
 from helpers.auth import get_current_user_from_credentials
+from helpers.logger import logger
 from helpers.web import raise_500, raise_404, raise_501
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
-from logger import logger
 from modern.jobs.ManuSepToUpload import ManuallySeparatedToEcoTaxa
 from modern.jobs.ScanToAutoSep import BackgroundAndScanToAutoSeparated
 from modern.tasks import JobScheduler

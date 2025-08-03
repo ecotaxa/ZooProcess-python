@@ -5,7 +5,7 @@ import time
 import traceback
 from os import fstat
 from pathlib import Path
-from typing import Tuple, BinaryIO, Any, Coroutine
+from typing import Tuple, BinaryIO, Any
 
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -14,7 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, JSONResponse, RedirectResponse
 
-from logger import logger
+from .logger import logger
 
 
 def raise_500(error_message: str):

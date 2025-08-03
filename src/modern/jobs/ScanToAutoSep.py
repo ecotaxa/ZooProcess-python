@@ -125,7 +125,7 @@ class BackgroundAndScanToAutoSeparated(Job):
         modern_fs.mark_ML_separation_done()
 
     def _cleanup_work(self):
-        """Cleanup the files that present process is going to (re) create"""
+        """Cleanup the files that the present process is going to (re) create"""
         work_files = self.zoo_project.zooscan_scan.work.get_files(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )

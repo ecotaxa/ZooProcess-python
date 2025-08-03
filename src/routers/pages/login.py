@@ -9,7 +9,7 @@ from helpers.auth import (
     authenticate_user,
 )
 from local_DB.db_dependencies import get_db
-from logger import logger
+from helpers.logger import logger
 from routers.pages.common import templates
 
 # Create a router instance

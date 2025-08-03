@@ -16,7 +16,7 @@ from ZooProcess_lib.img_tools import (
     loadimage,
 )
 from helpers.tools import create_folder
-from logger import logger
+from helpers.logger import logger
 
 
 # def create_folder(path: Path):

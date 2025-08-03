@@ -6,7 +6,7 @@ from Models import ScanPostRsp, UploadPostRsp
 from helpers.web import get_stream
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
-from logger import logger
+from helpers.logger import logger
 from modern.app_urls import get_download_url
 from modern.files import add_file, UPLOAD_DIR
 

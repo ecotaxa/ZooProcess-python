@@ -4,7 +4,7 @@ import time
 from functools import wraps
 from pathlib import Path
 
-from logger import logger
+from helpers.logger import logger
 
 
 def nameit(func):

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from helpers.auth import get_current_user_from_credentials
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
-from logger import logger
+from helpers.logger import logger
 from routers.pages.common import templates
 
 # Create a router instance

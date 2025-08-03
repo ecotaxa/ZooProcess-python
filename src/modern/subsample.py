@@ -7,7 +7,7 @@ from Models import SubSampleIn
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.scans import ScanCSVLine, read_scans_metadata_table
 from local_DB.models import InFlightScan
-from logger import logger
+from helpers.logger import logger
 from modern.ids import scan_name_from_subsample_name
 from modern.to_legacy import reconstitute_csv_line, reconstitute_fracid
 

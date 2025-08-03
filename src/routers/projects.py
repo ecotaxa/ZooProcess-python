@@ -15,7 +15,7 @@ from img_proc.convert import convert_tiff_to_jpeg
 from legacy.backgrounds import find_final_background_file, find_raw_background_file
 from legacy_to_remote.importe import import_old_project
 from local_DB.db_dependencies import get_db
-from logger import logger
+from helpers.logger import logger
 from modern.from_legacy import (
     project_from_legacy,
     backgrounds_from_legacy_project,

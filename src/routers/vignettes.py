@@ -27,7 +27,7 @@ from helpers.web import get_stream, raise_422, raise_500
 from img_proc.drawing import apply_matrix_onto
 from legacy.ids import measure_file_name
 from local_DB.db_dependencies import get_db
-from logger import logger
+from helpers.logger import logger
 from modern.filesystem import (
     ModernScanFileSystem,
     V10_THUMBS_TO_CHECK_SUBDIR,
