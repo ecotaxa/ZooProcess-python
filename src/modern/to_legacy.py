@@ -24,6 +24,7 @@ def reconstitute_csv_line(scan_data: Dict) -> ScanCSVLine:
 
 def save_mask_image(logger: Logger, mask: np.ndarray, path: Path) -> None:
     tmp_path = tempfile.mktemp(suffix=".gif")
-    logger.info(f"Saving mask image to {path}")
+    logger.debug(f"Mask image saved to {path}")
+    logger.info(f"Saving mask image")
     save_gif_image(mask, Path(tmp_path))  # Write to a temp file
     shutil.move(tmp_path, path)  # Rename

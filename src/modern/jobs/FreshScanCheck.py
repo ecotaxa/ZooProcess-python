@@ -1,10 +1,9 @@
 # Process a scan from its physical acquisition to operator check
 
-from pathlib import Path
-from typing import List
-
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from ZooProcess_lib.img_tools import get_creation_date
+from helpers.paths import file_date
 from legacy.ids import (
     mask_file_name,
 )
@@ -39,22 +38,35 @@ class FreshScanToCheck(Job):
         )
         self.modern_fs = ModernScanFileSystem(subsample_dir)
         # Image inputs
-        self.raw_scan: Path = Path("xyz")  # Just to keep mypy happy
-        self.bg_scans: List[Path] = []
+        self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
+            self.logger, self.zoo_project, self.subsample_name
+        )
+        # Outputs
+        # MSK with the same name as Legacy, for practicality, but in the modern subdirectory
+        meta_dir = self.modern_fs.ensure_meta_dir()
+        self.msk_file_path = meta_dir / mask_file_name(self.subsample_name)
 
     def prepare(self):
         """
         Start the job execution.
         """
+        self.logger = self._setup_job_logger(
+            self.modern_fs.ensure_meta_dir() / "mask_gen_job.log"
+        )
         # Mark the job as started
         self.mark_started()
         # Log the start of the job execution
         self.logger.info(
             f"Starting post-scan check generation for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
         )
-        self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
-            self.logger, self.zoo_project, self.subsample_name
-        )
+
+    def is_needed(self) -> bool:
+        scan_date = get_creation_date(self.raw_scan)
+        if self.msk_file_path.exists():
+            msk_date = file_date(self.msk_file_path)
+            return msk_date <= scan_date
+        else:
+            return True
 
     def run(self):
         # self._cleanup_work()
@@ -66,14 +78,10 @@ class FreshScanToCheck(Job):
         scan_resolution, scan_without_background = convert_scan_and_backgrounds(
             self.logger, processor, self.raw_scan, self.bg_scans
         )
-        # Generate MSK with the same name as Legacy, for practicality, but in the modern subdirectory
-        meta_dir = self.modern_fs.meta_dir
-        msk_file_name = mask_file_name(self.subsample_name)
-        msk_file_path = meta_dir / msk_file_name
         # Mask generation
         self.logger.info(f"Generating MSK")
         mask = processor.segmenter.get_mask_from_image(scan_without_background)
-        save_mask_image(self.logger, mask, msk_file_path)
+        save_mask_image(self.logger, mask, self.msk_file_path)
 
     def _cleanup_work(self):
         """Clean up the files that the present process is going to (re) create"""

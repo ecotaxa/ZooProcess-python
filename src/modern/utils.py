@@ -3,7 +3,7 @@ from calendar import EPOCH
 from datetime import datetime
 from os.path import getmtime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from Models import TaskRsp
 from .tasks import Job, JobStateEnum
@@ -182,7 +182,7 @@ def convert_ddm_to_decimal_degrees(a_value):
     return degrees + decimal / 100
 
 
-def job_to_task_rsp(job: Job) -> TaskRsp:
+def job_to_task_rsp(job: Optional[Job]) -> Optional[TaskRsp]:
     """
     Transform a Job object into a TaskRsp model.
 
@@ -196,6 +196,8 @@ def job_to_task_rsp(job: Job) -> TaskRsp:
         >>> job = Job(1)
         >>> task_rsp = job_to_task_rsp(job)
     """
+    if job is None:
+        return None
 
     # Map job state to task status
     status_map = {
@@ -223,6 +225,7 @@ def job_to_task_rsp(job: Job) -> TaskRsp:
     #         log_url = f"file://{handler.baseFilename}"
     #         break
 
+    log_line = job.last_log_line if job.last_log_line else "Pending"
     # Create and return the TaskRsp model
     return TaskRsp(
         id=str(job.job_id),
@@ -230,7 +233,7 @@ def job_to_task_rsp(job: Job) -> TaskRsp:
         params=params,  # TODO: Is it really used?
         percent=percent,
         status=status_map.get(job.state, "PENDING"),
-        log=job.last_log_line,
+        log=log_line,
         createdAt=job.created_at,
         updatedAt=job.updated_at,
     )

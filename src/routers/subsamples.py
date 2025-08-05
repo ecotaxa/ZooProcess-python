@@ -1,6 +1,7 @@
 import shutil
+from datetime import datetime
 from pathlib import Path
-from typing import List, Any
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -14,6 +15,8 @@ from Models import (
     User,
     ScanPostRsp,
     ProcessRsp,
+    MarkingRsp,
+    MarkSubsampleReq,
 )
 from helpers.auth import get_current_user_from_credentials
 from helpers.logger import logger
@@ -171,18 +174,8 @@ def get_subsample(
         f"Getting subsample {subsample_name} for sample {sample_name} in project {zoo_project.name}"
     )
 
-    # Get the project scans metadata
-    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
-
-    # Filter the metadata for the specific sample
-    sample_scans_metadata = sub_scans_metadata_table_for_sample(
-        project_scans_metadata, sample_name
-    )
-
-    # Find the metadata for the specific subsample
-    scan_id = scan_name_from_subsample_name(subsample_name)
-    zoo_scan_metadata_for_sample = find_scan_metadata(
-        sample_scans_metadata, sample_name, scan_id
+    zoo_scan_metadata_for_sample = _sample_scans_meta(
+        zoo_project, sample_name, subsample_name, db
     )
 
     if zoo_scan_metadata_for_sample is None:
@@ -194,6 +187,21 @@ def get_subsample(
     )
 
     return subsample
+
+
+def _sample_scans_meta(zoo_project, sample_name, subsample_name, db):
+    # Get the project scans metadata
+    project_scans_metadata = get_project_scans_metadata(db, zoo_project)
+    # Filter the metadata for the specific sample
+    sample_scans_metadata = sub_scans_metadata_table_for_sample(
+        project_scans_metadata, sample_name
+    )
+    # Find the metadata for the specific subsample
+    scan_id = scan_name_from_subsample_name(subsample_name)
+    zoo_scan_metadata_for_sample = find_scan_metadata(
+        sample_scans_metadata, sample_name, scan_id
+    )
+    return zoo_scan_metadata_for_sample
 
 
 @router.delete("/{subsample_hash}")
@@ -260,7 +268,7 @@ def process_subsample(
         db: Database dependency.
 
     Returns:
-        dict: A message indicating the subsample was processed.
+        ProcessRsp: A capsule around the job which does/did the processing.
 
     Raises:
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
@@ -269,16 +277,74 @@ def process_subsample(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-    ret: Job
-    with JobScheduler.jobs_lock:
-        bg2auto_task = FreshScanToCheck(zoo_project, sample_name, subsample_name)
-        there_task = JobScheduler.find_job(bg2auto_task)
-        if there_task is None:
-            JobScheduler.submit(bg2auto_task)
-            ret = bg2auto_task
-        else:
-            ret = there_task
+    ret: Job | None
+    bg2auto_task = FreshScanToCheck(zoo_project, sample_name, subsample_name)
+    if not bg2auto_task.is_needed():
+        ret = None
+    else:
+        with JobScheduler.jobs_lock:
+            there_tasks = JobScheduler.find_jobs(bg2auto_task)
+            must_submit = len([a_tsk for a_tsk in there_tasks if a_tsk.will_do()]) == 0
+            if must_submit:
+                JobScheduler.submit(bg2auto_task)
+                ret = bg2auto_task
+            else:
+                ret = there_tasks[-1] if there_tasks else None
     return ProcessRsp(task=job_to_task_rsp(ret))
+
+
+@router.post("/{subsample_hash}/mark")
+def mark_subsample(
+    project_hash: str,
+    sample_hash: str,
+    subsample_hash: str,
+    marking_data: MarkSubsampleReq,
+    user=Depends(get_current_user_from_credentials),
+    db: Session = Depends(get_db),
+) -> SubSample:
+    """
+    Mark that the subsample is validated by a user.
+
+    Args:
+        project_hash (str): The ID of the project.
+        sample_hash (str): The hash of the sample.
+        subsample_hash (str): The hash of the subsample to process.
+        marking_data (MarkSubsampleReq): The validation data including status, comments, and optional validation date.
+        user: User from authentication.
+        db: Database dependency.
+
+    Returns:
+        The updated SubSample
+
+    Raises:
+        HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
+    """
+    # Validate the project, sample, and subsample hashes
+    zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
+        db, project_hash, sample_hash, subsample_hash
+    )
+
+    # Use current datetime if not provided
+    validation_date = marking_data.validation_date or datetime.now()
+    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+    modern_fs = ModernScanFileSystem(subsample_dir)
+    modern_fs.mark_MSK_validated(validation_date)
+
+    # Log the validation action
+    logger.info(
+        f"Marking subsample {subsample_name} as {marking_data.status} by user {user.name} with comments: {marking_data.comments}"
+    )
+
+    subsample = subsample_from_legacy(
+        db,
+        zoo_project,
+        sample_name,
+        subsample_name,
+        _sample_scans_meta(zoo_project, sample_name, subsample_name, db),
+    )
+    return subsample
 
 
 @router.get("/{subsample_hash}/{img_name}")

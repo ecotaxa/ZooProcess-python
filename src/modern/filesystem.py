@@ -15,6 +15,7 @@ V10_THUMBS_AFTER_SUBDIR = (
 )
 
 ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
+ML_MSK_OK_TXT = "MSK_validated.txt"
 
 
 class ModernScanFileSystem:
@@ -168,3 +169,12 @@ class ModernScanFileSystem:
 
     def images_in_cut_after_dir(self):
         return [a_file.name for a_file in self.cut_dir_after.iterdir()]
+
+    def mark_MSK_validated(self, event_date: datetime):
+        """
+        Mark the MSK as validated by writing the date into a file
+        """
+        metadata_dir = self.ensure_meta_dir()
+        validation_file = metadata_dir / ML_MSK_OK_TXT
+        with open(validation_file, "w") as f:
+            f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))

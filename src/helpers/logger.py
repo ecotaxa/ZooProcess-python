@@ -1,12 +1,25 @@
 import logging
 import sys
+from logging import Logger
 from pathlib import Path
 
 from config_rdr import config
 
-# Create logs directory inside WORKING_DIR if it doesn't exist
+# Create a logs directory inside WORKING_DIR if it doesn't exist
 logs_dir = Path(config.WORKING_DIR) / "logs"
 logs_dir.mkdir(exist_ok=True, parents=True)
+
+
+class NullLogger(Logger):
+    """
+    A logger that does nothing with log records.
+
+    This is useful when you want to disable logging in certain parts of the application.
+    """
+
+    def __init__(self):
+        super().__init__("nullLogger")
+        self.addHandler(logging.NullHandler())
 
 
 # Configure the root logger

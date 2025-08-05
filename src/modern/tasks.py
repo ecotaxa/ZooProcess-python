@@ -8,10 +8,12 @@ import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
+from logging import Logger
+from pathlib import Path
 from threading import Thread, Event
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, List
 
-from helpers.logger import logger, logs_dir
+from helpers.logger import logger, logs_dir, NullLogger
 
 # Typings, to be clear that these are not e.g. task IDs
 JobIDT = int
@@ -33,27 +35,28 @@ class Job(ABC):
         self.created_at = datetime.now()
         self.updated_at = self.created_at
         self.last_log_line = None
-        self.logger = self._setup_job_logger()
+        self.logger = NullLogger()
 
-    def _setup_job_logger(self):
+    def _setup_job_logger(self, log_file: Optional[Path] = None) -> Logger:
         """
         Set up a logger for this job that writes to a file named after the job_id.
         """
         # Create a logger with the job_id as part of the name
         logger_name = f"job_{self.job_id}"
         job_logger = logging.getLogger(logger_name)
-        job_logger.setLevel(logging.INFO)
+        job_logger.setLevel(logging.DEBUG)
 
         # Create file formatter
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
-        # Create file handler with a filename based on job_id
-        log_file = logs_dir / f"job_{self.job_id}.log"
+        # Create a file handler with a filename based on job_id
+        if log_file is None:
+            log_file = logs_dir / f"job_{self.job_id}.log"
         # Use mode='w' to clear the log file at job startup
         file_handler = logging.FileHandler(log_file, mode="w")
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
 
         # Create a custom handler to store the last log line
@@ -106,6 +109,12 @@ class Job(ABC):
         """
         self.updated_at = datetime.now()
         self.logger.debug(f"Job {self.job_id} marked as alive at {self.updated_at}")
+
+    def is_done(self):
+        return self.state in (JobStateEnum.Finished, JobStateEnum.Error)
+
+    def will_do(self):
+        return self.state in (JobStateEnum.Pending, JobStateEnum.Running)
 
 
 class JobRunner(Thread):
@@ -283,21 +292,21 @@ class JobScheduler:
         logger.info(f"Job #{task.job_id} submitted")
 
     @classmethod
-    def find_job(cls, task: Job) -> Optional[Job]:
+    def find_jobs(cls, task: Job) -> List[Job]:
         """
-        Find a job matching exactly the class and params of the provided job.
+        Find jobs matching exactly the class and params of the provided job.
 
         Args:
             task: The job to match.
 
         Returns:
-            A job matching the class and parameters of the provided job, or None if no match is found.
+            All jobs matching the class and parameters of the provided job.
         """
         with cls.jobs_lock:
+            ret = []
             for job in cls._jobs:
                 # Check if the job is of the same class type
                 if isinstance(job, type(task)):
                     if job.params == task.params:
-                        return job
-            else:
-                return None
+                        ret.append(job)
+            return ret

@@ -318,6 +318,21 @@ class ProcessRsp(BaseModel):
     task: Optional[TaskRsp]
 
 
+class MarkSubsampleReq(BaseModel):
+    """Request model for marking a subsample"""
+
+    status: Literal["approved", "rejected"] = "approved"
+    comments: Optional[str] = None
+    validation_date: Optional[datetime] = None
+
+
+class MarkingRsp(BaseModel):
+    message: str
+    status: str
+    comments: Optional[str] = None
+    validation_date: Optional[datetime] = None
+
+
 class MultiplesSeparatorPrediction(BaseModel):
     """Model for a single prediction in the separation response"""
 
