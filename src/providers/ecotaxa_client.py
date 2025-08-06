@@ -117,5 +117,6 @@ class EcoTaxaApiClient(SimpleClient):
         job_status: ImportRsp = self.post(
             ImportRsp, "/file_import/%d" % dst_prj_id, json=req
         )
+        assert job_status.errors, "No error list returned!"
         assert len(job_status.errors) == 0, job_status.errors
         return job_status.job_id

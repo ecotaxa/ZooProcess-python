@@ -166,6 +166,7 @@ class ManuallySeparatedToEcoTaxa(Job):
         self.logger.info(f"Waiting for job {job_id}")
         final_job_state = client.wait_for_job_done(job_id)
         if final_job_state.state != "F":
+            assert final_job_state.errors is not None
             assert False, "Job failed:" + "\n".join(final_job_state.errors)
 
     def log_image_diffs(self, before_cuts, after_cuts):
@@ -209,4 +210,4 @@ class ManuallySeparatedToEcoTaxa(Job):
         #         self.logger.info(f"  - {img}")
 
     def _cleanup_work(self):
-        """Cleanup the files that present process is going to (re) create"""
+        """Cleanup the files that the present process is going to (re) create"""

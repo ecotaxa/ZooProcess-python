@@ -1,9 +1,9 @@
 import re
-from calendar import EPOCH
 from datetime import datetime
 from os.path import getmtime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+from typing import overload
 
 from Models import TaskRsp
 from .tasks import Job, JobStateEnum
@@ -180,6 +180,14 @@ def convert_ddm_to_decimal_degrees(a_value):
     decimal = (val - degrees) * 100
     decimal = round(decimal / 30 * 50, 4)
     return degrees + decimal / 100
+
+
+@overload
+def job_to_task_rsp(job: None) -> None: ...
+
+
+@overload
+def job_to_task_rsp(job: Job) -> TaskRsp: ...
 
 
 def job_to_task_rsp(job: Optional[Job]) -> Optional[TaskRsp]:

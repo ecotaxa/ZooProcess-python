@@ -15,7 +15,6 @@ from Models import (
     User,
     ScanPostRsp,
     ProcessRsp,
-    MarkingRsp,
     MarkSubsampleReq,
 )
 from helpers.auth import get_current_user_from_credentials

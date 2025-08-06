@@ -35,7 +35,7 @@ class Job(ABC):
         self.created_at = datetime.now()
         self.updated_at = self.created_at
         self.last_log_line = None
-        self.logger = NullLogger()
+        self.logger: Logger = NullLogger()
 
     def _setup_job_logger(self, log_file: Optional[Path] = None) -> Logger:
         """
@@ -171,7 +171,7 @@ class JobScheduler:
     # In-memory storage for jobs
     _jobs: list[Job] = []
     # Mutex for _jobs access
-    jobs_lock: threading.Lock = threading.RLock()
+    jobs_lock: threading.RLock = threading.RLock()
 
     @classmethod
     def _run_one(cls) -> None:
