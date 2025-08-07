@@ -82,6 +82,7 @@ class SubSampleStateEnum(str, Enum):
     Each state comes from a manual operation and moves to the next one with a manual operation
     """
 
+    EMPTY = "EMPTY"  # No scanned image, but some data suggests it should come
     ACQUIRED = "ACQUIRED"  # There is a scanned image
     MSK_APPROVED = "MSK_APPROVED"  # Visual MSK check and object count was made and OK
     IN_SEPARATION_VALIDATION = (

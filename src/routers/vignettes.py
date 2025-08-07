@@ -63,7 +63,7 @@ def processing_context(
             - processor: Processor object
             - thumbs_dir: Path to the thumbs directory
             - multiples_to_check_dir: Path to the multiples_to_check directory
-            - meta_dir: Path to the v10 metdata directory
+            - meta_dir: Path to the v10 metadata directory
     """
     scan_name = scan_name_from_subsample_name(subsample_name)
 
@@ -83,7 +83,7 @@ async def get_vignettes(
     subsample_hash: str,
     db: Session = Depends(get_db),
 ) -> VignetteResponse:
-    """Get reference to relevant vignettes for a specific subsample
+    """Get reference to the vignettes to validate for a specific subsample
 
     Args:
         project_hash (str): The ID of the project

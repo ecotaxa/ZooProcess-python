@@ -4,14 +4,12 @@ from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from ZooProcess_lib.img_tools import get_creation_date
 from helpers.paths import file_date
-from legacy.ids import (
-    mask_file_name,
-)
 from modern.filesystem import ModernScanFileSystem
-from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
+from modern.ids import scan_name_from_subsample_name
 from modern.jobs.ScanToAutoSep import (
     convert_scan_and_backgrounds,
     get_scan_and_backgrounds,
+    produce_cuts_and_index,
 )
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
@@ -80,6 +78,27 @@ class FreshScanToCheck(Job):
         self.logger.info(f"Generating MSK")
         mask = processor.segmenter.get_mask_from_image(scan_without_background)
         save_mask_image(self.logger, mask, self.msk_file_path)
+        # Segmentation
+        self.logger.info(f"Segmenting")
+        rois, stats = processor.segmenter.find_ROIs_in_image(
+            scan_without_background,
+            scan_resolution,
+        )
+        self.logger.info(f"Segmentation stats: {stats}")
+        modern_fs = ModernScanFileSystem(
+            self.zoo_project, self.sample_name, self.subsample_name
+        )
+        # "Vignettes"
+        produce_cuts_and_index(
+            self.logger,
+            processor,
+            modern_fs.fresh_empty_cut_dir(),
+            modern_fs.meta_dir,
+            scan_without_background,
+            scan_resolution,
+            rois,
+            self.scan_name,
+        )
 
     def _cleanup_work(self):
         """Clean up the files that the present process is going to (re) create"""

@@ -18,7 +18,6 @@ from Models import (
     SubSample,
     ScanTypeEnum,
     User,
-    SubSampleStateEnum,
 )
 from ZooProcess_lib.ZooscanFolder import (
     ZooscanProjectFolder,
@@ -47,7 +46,7 @@ from modern.app_urls import (
     generate_background_url,
     generate_work_image_url,
 )
-from modern.filesystem import ModernScanFileSystem
+from modern.from_modern import modern_facet_of_subsample
 from modern.ids import (
     hash_from_project,
     subsample_name_from_scan_name,
@@ -279,22 +278,6 @@ def work_images_from_legacy_as_scans(
     return ret
 
 
-def subsample_from_modern(
-    zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
-) -> tuple[SubSampleStateEnum, list[Scan]]:
-    raw_scan = zoo_project.zooscan_scan.raw.get_file(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
-
-    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
-    # Add modern unique scan files
-    subsample_state = SubSampleStateEnum.ACQUIRED
-    modern_scans = modern_scans_for_subsample(
-        zoo_project, sample_name, subsample_name, modern_fs
-    )
-    return subsample_state, modern_scans
-
-
 def subsample_from_legacy(
     db: Session,
     zoo_project: ZooscanProjectFolder,
@@ -331,7 +314,9 @@ def subsample_from_legacy(
     )
     scans.extend(extra_scans)
     # Complete with modern files, as they share the FS somehow
-    state, extra_scans = subsample_from_modern(zoo_project, sample_name, subsample_name)
+    state, extra_scans = modern_facet_of_subsample(
+        zoo_project, sample_name, subsample_name
+    )
     # Create the sample with metadata and scans
     ret = SubSample(
         id=hash_from_subsample_name(subsample_name),
@@ -344,29 +329,6 @@ def subsample_from_legacy(
         user=user,
     )
     return ret
-
-
-def modern_scans_for_subsample(
-    zoo_project: ZooscanProjectFolder,
-    sample_name: str,
-    subsample_name: str,
-    modern_fs: ModernScanFileSystem,
-) -> List[Scan]:
-    msk_file = modern_fs.MSK_file_path()
-    if msk_file.exists():
-        project_hash = hash_from_project(zoo_project.path)
-        sample_hash = hash_from_sample_name(sample_name)
-        subsample_hash = hash_from_subsample_name(subsample_name)
-        scan = Scan(
-            id=msk_file.name,
-            url=generate_work_image_url(
-                project_hash, sample_hash, subsample_hash, msk_file.name, True
-            ),
-            type=ScanTypeEnum.V10_MASK,
-            user=SYSTEM_USER,
-        )
-        return [scan]
-    return []
 
 
 def scans_from_legacy_subsample(

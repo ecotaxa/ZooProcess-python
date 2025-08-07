@@ -28,7 +28,7 @@ class JobStateEnum(str, Enum):
 
 class Job(ABC):
     # Common Job traits
-    def __init__(self, params: Tuple = tuple()):
+    def __init__(self, params: Tuple):
         self.params = params
         self.job_id = 0
         self.state: JobStateEnum = JobStateEnum.Pending

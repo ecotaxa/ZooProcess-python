@@ -39,7 +39,7 @@ class ManuallySeparatedToEcoTaxa(Job):
         token: str,
         dst_project_id: int,
     ):
-        super().__init__()
+        super().__init__((zoo_project, sample_name, subsample_name))
         # Params
         self.zoo_project = zoo_project
         self.sample_name = sample_name

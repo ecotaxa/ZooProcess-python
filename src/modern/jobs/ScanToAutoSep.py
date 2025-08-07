@@ -29,7 +29,7 @@ class BackgroundAndScanToAutoSeparated(Job):
     def __init__(
         self, zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
     ):
-        super().__init__()
+        super().__init__((zoo_project, sample_name, subsample_name))
         self.zoo_project = zoo_project
         self.sample_name = sample_name
         self.subsample_name = subsample_name
@@ -61,6 +61,7 @@ class BackgroundAndScanToAutoSeparated(Job):
         )
 
     def run(self):
+        # TODO: Not here anymore
         # self._cleanup_work()
         processor = Processor.from_legacy_config(
             self.zoo_project.zooscan_config.read(),

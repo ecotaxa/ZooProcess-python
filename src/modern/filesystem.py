@@ -181,9 +181,13 @@ class ModernScanFileSystem:
         Mark the MSK as validated by writing the date into a file
         """
         metadata_dir = self.ensure_meta_dir()
-        validation_file = metadata_dir / ML_MSK_OK_TXT
+        validation_file = self.MSK_validated_file_path
         with open(validation_file, "w") as f:
             f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
 
     def MSK_file_path(self):
         return self.meta_dir / mask_file_name(self.subsample_name)
+
+    @property
+    def MSK_validated_file_path(self):
+        return self.meta_dir / ML_MSK_OK_TXT
