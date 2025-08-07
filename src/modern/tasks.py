@@ -110,11 +110,22 @@ class Job(ABC):
         self.updated_at = datetime.now()
         self.logger.debug(f"Job {self.job_id} marked as alive at {self.updated_at}")
 
+    def mark_done(self, logger: Logger):
+        """
+        Signal the end of running the job.
+        """
+        self.updated_at = datetime.now()
+        self.logger.debug(f"Job {self.job_id} finished at {self.updated_at}")
+        logger.info(f"Job {self.job_id} finished at {self.updated_at}")
+
     def is_done(self):
         return self.state in (JobStateEnum.Finished, JobStateEnum.Error)
 
     def will_do(self):
         return self.state in (JobStateEnum.Pending, JobStateEnum.Running)
+
+    def is_in_error(self):
+        return self.state in (JobStateEnum.Error,)
 
 
 class JobRunner(Thread):
@@ -137,11 +148,11 @@ class JobRunner(Thread):
             job.run()
             job.logger.info("Processing completed successfully")
             job.state = JobStateEnum.Finished
-            job.mark_alive()
+            job.mark_done(logger)
         except Exception as e:
             job.logger.error(f"Error during processing: {str(e)}", exc_info=True)
             job.state = JobStateEnum.Error
-            job.mark_alive()
+            job.mark_done(logger)
             raise
 
     def tech_error(self, te: Any) -> None:
@@ -150,7 +161,8 @@ class JobRunner(Thread):
         as it was not possible to start it. Report here.
         """
         self.job.state = JobStateEnum.Error
-        self.job.logger.error(f"Failed to start due to {str(te)}")
+        self.job.logger.error(f"Failed to start due to: {str(te)}")
+        self.job.mark_done(logger)
 
 
 class JobScheduler:
@@ -292,9 +304,10 @@ class JobScheduler:
         logger.info(f"Job #{task.job_id} submitted")
 
     @classmethod
-    def find_jobs(cls, task: Job) -> List[Job]:
+    def find_effective_jobs_like(cls, task: Job) -> List[Job]:
         """
-        Find jobs matching exactly the class and params of the provided job.
+        Find jobs matching exactly the class and params of the provided job, and able
+        to complete the task.
 
         Args:
             task: The job to match.
@@ -308,5 +321,6 @@ class JobScheduler:
                 # Check if the job is of the same class type
                 if isinstance(job, type(task)):
                     if job.params == task.params:
-                        ret.append(job)
-            return ret
+                        if job.will_do():
+                            ret.append(job)
+            return sorted(ret, key=lambda a_job: a_job.created_at, reverse=True)

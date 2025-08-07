@@ -326,7 +326,7 @@ class TaskRsp(TaskReq):
     id: str
     log: Optional[str]  # last user log line produced
     percent: int
-    status: Literal["PENDING", "RUNNING", "FINISHED", "FAILED"]
+    status: Literal["Pending", "Running", "Finished", "Failed"]
     createdAt: datetime
     updatedAt: datetime
 

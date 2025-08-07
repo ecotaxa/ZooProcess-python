@@ -209,10 +209,10 @@ def job_to_task_rsp(job: Optional[Job]) -> Optional[TaskRsp]:
 
     # Map job state to task status
     status_map = {
-        JobStateEnum.Pending: "PENDING",
-        JobStateEnum.Running: "RUNNING",
-        JobStateEnum.Error: "FAILED",
-        JobStateEnum.Finished: "FINISHED",
+        JobStateEnum.Pending: "Pending",
+        JobStateEnum.Running: "Running",
+        JobStateEnum.Error: "Failed",
+        JobStateEnum.Finished: "Finished",
     }
 
     # Calculate progress percentage based on job state
@@ -240,7 +240,7 @@ def job_to_task_rsp(job: Optional[Job]) -> Optional[TaskRsp]:
         exec=exec_name,  # TODO: Is it really used?
         params=params,  # TODO: Is it really used?
         percent=percent,
-        status=status_map.get(job.state, "PENDING"),
+        status=status_map.get(job.state, "Pending"),
         log=log_line,
         createdAt=job.created_at,
         updatedAt=job.updated_at,

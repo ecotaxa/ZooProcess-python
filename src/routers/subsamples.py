@@ -253,7 +253,7 @@ def process_subsample(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
-    user=Depends(get_current_user_from_credentials),
+    _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> ProcessRsp:
     """
@@ -263,7 +263,7 @@ def process_subsample(
         project_hash (str): The ID of the project.
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample to process.
-        user: User from authentication.
+        _user: User from authentication.
         db: Database dependency.
 
     Returns:
@@ -282,13 +282,12 @@ def process_subsample(
         ret = None
     else:
         with JobScheduler.jobs_lock:
-            there_tasks = JobScheduler.find_jobs(bg2auto_task)
-            must_submit = len([a_tsk for a_tsk in there_tasks if a_tsk.will_do()]) == 0
-            if must_submit:
+            there_tasks = JobScheduler.find_effective_jobs_like(bg2auto_task)
+            if len(there_tasks) == 0:
                 JobScheduler.submit(bg2auto_task)
                 ret = bg2auto_task
             else:
-                ret = there_tasks[-1] if there_tasks else None
+                ret = there_tasks[-1]
     return ProcessRsp(task=job_to_task_rsp(ret))
 
 
