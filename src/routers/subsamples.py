@@ -325,10 +325,7 @@ def mark_subsample(
 
     # Use current datetime if not provided
     validation_date = marking_data.validation_date or datetime.now()
-    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
-    modern_fs = ModernScanFileSystem(subsample_dir)
+    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
     modern_fs.mark_MSK_validated(validation_date)
 
     # Log the validation action
@@ -444,10 +441,7 @@ async def get_subsample_modern_scan(
     logger.info(
         f"Getting modern scan image {img_name} for subsample {subsample_name} in sample {sample_name} in project {zoo_project.name}"
     )
-    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
-    modern_fs = ModernScanFileSystem(subsample_dir)
+    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
     real_files: List[Path] = list(
         filter(
             lambda p: p.name == img_name,

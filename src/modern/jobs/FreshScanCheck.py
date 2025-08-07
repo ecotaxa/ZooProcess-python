@@ -33,18 +33,14 @@ class FreshScanToCheck(Job):
         # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
-        subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
-            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
-        self.modern_fs = ModernScanFileSystem(subsample_dir)
+        self.modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
+
         # Image inputs
         self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
             self.logger, self.zoo_project, self.subsample_name
         )
         # Outputs
-        # MSK with the same name as Legacy, for practicality, but in the modern subdirectory
-        meta_dir = self.modern_fs.ensure_meta_dir()
-        self.msk_file_path = meta_dir / mask_file_name(self.subsample_name)
+        self.msk_file_path = self.modern_fs.MSK_file_path()
 
     def prepare(self):
         """
@@ -59,6 +55,8 @@ class FreshScanToCheck(Job):
         self.logger.info(
             f"Starting post-scan check generation for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
         )
+        assert self.raw_scan is not None, "No RAW scan"
+        assert len(self.bg_scans) == 2, "No background scan"
 
     def is_needed(self) -> bool:
         scan_date = get_creation_date(self.raw_scan)

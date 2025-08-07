@@ -35,10 +35,7 @@ class BackgroundAndScanToAutoSeparated(Job):
         self.subsample_name = subsample_name
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
-        subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
-            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
-        self.modern_fs = ModernScanFileSystem(subsample_dir)
+        self.modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
         # Image inputs
         self.raw_scan: Path = Path("xyz")  # Just to keep mypy happy
         self.bg_scans: List[Path] = []
@@ -86,10 +83,9 @@ class BackgroundAndScanToAutoSeparated(Job):
             scan_resolution,
         )
         self.logger.info(f"Segmentation stats: {stats}")
-        subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
-            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+        modern_fs = ModernScanFileSystem(
+            self.zoo_project, self.sample_name, self.subsample_name
         )
-        modern_fs = ModernScanFileSystem(subsample_dir)
         produce_cuts_and_index(
             self.logger,
             processor,
@@ -166,7 +162,7 @@ def get_scan_and_backgrounds(
     raw_scan = zoo_project.zooscan_scan.raw.get_file(
         subsample_name, THE_SCAN_PER_SUBSAMPLE
     )
-    assert raw_scan.exists()
+    assert raw_scan.exists(), f"No scan at {raw_scan}"
     raw_scan_date = get_creation_date(raw_scan)
     for_msg = raw_scan.relative_to(zoo_project.path)
     logger.info(f"Raw scan file {for_msg} dated {raw_scan_date}")

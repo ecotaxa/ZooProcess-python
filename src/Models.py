@@ -230,11 +230,11 @@ class Scan(BaseModel):
     id: str
     url: str
     type: ScanTypeEnum
+    user: User
+    # TODO: The 3 below are unused on client
     archived: bool = False
     deleted: bool = False
-    metadata: List["MetadataModel"]
-    scanSubsamples: List[ScanSubsample]
-    user: User
+    metadata: List["MetadataModel"] = []
 
 
 class LoginReq(BaseModel):

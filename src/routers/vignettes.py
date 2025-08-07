@@ -67,15 +67,12 @@ def processing_context(
     """
     scan_name = scan_name_from_subsample_name(subsample_name)
 
-    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
     logger.info(f"{zoo_project}, {sample_name}, {subsample_name}, {scan_name}")
     processor = Processor.from_legacy_config(
         zoo_project.zooscan_config.read(),
         zoo_project.zooscan_config.read_lut(),
     )
-    fs = ModernScanFileSystem(subsample_dir)
+    fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
     return processor, fs.cut_dir, fs.multiples_vis_dir, fs.meta_dir
 
 

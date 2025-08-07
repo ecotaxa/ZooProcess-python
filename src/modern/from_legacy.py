@@ -280,6 +280,22 @@ def work_images_from_legacy_as_scans(
     return ret
 
 
+def subsample_from_modern(
+    zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
+) -> tuple[SubSampleStateEnum, list[Scan]]:
+    raw_scan = zoo_project.zooscan_scan.raw.get_file(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+
+    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
+    # Add modern unique scan files
+    subsample_state = SubSampleStateEnum.ACQUIRED
+    modern_scans = modern_scans_for_subsample(
+        zoo_project, sample_name, subsample_name, modern_fs
+    )
+    return subsample_state, modern_scans
+
+
 def subsample_from_legacy(
     db: Session,
     zoo_project: ZooscanProjectFolder,
@@ -347,25 +363,24 @@ def subsample_from_legacy(
     return ret
 
 
-def modern_scans_for_subsample(zoo_project, sample_name, subsample_name) -> List[Scan]:
-    subsample_dir = zoo_project.zooscan_scan.work.get_sub_directory(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
-    modern_fs = ModernScanFileSystem(subsample_dir)
-    msk_file_name = mask_file_name(subsample_name)
-    if (modern_fs.meta_dir / msk_file_name).exists():
+def modern_scans_for_subsample(
+    zoo_project: ZooscanProjectFolder,
+    sample_name: str,
+    subsample_name: str,
+    modern_fs: ModernScanFileSystem,
+) -> List[Scan]:
+    msk_file = modern_fs.MSK_file_path()
+    if msk_file.exists():
         project_hash = hash_from_project(zoo_project.path)
         sample_hash = hash_from_sample_name(sample_name)
         subsample_hash = hash_from_subsample_name(subsample_name)
         scan = Scan(
-            id=msk_file_name,
+            id=msk_file.name,
             url=generate_work_image_url(
-                project_hash, sample_hash, subsample_hash, msk_file_name, True
+                project_hash, sample_hash, subsample_hash, msk_file.name, True
             ),
-            metadata=[],
             type=ScanTypeEnum.V10_MASK,
             user=SYSTEM_USER,
-            scanSubsamples=[],  # Quite sure it's unnecessary here
         )
         return [scan]
     return []
@@ -376,11 +391,15 @@ def scans_from_legacy_subsample(
     sample_name: str,
     subsample_name: str,
     user: User,
-    back_link: List[ScanSubsample],
 ) -> List[Scan]:
     # What is presented as a "scan" is in fact several files, but the lib knows
     scan_name = scan_name_from_subsample_name(subsample_name)
     if scan_name not in zoo_project.list_scans_with_state():
+        return []
+    # Care for missing raw scans
+    if raw_file_name(scan_name) not in [
+        a_raw.name for a_raw in zoo_project.zooscan_scan.raw.get_samples()
+    ]:
         return []
 
     # So far, there is a _maximum_ of 1 scan per subsample
@@ -390,10 +409,8 @@ def scans_from_legacy_subsample(
     the_scan = Scan(
         id=scan_name_from_subsample_name(subsample_name),
         url=generate_scan_url(project_hash, sample_hash, subsample_hash),
-        metadata=[],
         type=ScanTypeEnum.SCAN,
         user=user,
-        scanSubsamples=back_link,
     )
     return [the_scan]
 
@@ -402,17 +419,14 @@ def background_from_legacy_as_scan(
     zoo_project: ZooscanProjectFolder,
     background_date: str,
     user: User,
-    back_link: List[ScanSubsample],
 ) -> Scan:
     # So far there is a _maximum_ of 1 scan per subsample
     project_hash = hash_from_project(zoo_project.path)
     the_scan = Scan(
         id=background_date,
         url=generate_background_url(project_hash, background_date),
-        metadata=[],
         type=ScanTypeEnum.MEDIUM_BACKGROUND,
         user=user,
-        scanSubsamples=back_link,
     )
     return the_scan
 

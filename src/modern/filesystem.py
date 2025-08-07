@@ -5,6 +5,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
+from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from legacy.ids import mask_file_name
+from modern.ids import THE_SCAN_PER_SUBSAMPLE
+
 V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
 V10_THUMBS_TO_CHECK_SUBDIR = (
     "v10_multiples"  # Where and how ML determined we should separate, RGB PNGs
@@ -24,14 +28,16 @@ class ModernScanFileSystem:
     Provides access to various subdirectories used in the modern workflow.
     """
 
-    def __init__(self, legacy_scan_dir: Path):
+    def __init__(
+        self, zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
+    ):
         """
         Initialize with a legacy work directory.
-
-        Args:
-            legacy_scan_dir: Path to the legacy work directory
         """
-        self.work_dir = legacy_scan_dir
+        self.subsample_name = subsample_name
+        self.work_dir = zoo_project.zooscan_scan.work.get_sub_directory(
+            subsample_name, THE_SCAN_PER_SUBSAMPLE
+        )
 
     @property
     def meta_dir(self) -> Path:
@@ -161,7 +167,7 @@ class ModernScanFileSystem:
     def ensure_meta_dir(self) -> Path:
         meta_dir = self.meta_dir
         if not meta_dir.exists():
-            os.makedirs(meta_dir)
+            os.makedirs(meta_dir, exist_ok=True)
         return meta_dir
 
     def images_in_cut_dir(self):
@@ -178,3 +184,6 @@ class ModernScanFileSystem:
         validation_file = metadata_dir / ML_MSK_OK_TXT
         with open(validation_file, "w") as f:
             f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
+
+    def MSK_file_path(self):
+        return self.meta_dir / mask_file_name(self.subsample_name)

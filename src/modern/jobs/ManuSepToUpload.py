@@ -49,10 +49,7 @@ class ManuallySeparatedToEcoTaxa(Job):
         # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
-        subsample_dir = self.zoo_project.zooscan_scan.work.get_sub_directory(
-            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
-        self.modern_fs = ModernScanFileSystem(subsample_dir)
+        self.modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
 
     def prepare(self):
         """
