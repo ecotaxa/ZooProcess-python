@@ -77,6 +77,22 @@ class SampleWithBackRef(Sample):
     project: Project
 
 
+class SubSampleStateEnum(str, Enum):
+    """In chronological order of apparition.
+    Each state comes from a manual operation and moves to the next one with a manual operation
+    """
+
+    ACQUIRED = "ACQUIRED"  # There is a scanned image
+    MSK_APPROVED = "MSK_APPROVED"  # Visual MSK check and object count was made and OK
+    IN_SEPARATION_VALIDATION = (
+        "IN_SEPARATION_VALIDATION"  # Auto separation was done, it's being validated
+    )
+    SEPARATION_VALIDATION_DONE = (
+        "SEPARATION_VALIDATION_DONE"  # Auto separation was done, it's being validated
+    )
+    UPLOADED = "UPLOADED"  # Final state, all went into EcoTaxa
+
+
 class SubSample(BaseModel):
     """SubSample model as defined in the OpenAPI specification"""
 
@@ -86,6 +102,7 @@ class SubSample(BaseModel):
     scan: List["Scan"]
     createdAt: datetime
     updatedAt: datetime
+    state: SubSampleStateEnum
     user: User
 
 
@@ -149,7 +166,7 @@ class Background(BaseModel):
     instrument: "Instrument"
     createdAt: datetime
     type: "ScanTypeEnum"
-    error: datetime = None
+    error: Optional[datetime] = None
     # path: str
     # bearer: str | None = None
     # bd: str | None = None

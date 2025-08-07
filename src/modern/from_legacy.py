@@ -17,8 +17,8 @@ from Models import (
     MetadataModel,
     SubSample,
     ScanTypeEnum,
-    ScanSubsample,
     User,
+    SubSampleStateEnum,
 )
 from ZooProcess_lib.ZooscanFolder import (
     ZooscanProjectFolder,
@@ -29,7 +29,8 @@ from ZooProcess_lib.ZooscanFolder import (
     WRK_MSK1,
 )
 from config_rdr import config
-from legacy.ids import mask_file_name
+from helpers.logger import logger
+from legacy.ids import raw_file_name
 from legacy.samples import (
     find_sample_metadata,
     SampleCSVLine,
@@ -41,7 +42,6 @@ from legacy.scans import (
     sub_scans_metadata_table_for_sample,
 )
 from local_DB.data_utils import get_background_id
-from helpers.logger import logger
 from modern.app_urls import (
     generate_scan_url,
     generate_background_url,
@@ -165,7 +165,8 @@ def subsamples_from_legacy_project_and_sample(
         subsample_name = subsample_name_from_scan_name(scan_name)
         zoo_subsample_metadata = find_scan_metadata(
             sample_scans_metadata, sample_name, scan_name
-        )  # No concept of "subsample" in legacy"
+        )  # No concept of "subsample" in legacy".
+        # Iif a scan exists, there is a subsample.
         if zoo_subsample_metadata is None:
             # Not an error or warning, we don't have the relationship samples->subsample beforehand
             continue
@@ -271,10 +272,8 @@ def work_images_from_legacy_as_scans(
             url=generate_work_image_url(
                 project_hash, sample_hash, subsample_hash, work_file_name
             ),
-            metadata=[],
             type=modern_type,
             user=SYSTEM_USER,
-            scanSubsamples=[],  # Quite sure it's unnecessary here
         )
         ret.append(scan)
     return ret
@@ -306,9 +305,7 @@ def subsample_from_legacy(
     modern_metadata = scan_from_legacy_meta(zoo_scan_metadata)
     metadata = to_api_meta(modern_metadata)
     subsample_paths = [
-        zoo_project.zooscan_scan.work.get_sub_directory(
-            subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
+        zoo_project.zooscan_scan.raw.get_file(subsample_name, THE_SCAN_PER_SUBSAMPLE)
     ]
     subsample_paths.extend(
         zoo_project.zooscan_scan.work.get_files(
@@ -318,22 +315,7 @@ def subsample_from_legacy(
     created_at, updated_at = min_max_dates(subsample_paths)
     user = user_with_name(modern_metadata["operator"])
     # Extract scans from the legacy project folder
-    parent = [
-        ScanSubsample(
-            subsample=SubSample(
-                id=hash_from_subsample_name(subsample_name),
-                name=subsample_name,
-                metadata=metadata,
-                scan=[],
-                createdAt=created_at,
-                updatedAt=updated_at,
-                user=user,
-            )
-        )
-    ]
-    scans = scans_from_legacy_subsample(
-        zoo_project, sample_name, subsample_name, user, parent
-    )
+    scans = scans_from_legacy_subsample(zoo_project, sample_name, subsample_name, user)
     # Client-side also expects _the_ chosen background to be returned as an extra "scan" with OK type
     bg_id = get_background_id(
         db,
@@ -342,22 +324,23 @@ def subsample_from_legacy(
         scan_name_from_subsample_name(subsample_name),
     )
     if bg_id is not None:
-        scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user, parent))
+        scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user))
     # Client-side also expects some produced files as pseudo-scans
     extra_scans = work_images_from_legacy_as_scans(
         zoo_project, sample_name, subsample_name
     )
     scans.extend(extra_scans)
-    # Add modern unique scan files
-    scans.extend(modern_scans_for_subsample(zoo_project, sample_name, subsample_name))
+    # Complete with modern files, as they share the FS somehow
+    state, extra_scans = subsample_from_modern(zoo_project, sample_name, subsample_name)
     # Create the sample with metadata and scans
     ret = SubSample(
         id=hash_from_subsample_name(subsample_name),
         name=subsample_name,
         metadata=metadata,
-        scan=scans,
+        scan=scans + extra_scans,
         createdAt=created_at,
         updatedAt=updated_at,
+        state=state,
         user=user,
     )
     return ret
