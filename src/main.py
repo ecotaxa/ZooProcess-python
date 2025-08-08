@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List
 
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, APIRouter
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -125,15 +125,20 @@ app.mount(
     name="static",
 )
 
+api_router = APIRouter(
+    prefix="/api",
+    tags=["api"],
+)
 # Include the routers
-app.include_router(projects_router)
-app.include_router(samples_router)
-app.include_router(subsamples_router)
-app.include_router(instruments_router)
-app.include_router(images_router)
-app.include_router(tasks_router)
-app.include_router(vignettes_router)
-app.include_router(pages_router)
+api_router.include_router(projects_router)
+api_router.include_router(samples_router)
+api_router.include_router(subsamples_router)
+api_router.include_router(instruments_router)
+api_router.include_router(images_router)
+api_router.include_router(tasks_router)
+api_router.include_router(vignettes_router)
+api_router.include_router(pages_router)
+app.include_router(api_router)
 
 
 @app.get("/favicon.ico")
