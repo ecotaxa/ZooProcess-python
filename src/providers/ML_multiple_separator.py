@@ -12,11 +12,16 @@ from ZooProcess_lib.img_tools import load_image, saveimage
 from config_rdr import config
 from helpers.logger import logger
 from providers.ImageList import ImageList
+from providers.server import ping_DeepAAS_server
 
 BGR_RED_COLOR = (0, 0, 255)
 RGB_RED_COLOR = (255, 0, 0)
 
 BASE_URI = "v2/models/zooprocess_multiple_separator/predict/"
+
+
+def ping_separator_server(log_to: Logger):
+    return ping_DeepAAS_server(log_to, config.SEPARATOR_SERVER)
 
 
 def separate_each_image_from(

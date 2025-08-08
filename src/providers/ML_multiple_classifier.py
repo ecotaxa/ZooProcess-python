@@ -9,6 +9,7 @@ import requests
 from Models import MultiplesClassifierRsp
 from providers.ImageList import ImageList
 from config_rdr import config
+from providers.server import ping_DeepAAS_server
 
 BASE_URI = "v2/models/zooprocess_multiple_classifier/predict/"
 
@@ -38,7 +39,8 @@ def classify_all_images_from(
         - list of (Vignette name, Vignette score)
         - Error message if any, None otherwise
     """
-    logger.info(f"Classifying images for multiples in: {img_path}")
+    logger.info(f"Finding potential multiples")
+    logger.debug(f"Classifying images for multiples in: {img_path}")
 
     # Create a zip file of images in a directory
     image_list = ImageList(img_path, images=image_names)
@@ -73,6 +75,10 @@ def use_classifications(
     return
 
 
+def ping_classify_server(log_to: Logger):
+    return ping_DeepAAS_server(log_to, config.CLASSIFIER_SERVER)
+
+
 def call_classify_server(
     logger: Logger, image_or_zip_path: Path, bottom_crop: int = 31
 ) -> Tuple[Optional[MultiplesClassifierRsp], Optional[str]]:
@@ -82,6 +88,7 @@ def call_classify_server(
     Args:
         image_or_zip_path: Path to the single image file, or zip with images, to send
         bottom_crop: Number of pixels to crop from the bottom (default: 0)
+        logger: A Logger instance
 
     Returns:
         Tuple containing:
