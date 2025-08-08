@@ -84,13 +84,15 @@ class SubSampleStateEnum(str, Enum):
 
     EMPTY = "EMPTY"  # No scanned image, but some data suggests it should come
     ACQUIRED = "ACQUIRED"  # There is a scanned image
-    MSK_APPROVED = "MSK_APPROVED"  # Visual MSK check and object count was made and OK
-    IN_SEPARATION_VALIDATION = (
-        "IN_SEPARATION_VALIDATION"  # Auto separation was done, it's being validated
+    SEGMENTED = "SEGMENTED"  # Segmentation and MSK generation took place
+    MSK_APPROVED = (
+        "MSK_APPROVED"  # Visual check of MSK and object count was made and OK
     )
+    MULTIPLES_GENERATED = "MULTIPLES_GENERATED"  # ML determined multiples
     SEPARATION_VALIDATION_DONE = (
-        "SEPARATION_VALIDATION_DONE"  # Auto separation was done, it's being validated
+        "SEPARATION_VALIDATION_DONE"  # Validation of multiples done
     )
+    UPLOADING = "UPLOADING"  # Transferring to EcoTaxa
     UPLOADED = "UPLOADED"  # Final state, all went into EcoTaxa
 
 

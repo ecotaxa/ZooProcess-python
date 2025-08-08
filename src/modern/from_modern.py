@@ -30,14 +30,19 @@ def modern_subsample_state(
     subsample_name: str,
     modern_fs: ModernScanFileSystem,
 ) -> SubSampleStateEnum:
+    ret = SubSampleStateEnum.EMPTY
     raw_scan = zoo_project.zooscan_scan.raw.get_file(
         subsample_name, THE_SCAN_PER_SUBSAMPLE
     )
-    if not raw_scan.exists():
-        return SubSampleStateEnum.EMPTY
+    if raw_scan.exists():
+        ret = SubSampleStateEnum.ACQUIRED
+    if modern_fs.cut_dir.exists():
+        ret = SubSampleStateEnum.SEGMENTED
     if modern_fs.MSK_validated_file_path.exists():
-        return SubSampleStateEnum.MSK_APPROVED
-    return SubSampleStateEnum.ACQUIRED
+        ret = SubSampleStateEnum.MSK_APPROVED
+    if modern_fs.multiples_vis_dir.exists():
+        ret = SubSampleStateEnum.MULTIPLES_GENERATED
+    return ret
 
 
 def modern_scans_for_subsample(
