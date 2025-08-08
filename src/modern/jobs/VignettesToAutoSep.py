@@ -1,5 +1,6 @@
-# Process a scan from its background+scan until auto separation
+# Process a scan from its vignettes until auto separation
 import os
+import time
 from logging import Logger
 from pathlib import Path
 from typing import List, Tuple, Optional
@@ -9,129 +10,127 @@ import numpy as np
 from ZooProcess_lib.LegacyMeta import Measurements
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ROI import ROI, unique_visible_key
-from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder, WRK_MSK1
+from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from ZooProcess_lib.img_tools import get_creation_date
-from legacy.ids import measure_file_name, mask_file_name
+from helpers.paths import count_files_in_dir
+from legacy.ids import measure_file_name
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 from modern.tasks import Job
-from modern.to_legacy import save_mask_image
 from providers.ImageList import ImageList
-from providers.ML_multiple_classifier import classify_all_images_from
+from providers.ML_multiple_classifier import (
+    classify_all_images_from,
+    ping_classify_server,
+)
 from providers.ML_multiple_separator import (
     separate_all_images_from,
     show_separations_in_images,
+    ping_separator_server,
 )
 
 
-class BackgroundAndScanToAutoSeparated(Job):
+class VignettesToAutoSeparated(Job):
 
     def __init__(
         self, zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
     ):
         super().__init__((zoo_project, sample_name, subsample_name))
+        # Params
         self.zoo_project = zoo_project
         self.sample_name = sample_name
         self.subsample_name = subsample_name
+        # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
         self.modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
-        # Image inputs
-        self.raw_scan: Path = Path("xyz")  # Just to keep mypy happy
-        self.bg_scans: List[Path] = []
+        # Input
+        self.cut_dir: Path = self.modern_fs.cut_dir
+        # Output
+        self.multiples_dir: Path = self.modern_fs.multiples_vis_dir
+
+    def is_needed(self) -> bool:
+        if not self.multiples_dir.exists():
+            return True
+        return count_files_in_dir(self.multiples_dir) == 0
 
     def prepare(self):
         """
         Start the job execution.
-        Pre-requisites:
-            - 2 RAW backgrounds
-            - 1 RAW scan
-        Process a scan from its background until first segmentation and automatic separation.
         """
+        self.logger = self._setup_job_logger(
+            self.modern_fs.ensure_meta_dir() / "auto_sep_job.log"
+        )
         # Mark the job as started
         self.mark_started()
-
         # Log the start of the job execution
         self.logger.info(
-            f"Starting processing for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
+            f"Starting automatic separation for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
         )
 
-        self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
-            self.logger, self.zoo_project, self.subsample_name
-        )
+        assert self.cut_dir.exists(), f"No thumbnails directory {self.cut_dir}"
+        assert count_files_in_dir(self.cut_dir) > 0, f"No thumbnails in {self.cut_dir}"
+        assert ping_classify_server(self.logger)[0]
+        assert ping_separator_server(self.logger)[0]
 
     def run(self):
-        # TODO: Not here anymore
-        # self._cleanup_work()
-        processor = Processor.from_legacy_config(
-            self.zoo_project.zooscan_config.read(),
-            self.zoo_project.zooscan_config.read_lut(),
-        )
-        scan_resolution, scan_without_background = convert_scan_and_backgrounds(
-            self.logger, processor, self.raw_scan, self.bg_scans
-        )
-
-        # Mask generation
-        self.logger.info(f"Generating MSK")
-        mask = processor.segmenter.get_mask_from_image(scan_without_background)
-        msk_file_name = mask_file_name(self.subsample_name)
-        msk_dir = self.modern_fs.ensure_meta_dir()
-        save_mask_image(self.logger, mask, msk_dir / msk_file_name)
-
-        self.logger.info(f"Segmenting")
-        rois, stats = processor.segmenter.find_ROIs_in_image(
-            scan_without_background,
-            scan_resolution,
-        )
-        self.logger.info(f"Segmentation stats: {stats}")
-        modern_fs = ModernScanFileSystem(
-            self.zoo_project, self.sample_name, self.subsample_name
-        )
-        produce_cuts_and_index(
-            self.logger,
-            processor,
-            modern_fs.fresh_empty_cut_dir(),
-            modern_fs.meta_dir,
-            scan_without_background,
-            scan_resolution,
-            rois,
-            self.scan_name,
-        )
-        thumbs_dir = modern_fs.cut_dir
-
         self.logger.info(f"Determining multiples")
-        # First ML step, send all images to the multiples classifier
-        maybe_multiples, error = classify_all_images_from(self.logger, thumbs_dir, 0.4)
+        # First ML step, send all images to the multiple classifier
+        maybe_multiples, error = classify_all_images_from(
+            self.logger, self.cut_dir, 0.4
+        )
         assert error is None, error
 
         self.logger.info(f"Separating multiples (auto)")
         # Second ML step, send potential multiples to the separator
-        multiples_vis_dir = modern_fs.fresh_empty_multiples_vis_dir()
-        image_list = ImageList(thumbs_dir, [m.name for m in maybe_multiples])
+        multiples_vis_dir = self.modern_fs.fresh_empty_multiples_vis_dir()
+        image_list = ImageList(self.cut_dir, [m.name for m in maybe_multiples])
         # Send files by chunks to avoid the operator waiting too long with no feedback
         processed = 0
         to_process = len(image_list.get_images())
+        start_time = time.time()
         for a_chunk in image_list.split(12):
             results, error = separate_all_images_from(self.logger, a_chunk)
             assert error is None, error
             assert results is not None  # mypy
-            show_separations_in_images(thumbs_dir, results, multiples_vis_dir)
+            show_separations_in_images(self.cut_dir, results, multiples_vis_dir)
             processed += len(a_chunk.get_images())
-            self.logger.info(f"Processed {processed}/{to_process} images")
+            eta_str = self.compute_ETA(start_time, processed, to_process)
+            self.logger.info(
+                f"Processed {processed}/{to_process} images - ETA: {eta_str}"
+            )
+
         # Add some marker that all went fine
-        modern_fs.mark_ML_separation_done()
+        self.modern_fs.mark_ML_separation_done()
+
+    @staticmethod
+    def compute_ETA(start_time: float, processed: int, to_process: int) -> str:
+        # Calculate ETA
+        if processed > 0 and to_process > 0:
+            elapsed_time = time.time() - start_time
+            images_per_second = processed / elapsed_time
+            remaining_images = to_process - processed
+            eta_seconds = (
+                remaining_images / images_per_second if images_per_second > 0 else 0
+            )
+            # Format ETA as minutes and seconds
+            eta_minutes = int(eta_seconds // 60)
+            eta_seconds_remainder = int(eta_seconds % 60)
+            eta_str = f"{eta_minutes}m {eta_seconds_remainder}s"
+        else:
+            eta_str = "unknown"
+        return eta_str
 
     def _cleanup_work(self):
         """Cleanup the files that the present process is going to (re) create"""
-        work_files = self.zoo_project.zooscan_scan.work.get_files(
-            self.subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )
-        if WRK_MSK1 in work_files:
-            the_work_file = work_files[WRK_MSK1]
-            assert isinstance(
-                the_work_file, Path
-            ), f"Unexpected {WRK_MSK1} (not a file?)!"
-            os.remove(the_work_file)
+        # work_files = self.zoo_project.zooscan_scan.work.get_files(
+        #     self.subsample_name, THE_SCAN_PER_SUBSAMPLE
+        # )
+        # if WRK_MSK1 in work_files:
+        #     the_work_file = work_files[WRK_MSK1]
+        #     assert isinstance(
+        #         the_work_file, Path
+        #     ), f"Unexpected {WRK_MSK1} (not a file?)!"
+        #     os.remove(the_work_file)
 
 
 def generate_box_measures(rois: List[ROI], scan_name: str, meta_file: Path) -> None:
@@ -221,6 +220,7 @@ def produce_cuts_and_index(
 ) -> None:
     # Thumbnail generation
     logger.info(f"Extracting")
+    logger.debug(f"Extracting to {thumbs_dir}")
     processor.extractor.extract_all_with_border_to_dir(
         image,
         image_resolution,

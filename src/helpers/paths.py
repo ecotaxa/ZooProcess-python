@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Optional
@@ -40,3 +41,7 @@ def directory_date_range(
 
 def file_date(file_path: Path) -> datetime:
     return datetime.fromtimestamp(file_path.stat().st_mtime)
+
+
+def count_files_in_dir(path: Path) -> int:
+    return len(os.listdir(path))

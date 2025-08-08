@@ -6,7 +6,7 @@ from ZooProcess_lib.img_tools import get_creation_date
 from helpers.paths import file_date
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import scan_name_from_subsample_name
-from modern.jobs.ScanToAutoSep import (
+from modern.jobs.VignettesToAutoSep import (
     convert_scan_and_backgrounds,
     get_scan_and_backgrounds,
     produce_cuts_and_index,
@@ -15,7 +15,7 @@ from modern.tasks import Job
 from modern.to_legacy import save_mask_image
 
 
-class FreshScanToCheck(Job):
+class FreshScanToVignettes(Job):
 
     def __init__(
         self,
@@ -32,7 +32,6 @@ class FreshScanToCheck(Job):
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
         self.modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
-
         # Image inputs
         self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
             self.logger, self.zoo_project, self.subsample_name
@@ -43,6 +42,10 @@ class FreshScanToCheck(Job):
     def prepare(self):
         """
         Start the job execution.
+        Pre-requisites:
+            - 2 RAW backgrounds
+            - 1 RAW scan
+        Process a scan from its background until first segmentation and automatic separation.
         """
         self.logger = self._setup_job_logger(
             self.modern_fs.ensure_meta_dir() / "mask_gen_job.log"
@@ -89,6 +92,7 @@ class FreshScanToCheck(Job):
             self.zoo_project, self.sample_name, self.subsample_name
         )
         # "Vignettes"
+        self.logger.info(f"Producing thumbnails")
         produce_cuts_and_index(
             self.logger,
             processor,
