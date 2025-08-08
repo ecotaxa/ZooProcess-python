@@ -18,7 +18,7 @@ from legacy.ids import (
 )
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
-from modern.jobs.ScanToAutoSep import (
+from modern.jobs.VignettesToAutoSep import (
     get_scan_and_backgrounds,
     convert_scan_and_backgrounds,
     produce_cuts_and_index,
@@ -29,7 +29,7 @@ from providers.ecotaxa_client import EcoTaxaApiClient
 from providers.ecotaxa_tsv import EcoTaxaTSV
 
 
-class ManuallySeparatedToEcoTaxa(Job):
+class VerifiedSeparationToEcoTaxa(Job):
 
     def __init__(
         self,

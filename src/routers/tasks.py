@@ -9,8 +9,8 @@ from helpers.logger import logger
 from helpers.web import raise_500, raise_404, raise_501
 from local_DB.db_dependencies import get_db
 from local_DB.models import User
-from modern.jobs.ManuSepToUpload import ManuallySeparatedToEcoTaxa
-from modern.jobs.ScanToAutoSep import BackgroundAndScanToAutoSeparated
+from modern.jobs.VerifiedSepToUpload import VerifiedSeparationToEcoTaxa
+from modern.jobs.VignettesToAutoSep import VignettesToAutoSeparated
 from modern.tasks import JobScheduler
 from modern.utils import job_to_task_rsp
 from routers.utils import validate_path_components
@@ -64,7 +64,7 @@ def create_task(
         zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
             db, project_hash, sample_hash, subsample_hash
         )
-        bg2auto_task = BackgroundAndScanToAutoSeparated(
+        bg2auto_task = VignettesToAutoSeparated(
             zoo_project, sample_name, subsample_name
         )
         JobScheduler.submit(bg2auto_task)
@@ -78,7 +78,7 @@ def create_task(
         zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
             db, project_hash, sample_hash, subsample_hash
         )
-        manu2ecotaxa_task = ManuallySeparatedToEcoTaxa(
+        manu2ecotaxa_task = VerifiedSeparationToEcoTaxa(
             zoo_project, sample_name, subsample_name, token, dst_project_id
         )
         JobScheduler.submit(manu2ecotaxa_task)

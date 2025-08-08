@@ -42,7 +42,8 @@ from modern.ids import (
     scan_name_from_subsample_name,
     THE_SCAN_PER_SUBSAMPLE,
 )
-from modern.jobs.FreshScanCheck import FreshScanToCheck
+from modern.jobs.FreshScanToVignettes import FreshScanToVignettes
+from modern.jobs.VignettesToAutoSep import VignettesToAutoSeparated
 from modern.subsample import get_project_scans_metadata, add_subsample
 from modern.tasks import JobScheduler, Job
 from modern.utils import job_to_task_rsp
@@ -276,16 +277,21 @@ def process_subsample(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-    ret: Job | None
-    bg2auto_task = FreshScanToCheck(zoo_project, sample_name, subsample_name)
-    if not bg2auto_task.is_needed():
-        ret = None
+    ret: Job | None = None
+    bg2auto_task = FreshScanToVignettes(zoo_project, sample_name, subsample_name)
+    auto_sep_task = VignettesToAutoSeparated(zoo_project, sample_name, subsample_name)
+    if bg2auto_task.is_needed():
+        to_launch = bg2auto_task
+    elif auto_sep_task.is_needed():
+        to_launch = auto_sep_task
     else:
+        to_launch = None
+    if to_launch is not None:
         with JobScheduler.jobs_lock:
-            there_tasks = JobScheduler.find_effective_jobs_like(bg2auto_task)
+            there_tasks = JobScheduler.find_effective_jobs_like(to_launch)
             if len(there_tasks) == 0:
-                JobScheduler.submit(bg2auto_task)
-                ret = bg2auto_task
+                JobScheduler.submit(to_launch)
+                ret = to_launch
             else:
                 ret = there_tasks[-1]
     return ProcessRsp(task=job_to_task_rsp(ret))
