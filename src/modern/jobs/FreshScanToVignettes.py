@@ -1,9 +1,9 @@
 # Process a scan from its physical acquisition to operator check
+from pathlib import Path
+from typing import List
 
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
-from ZooProcess_lib.img_tools import get_creation_date
-from helpers.paths import file_date
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import scan_name_from_subsample_name
 from modern.jobs.VignettesToAutoSep import (
@@ -33,11 +33,10 @@ class FreshScanToVignettes(Job):
         # Modern side
         self.modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
         # Image inputs
-        self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
-            self.logger, self.zoo_project, self.subsample_name
-        )
+        self.raw_scan: Path = Path("")
+        self.bg_scans: List[Path] = []
         # Outputs
-        self.msk_file_path = self.modern_fs.MSK_file_path()
+        self.msk_file_path = self.modern_fs.MSK_file_path
 
     def prepare(self):
         """
@@ -55,6 +54,10 @@ class FreshScanToVignettes(Job):
         # Log the start of the job execution
         self.logger.info(
             f"Starting post-scan check generation for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
+        )
+        # Collect inputs
+        self.raw_scan, self.bg_scans = get_scan_and_backgrounds(
+            self.logger, self.zoo_project, self.subsample_name
         )
         assert self.raw_scan is not None, "No RAW scan"
         assert len(self.bg_scans) == 2, "No background scan"
