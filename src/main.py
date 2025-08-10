@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette import status
-from starlette.responses import Response
+from starlette.responses import Response, FileResponse
 
 from Models import (
     ScanIn,
@@ -125,6 +125,13 @@ app.mount(
     name="static",
 )
 
+# Mount the dist directory to serve the frontend assets
+app.mount(
+    "/assets",
+    StaticFiles(directory=str(Path(__file__).parent.parent / "dist" / "assets")),
+    name="assets",
+)
+
 api_router = APIRouter(
     prefix="/api",
     tags=["api"],
@@ -222,7 +229,7 @@ def add_background_for_instrument(
     return for_all[0]
 
 
-@app.post("/login")
+@app.post("/api/login")
 def login_post(login_req: LoginReq, db: Session = Depends(get_db)):
     """
     Login endpoint
@@ -315,6 +322,22 @@ def crash_endpoint():
     logger.info("Crash endpoint called - about to raise an exception")
     # Deliberately raise an exception
     raise Exception("This is a deliberate crash for testing error handling")
+
+
+@app.get("/{path:path}")
+def fallback_route(path: str):
+    """
+    Fallback route that serves the static index.html file for any unmatched routes.
+    This enables client-side routing to work properly.
+
+    Args:
+        path: The path that was not matched by any other route.
+
+    Returns:
+        FileResponse: The index.html file.
+    """
+    index_path = Path(__file__).parent.parent / "dist" / "index.html"
+    return FileResponse(index_path)
 
 
 # Start the application when run directly
