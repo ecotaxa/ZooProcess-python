@@ -62,14 +62,6 @@ class FreshScanToVignettes(Job):
         assert self.raw_scan is not None, "No RAW scan"
         assert len(self.bg_scans) == 2, "No background scan"
 
-    def is_needed(self) -> bool:
-        scan_date = get_creation_date(self.raw_scan)
-        if self.msk_file_path.exists():
-            msk_date = file_date(self.msk_file_path)
-            return msk_date <= scan_date
-        else:
-            return True
-
     def run(self):
         # self._cleanup_work()
         processor = Processor.from_legacy_config(

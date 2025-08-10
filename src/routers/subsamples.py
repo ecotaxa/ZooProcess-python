@@ -16,6 +16,7 @@ from Models import (
     ScanPostRsp,
     ProcessRsp,
     MarkSubsampleReq,
+    SubSampleStateEnum,
 )
 from helpers.auth import get_current_user_from_credentials
 from helpers.logger import logger
@@ -38,6 +39,7 @@ from modern.from_legacy import (
     subsample_from_legacy,
     backgrounds_from_legacy_project,
 )
+from modern.from_modern import modern_subsample_state
 from modern.ids import (
     scan_name_from_subsample_name,
     THE_SCAN_PER_SUBSAMPLE,
@@ -277,15 +279,19 @@ def process_subsample(
     zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
+    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
+    state = modern_subsample_state(zoo_project, sample_name, subsample_name, modern_fs)
+    to_launch: Job | None
+    match state:
+        case SubSampleStateEnum.ACQUIRED:
+            to_launch = FreshScanToVignettes(zoo_project, sample_name, subsample_name)
+        case SubSampleStateEnum.MSK_APPROVED:
+            to_launch = VignettesToAutoSeparated(
+                zoo_project, sample_name, subsample_name
+            )
+        case _:
+            to_launch = None
     ret: Job | None = None
-    bg2auto_task = FreshScanToVignettes(zoo_project, sample_name, subsample_name)
-    auto_sep_task = VignettesToAutoSeparated(zoo_project, sample_name, subsample_name)
-    if bg2auto_task.is_needed():
-        to_launch = bg2auto_task
-    elif auto_sep_task.is_needed():
-        to_launch = auto_sep_task
-    else:
-        to_launch = None
     if to_launch is not None:
         with JobScheduler.jobs_lock:
             there_tasks = JobScheduler.find_effective_jobs_like(to_launch)

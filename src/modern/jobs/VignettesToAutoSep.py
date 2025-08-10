@@ -48,11 +48,6 @@ class VignettesToAutoSeparated(Job):
         # Output
         self.multiples_dir: Path = self.modern_fs.multiples_vis_dir
 
-    def is_needed(self) -> bool:
-        if not self.multiples_dir.exists():
-            return True
-        return count_files_in_dir(self.multiples_dir) == 0
-
     def prepare(self):
         """
         Start the job execution.
@@ -172,7 +167,9 @@ def get_scan_and_backgrounds(
     bg_raw_files = zooscan_back.get_last_raw_backgrounds_before(raw_scan_date)
     bg_scans = []
     for a_bg in bg_raw_files:
-        assert a_bg.exists()
+        assert (
+            a_bg and a_bg.exists()
+        ), f"Inconsistent in {zooscan_back.path} for {raw_scan_date}"
         bg_scan_date = get_creation_date(a_bg)
         for_msg = a_bg.relative_to(zoo_project.path)
         logger.info(f"Raw background file {for_msg} dated {bg_scan_date}")

@@ -185,6 +185,7 @@ class ModernScanFileSystem:
         with open(validation_file, "w") as f:
             f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
 
+    @property
     def MSK_file_path(self):
         return self.meta_dir / mask_file_name(self.subsample_name)
 
