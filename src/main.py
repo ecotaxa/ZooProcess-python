@@ -144,8 +144,9 @@ api_router.include_router(instruments_router)
 api_router.include_router(images_router)
 api_router.include_router(tasks_router)
 api_router.include_router(vignettes_router)
-api_router.include_router(pages_router)
 app.include_router(api_router)
+
+app.include_router(pages_router)
 
 
 @app.get("/favicon.ico")

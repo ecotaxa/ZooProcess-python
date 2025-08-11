@@ -3,7 +3,6 @@ fastapi==0.115.12
 pydantic==2.11.4
 uvicorn==0.34.2
 requests==2.32.3
-numpy==2.2.6
 python-multipart==0.0.20
 aiofiles==24.1.0
 jinja2==3.1.6 # For HTML templates
@@ -11,11 +10,12 @@ jinja2==3.1.6 # For HTML templates
 pymongo==4.13.0
 # pandas
 # matplotlib
-opencv-python==4.11.0.86 # cv2
-pillow==11.2.1 # PIL
+# numpy==2.3.2 # in ZooProcess-lib
+# opencv-python==4.11.0.86 # cv2, in ZooProcess-lib
+# pillow==11.3.0 # PIL, in ZooProcess-lib
 pyjwt==2.10.1 # For JWT token validation
-sqlalchemy==2.0.41 # ORM for database operations
-# ZooProcess-lib @ git+https://github.com/ecotaxa/ZooProcess-lib.git@v0.1.0
+sqlalchemy==2.0.42 # ORM for database operations
+ZooProcess-lib @ https://github.com/ecotaxa/ZooProcess-lib/archive/refs/tags/v0.6.0.tar.gz
 python-dotenv==1.1.0
 
 # CLI dependencies

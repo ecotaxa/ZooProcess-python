@@ -19,8 +19,8 @@ from rich.console import Console
 from rich.table import Table
 from sqlalchemy.exc import IntegrityError
 
-from src.local_DB.models import User
-from src.local_DB.sqlite_db import SQLAlchemyDB
+from local_DB.models import User
+from local_DB.sqlite_db import SQLAlchemyDB
 
 console = Console()
 
