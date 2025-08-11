@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZooProcess - Projects</title>
+    <link rel="stylesheet" href="/static/ui.css">
+    <style>
+        .projects-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .projects-table th, .projects-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .projects-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .projects-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .projects-table tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .project-name {
+            font-weight: bold;
+            color: #0056b3;
+        }
+
+        .sample-name {
+            color: #28a745;
+        }
+
+        .subsample-name {
+            color: #6c757d;
+        }
+
+        .scan-name {
+            color: #dc3545;
+        }
+
+        .submit-btn {
+            padding: 4px 8px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .submit-btn:hover {
+            background-color: #003d82;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ZooProcess Projects</h1>
+        </header>
+
+        <div class="user-info">
+            <h2>User Information</h2>
+            <p>Name: {{ user.name }}</p>
+            <p>Email: {{ user.email }}</p>
+            <a href="/ui/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content">
+            <h2>Projects List</h2>
+
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Scan</th>
+                        <th>Subsample</th>
+                        <th>Sample</th>
+                        <th>Project</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in project_items %}
+                        <tr>
+                            <td class="scan-name">
+                                {% if item.scan > 0 %}
+                                    <form action="/ui/export_form" method="get" style="display: inline; margin-left: 10px;">
+                                        <input type="hidden" name="project_id" value="{{ item.project.id }}">
+                                        <input type="hidden" name="sample_id" value="{{ item.sample.id }}">
+                                        <input type="hidden" name="subsample_id" value="{{ item.subsample.id }}">
+                                        <button type="submit" class="submit-btn">Export</button>
+                                    </form>
+                                {% else %}
+                                    No scans available
+                                {% endif %}
+                            </td>
+                            <td class="subsample-name">{{ item.subsample.name }}</td>
+                            <td class="sample-name">{{ item.sample.name }}</td>
+                            <td class="project-name">{{ item.project.name or item.project.path.split('/')[-1] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <a href="/ui/" class="home-link">Back to Home</a>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 ZooProcess. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

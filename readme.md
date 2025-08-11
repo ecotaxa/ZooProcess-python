@@ -1,6 +1,6 @@
 
 # API Pipeline
- 
+
 A REST API to pilot the Ecotaxa pipelines
 
 
@@ -22,14 +22,46 @@ pip install numpy
 uvicorn main:app --reload
 ```
 
-# run it to VENV
+# Development Setup
+
+For detailed installation instructions, please refer to the [Installation Guide](docs/installation.md).
+
+## Quick Start
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-#pip install uvicorn  # if issue run manually uviicorn installation
-# uvicorn main:app --reload
 python -m uvicorn main:app --reload
+```
+
+# Environment Variables
+
+The application uses the following environment variables:
+
+- `APP_ENV`: Determines which configuration to use (`development` or `production`). Defaults to `development`.
+- `WORKING_DIR`: The working directory where the application will look for configuration files and other resources. Defaults to the current working directory.
+- `SECRET`: The secret key used for JWT token signing and verification. If not set, a default value is used, but it's strongly recommended to set this to a secure, unique value in production environments.
+
+You can set these environment variables before running the application:
+
+```bash
+# Set the environment to production
+export APP_ENV=production
+
+# Set the working directory
+export WORKING_DIR=/path/to/your/working/directory
+
+# Set the secret key for JWT token signing and verification
+export SECRET="your-secure-secret-key"
+
+# Run the application
+python -m uvicorn main:app --reload
+```
+
+Or you can set them when running the application:
+
+```bash
+APP_ENV=production WORKING_DIR=/path/to/your/working/directory SECRET="your-secure-secret-key" python -m uvicorn main:app --reload
 ```
 
 
@@ -143,6 +175,9 @@ openapigenerator generate -i http://localhost:5000/openapi.json -g python -o ./s
 
 # run unit test
 
+## Test Generation Control
+
+The generation of tests can be controlled using the `test_config.json` file in the project root directory. See [TEST_GENERATION.md](tests/TEST_GENERATION.md) for more information.
 
 ```bash
 python3 -m venv test_venv
@@ -150,16 +185,171 @@ source test_venv/bin/activate
 pip install --upgrade pip 
 pip install -r requirements.txt
 
-python3 -m unittest discover tests
+pytest
 ```
 
-or one test
+or one test file
 ```bash
-python -m unittest tests/*.py 
+pytest tests/test_file.py
 ```
-add -v for verbose mode, and ahave list of test functions
+add -v for verbose mode to see a list of test functions
 
-Run only on test function
+Run only one test function
 ```bash
-python -m unittest tests.test_server.Test_server.test_dbserver_withconfig
+pytest tests/test_file.py::test_function_name
 ```
+
+# Type Checking with Mypy
+
+The project uses [mypy](https://mypy.readthedocs.io/) for static type checking. Mypy helps catch type-related errors before runtime by analyzing type annotations in the code.
+
+## Running Mypy
+
+To run mypy on the project:
+
+```bash
+# Install mypy if not already installed
+pip install -r requirements.txt
+
+# Run mypy on the entire src directory
+mypy src
+
+# Run mypy on a specific file
+mypy src/path/to/file.py
+```
+
+## Configuration
+
+Mypy is configured using the `mypy.ini` file in the project root. The configuration includes:
+
+- Python version set to 3.9
+- Warning settings for returning Any types and unused configs
+- Type checking for untyped definitions
+- Ignoring missing imports for common libraries (numpy, pandas, matplotlib, etc.)
+
+## Adding Type Annotations
+
+When adding new code to the project, consider adding type annotations to improve code quality and maintainability. For example:
+
+```python
+def add_numbers(a: int, b: int) -> int:
+    return a + b
+```
+
+For more information on Python type annotations, see the [mypy documentation](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html).
+
+# Database with SQLAlchemy
+
+The application uses SQLAlchemy as an ORM (Object-Relational Mapping) to interact with the SQLite database. This provides a more Pythonic way to work with the database and makes it easier to maintain and extend the database schema.
+
+## Database Models
+
+Database models are defined in `src/db_models.py`. Each model represents a table in the database and inherits from the SQLAlchemy `Base` class.
+
+Example model:
+```python
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class Example(Base):
+    __tablename__ = "example"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    value = Column(String)
+```
+
+## Using SQLAlchemy in Your Code
+
+There are two ways to interact with the database:
+
+1. Using the backward-compatible `SQLiteDB` class (recommended for existing code):
+
+```python
+from src.local_db.sqlite_db import SQLiteDB
+
+# Using the context manager
+with SQLiteDB() as db:
+  # Execute raw SQL queries
+  cursor = db.execute("SELECT * FROM example")
+  results = cursor.fetchall()
+```
+
+2. Using the new `SQLAlchemyDB` class (recommended for new code):
+
+```python
+from src.local_db.sqlite_db import SQLAlchemyDB
+from src.local_db.models import Example
+
+# Using the context manager
+with SQLAlchemyDB() as db:
+  # Create a new record
+  example = Example(name="test", value="value")
+  db.session.add(example)
+  db.session.commit()
+
+  # Query records
+  results = db.session.query(Example).filter_by(name="test").all()
+```
+
+See the example script in `examples/sqlalchemy_example.py` for a complete example of using SQLAlchemy in the project.
+
+# Command-Line Interface (CLI)
+
+The application provides a command-line interface (CLI) for various administrative tasks. The CLI is built using Typer and provides a user-friendly interface with rich formatting.
+
+## User Management CLI
+
+The User Management CLI allows you to add, update, remove, and list users in the database.
+
+### Installation
+
+Make sure you have installed the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Usage
+
+```bash
+# Show help
+python -m commands.user_cli --help
+
+# Add a new user
+python -m commands.user_cli add --name "John Doe" --email "john@example.com"
+# You will be prompted to enter and confirm a password
+
+# Update an existing user
+python -m commands.user_cli update --id "user_id" --name "New Name" --email "new@example.com"
+# If you want to update the password, you will be prompted to enter and confirm it
+
+# Remove a user
+python -m commands.user_cli remove --id "user_id"
+# You will be asked to confirm the removal unless you use the --force option
+
+# List all users
+python -m commands.user_cli list
+```
+
+### Commands
+
+- `add`: Add a new user to the database
+  - `--name`: User's full name (required)
+  - `--email`: User's email address (required)
+  - `--password`: User's password (will be prompted if not provided)
+  - `--confirm-password`: Confirm password (will be prompted if not provided)
+
+- `update`: Update an existing user in the database
+  - `--id`: User ID (required)
+  - `--name`: User's new name (optional)
+  - `--email`: User's new email address (optional)
+  - `--password`: User's new password (optional, will be prompted if provided)
+
+- `remove`: Remove a user from the database
+  - `--id`: User ID (required)
+  - `--force` or `-f`: Force removal without confirmation (optional)
+
+- `list`: List all users in the database

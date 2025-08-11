@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZooProcess - Login</title>
+    <link rel="stylesheet" href="/static/ui.css">
+</head>
+<body>
+    <div class="container auth">
+        <header>
+            <h1>ZooProcess Login</h1>
+        </header>
+
+        <div class="login-form">
+            <form action="/ui/login" method="post">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                {% if error %}
+                <div class="error-message">
+                    {{ error }}
+                </div>
+                {% endif %}
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 ZooProcess. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

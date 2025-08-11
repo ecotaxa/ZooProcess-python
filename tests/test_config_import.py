@@ -1,0 +1,150 @@
+import os
+import sys
+import subprocess
+import tempfile
+import shutil
+
+
+# Test script to verify that main.py validation works correctly
+def test_empty_drives(project_python_path):
+    """Test that importing main.py fails when DRIVES is empty."""
+    # Create a temporary script that imports config_rdr.py and then main.py
+    paths_str = ", ".join([f'"{path}"' for path in project_python_path])
+    script = f"""
+import os
+import sys
+# Add the project paths to the Python path
+for path in [{paths_str}]:
+    sys.path.append(path)
+print(sys.path)
+# Unset DRIVES environment variable
+if "DRIVES" in os.environ:
+    del os.environ["DRIVES"]
+# Import config.py first to set up config._DRIVES
+from config_rdr import config
+# Import main.py, which should fail
+try:
+    import main
+    print("ERROR: Import succeeded when it should have failed")
+    sys.exit(1)
+except SystemExit:
+    print("SUCCESS: Import failed as expected")
+    sys.exit(0)
+"""
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+        f.write(script.encode())
+        script_path = f.name
+
+    try:
+        # Run the script and check the exit code
+        result = subprocess.run(
+            [sys.executable, script_path], capture_output=True, text=True
+        )
+        print(f"Exit code: {result.returncode}")
+        print(f"Output: {result.stdout}")
+        print(f"Error: {result.stderr}")
+        assert (
+            result.returncode == 0
+        ), f"Script failed with exit code {result.returncode}"
+        assert "SUCCESS: Import failed as expected" in result.stdout
+    finally:
+        # Clean up the temporary script
+        os.unlink(script_path)
+
+
+def test_invalid_drives(project_python_path):
+    """Test that importing main.py fails when DRIVES contains invalid paths."""
+    # Create a temporary script that imports config_rdr.py and then main.py
+    paths_str = ", ".join([f'"{path}"' for path in project_python_path])
+    script = f"""
+import os
+import sys
+# Add the project paths to the Python path
+for path in [{paths_str}]:
+    sys.path.append(path)
+# Set DRIVES environment variable with invalid paths
+os.environ["DRIVES"] = "/nonexistent/path1,/nonexistent/path2"
+# Import config.py first to set up config._DRIVES
+from config_rdr import config
+# Import main.py, which should fail
+try:
+    import main
+    print("ERROR: Import succeeded when it should have failed")
+    sys.exit(1)
+except SystemExit:
+    print("SUCCESS: Import failed as expected")
+    sys.exit(0)
+"""
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+        f.write(script.encode())
+        script_path = f.name
+
+    try:
+        # Run the script and check the exit code
+        result = subprocess.run(
+            [sys.executable, script_path], capture_output=True, text=True
+        )
+        print(f"Exit code: {result.returncode}")
+        print(f"Output: {result.stdout}")
+        print(f"Error: {result.stderr}")
+        assert (
+            result.returncode == 0
+        ), f"Script failed with exit code {result.returncode}"
+        assert "SUCCESS: Import failed as expected" in result.stdout
+    finally:
+        # Clean up the temporary script
+        os.unlink(script_path)
+
+
+def test_valid_drives(project_python_path):
+    """Test that importing main.py succeeds when DRIVES contains valid paths."""
+    # Create temporary directories for testing
+    temp_dir1 = tempfile.mkdtemp()
+    temp_dir2 = tempfile.mkdtemp()
+
+    # Create a temporary script that imports config_rdr.py and then main.py
+    paths_str = ", ".join([f'"{path}"' for path in project_python_path])
+    script = f"""
+import os
+import sys
+from pathlib import Path
+# Add the project paths to the Python path
+for path in [{paths_str}]:
+    sys.path.append(path)
+# Set DRIVES environment variable with valid paths
+os.environ["DRIVES"] = "{temp_dir1},{temp_dir2}"
+# Import config.py first to set up config._DRIVES
+from config_rdr import config
+print(f"DEBUG: config._DRIVES = {{config.get_drives()}}")
+# Import main.py, which should succeed
+import main
+# Check that DRIVES is correctly loaded
+if config.get_drives() == [Path("{temp_dir1}"), Path("{temp_dir2}")]:
+    print("SUCCESS: Import succeeded and DRIVES is correctly loaded")
+else:
+    print(f"ERROR: DRIVES not correctly loaded. Expected [{temp_dir1}, {temp_dir2}], got {{config.DRIVES}}")
+    sys.exit(1)
+"""
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+        f.write(script.encode())
+        script_path = f.name
+
+    try:
+        # Run the script and check the exit code
+        result = subprocess.run(
+            [sys.executable, script_path], capture_output=True, text=True
+        )
+        print(f"Exit code: {result.returncode}")
+        print(f"Output: {result.stdout}")
+        print(f"Error: {result.stderr}")
+        assert (
+            result.returncode == 0
+        ), f"Script failed with exit code {result.returncode}"
+        assert (
+            "SUCCESS: Import succeeded and DRIVES is correctly loaded" in result.stdout
+        )
+    finally:
+        # Clean up the temporary script and directories
+        os.unlink(script_path)
+        shutil.rmtree(temp_dir1)
+        shutil.rmtree(temp_dir2)

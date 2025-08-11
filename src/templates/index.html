@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZooProcess - Home</title>
+    <link rel="stylesheet" href="/static/ui.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome to ZooProcess</h1>
+        </header>
+
+        <div class="user-info">
+            <h2>User Information</h2>
+            <p>Name: {{ user.name }}</p>
+            <p>Email: {{ user.email }}</p>
+            <a href="/ui/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content">
+            <h2>Available Pages</h2>
+            <ul>
+                <li><a href="/ui/about">About</a></li>
+                <li><a href="/ui/dashboard">Dashboard</a></li>
+                <li><a href="/ui/help">Help</a></li>
+                <li><a href="/ui/projects">Projects</a></li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 ZooProcess. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

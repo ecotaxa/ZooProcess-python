@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZooProcess - Submission</title>
+    <link rel="stylesheet" href="/static/ui.css">
+    <style>
+        .submission-details {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .submission-details h3 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+
+        .submission-details p {
+            margin: 10px 0;
+        }
+
+        .submission-details .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .submission-details .value {
+            color: #28a745;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 16px;
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .back-link:hover {
+            background-color: #003d82;
+        }
+    </style>
+</head>
+<body>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('ecotaxaForm');
+
+        form.addEventListener('submit', function (event) {
+            const emailInput = document.getElementById('ecotaxa_email');
+            const passwordInput = document.getElementById('ecotaxa_password');
+            let isValid = true;
+
+            // Clear previous error messages
+            const errorMessages = document.querySelectorAll('.error-message');
+            errorMessages.forEach(function (element) {
+                element.remove();
+            });
+
+            // Validate email
+            if (!emailInput.value.trim()) {
+                displayError(emailInput, 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail(emailInput.value.trim())) {
+                displayError(emailInput, 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            // Validate password
+            if (!passwordInput.value.trim()) {
+                displayError(passwordInput, 'Password is required');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+
+        function displayError(input, message) {
+            const errorElement = document.createElement('span');
+            errorElement.className = 'error-message';
+            errorElement.style.color = 'red';
+            errorElement.style.display = 'block';
+            errorElement.style.fontSize = '12px';
+            errorElement.style.marginTop = '5px';
+            errorElement.textContent = message;
+
+            input.parentNode.appendChild(errorElement);
+            input.style.borderColor = 'red';
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+    });
+</script>
+<div class="container">
+    <header>
+        <h1>ZooProcess Submission</h1>
+    </header>
+
+    <div class="user-info">
+        <h2>User Information</h2>
+        <p>Name: {{ user.name }}</p>
+        <p>Email: {{ user.email }}</p>
+        <a href="/ui/logout" class="logout-btn">Logout</a>
+    </div>
+
+    <div class="content">
+        <h2>Submission Details</h2>
+
+        <div class="submission-details">
+            <h3>Line IDs</h3>
+            <p><span class="label">Project ID:</span> <span class="value">{{ project_id }}</span></p>
+            <p><span class="label">Sample ID:</span> <span class="value">{{ sample_id }}</span></p>
+            <p><span class="label">Subsample ID:</span> <span class="value">{{ subsample_id }}</span></p>
+        </div>
+
+        {% if authenticated %}
+        <div class="submission-details">
+            <h3>EcoTaxa Authentication</h3>
+            <p style="color: #28a745; font-weight: bold;">Successfully authenticated as {{ ecotaxa_email }}</p>
+
+            <form action="/ui/export" method="post" style="margin-top: 20px;">
+                <h3>Available Zooscan Projects</h3>
+                {% if projects %}
+                <div style="margin-top: 15px;">
+                    <label for="ecotaxa_project" style="display: block; margin-bottom: 8px; font-weight: bold;">Select a
+                        project:</label>
+                    <select id="ecotaxa_project" name="ecotaxa_project_id"
+                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        <option value="">-- Select a project --</option>
+                        {% for project in projects %}
+                        <option value="{{ project.projid }}">{{ project.title }} (ID: {{ project.projid }}, Objects: {{
+                            project.objcount|int if project.objcount else 'N/A' }}, Validated: {{
+                            "%.2f"|format(project.pctvalidated) if project.pctvalidated else 'N/A' }}%)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <p>No Zooscan projects found.</p>
+                {% endif %}
+
+                <input type="hidden" name="project_id" value="{{ project_id }}">
+                <input type="hidden" name="sample_id" value="{{ sample_id }}">
+                <input type="hidden" name="subsample_id" value="{{ subsample_id }}">
+                <input type="hidden" name="ecotaxa_email" value="{{ ecotaxa_email }}">
+                <input type="hidden" name="ecotaxa_password" value="{{ ecotaxa_password }}">
+                <input type="hidden" name="task_to_create" value="true">
+
+                <button type="submit" class="submit-btn"
+                        style="padding: 8px 16px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px;">
+                    Continue with Export
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="submission-details">
+            <h3>EcoTaxa Credentials</h3>
+            {% if error %}
+            <div class="error-container"
+                 style="background-color: #ffebee; border: 1px solid #f44336; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                <p style="color: #f44336; margin: 0;">{{ error }}</p>
+            </div>
+            {% endif %}
+            <form id="ecotaxaForm" action="/ui/export" method="post">
+                <input type="hidden" name="project_id" value="{{ project_id }}">
+                <input type="hidden" name="sample_id" value="{{ sample_id }}">
+                <input type="hidden" name="subsample_id" value="{{ subsample_id }}">
+
+                <p>
+                    <label for="ecotaxa_email" class="label">Email:</label>
+                    <input type="email" id="ecotaxa_email" name="ecotaxa_email" required>
+                </p>
+                <p>
+                    <label for="ecotaxa_password" class="label">Password:</label>
+                    <input type="password" id="ecotaxa_password" name="ecotaxa_password" required>
+                </p>
+                <p>
+                    <button type="submit" class="submit-btn"
+                            style="padding: 8px 16px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Login to EcoTaxa
+                    </button>
+                </p>
+            </form>
+        </div>
+        {% endif %}
+
+        <a href="/ui/projects" class="back-link">Back to Projects</a>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 ZooProcess. All rights reserved.</p>
+    </footer>
+</div>
+</body>
+</html>
