@@ -64,8 +64,10 @@ class VignettesToAutoSeparated(Job):
 
         assert self.cut_dir.exists(), f"No thumbnails directory {self.cut_dir}"
         assert count_files_in_dir(self.cut_dir) > 0, f"No thumbnails in {self.cut_dir}"
-        assert ping_classify_server(self.logger)[0]
-        assert ping_separator_server(self.logger)[0]
+        assert ping_classify_server(self.logger)[0], "Classify server is not responding"
+        assert ping_separator_server(self.logger)[
+            0
+        ], f"Separator server is not responding"
 
     def run(self):
         self.logger.info(f"Determining multiples")

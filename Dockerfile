@@ -24,10 +24,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src /app
-RUN mkdir -p /dist/assets # TODO, plain python UI for now
+# Fetch compiled front-end from GH
+ADD https://github.com/ecotaxa/ZooProcess-front/releases/download/v0.0.3/dist.tgz client.tgz
+RUN cd / && tar xvf app/client.tgz && rm app/client.tgz
 COPY src/static /static
 
-EXPOSE 8000
+EXPOSE 80
 
 ENV APP_ENV=prod
 RUN python user_cli.py add --name admin --email admin@nowhere.com --password password --confirm-password password
