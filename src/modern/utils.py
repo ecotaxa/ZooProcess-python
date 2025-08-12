@@ -1,3 +1,4 @@
+import math
 import re
 from datetime import datetime
 from os.path import getmtime
@@ -152,7 +153,7 @@ def parse_sample_name(sample_name: str) -> dict:
     return parsed
 
 
-def convert_ddm_to_decimal_degrees(a_value):
+def convert_ddm_to_decimal_degrees(a_value: str) -> float:
     """
     Convert a coordinate from Degrees Decimal Minutes (DDM) format to Decimal Degrees (DD) format.
 
@@ -176,6 +177,8 @@ def convert_ddm_to_decimal_degrees(a_value):
         10.505
     """
     val = float(a_value)
+    if math.isnan(val):
+        return val
     degrees = int(val)
     decimal = (val - degrees) * 100
     decimal = round(decimal / 30 * 50, 4)

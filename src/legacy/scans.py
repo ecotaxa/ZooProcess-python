@@ -28,7 +28,8 @@ SCAN_CSV_COLUMNS = list(ScanCSVLine.__annotations__.keys())
 
 def read_scans_metadata_table(zoo_project: ZooscanProjectFolder) -> List[ScanCSVLine]:
     ret = zoo_project.zooscan_meta.read_scans_table()
-    assert list(ret[0].keys()) == SCAN_CSV_COLUMNS
+    if len(ret) > 0:
+        assert list(ret[0].keys()) == SCAN_CSV_COLUMNS
     return cast(List[ScanCSVLine], ret)
 
 

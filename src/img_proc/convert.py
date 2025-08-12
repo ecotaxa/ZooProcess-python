@@ -15,6 +15,9 @@ from ZooProcess_lib.img_tools import (
     load_tiff_image_and_info,
     loadimage,
 )
+
+PIL.Image.MAX_IMAGE_PIXELS = 520_000_000
+
 from helpers.tools import create_folder
 from helpers.logger import logger
 
@@ -78,7 +81,6 @@ def convert_tiff_to_jpeg(
     path_out: Optional[Path] = None,
     force: Optional[bool] = None,
 ) -> Optional[Path]:
-    PIL.Image.MAX_IMAGE_PIXELS = 375000000
     # print("EXIF")
     if path_out is None:
         # print("path_out == None")

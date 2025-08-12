@@ -141,7 +141,7 @@ class JobRunner(Thread):
         job = self.job
         try:
             job.prepare()
-        except (AssertionError, TypeError, AttributeError) as te:
+        except Exception as te:
             self.tech_error(te)
             return
         try:
