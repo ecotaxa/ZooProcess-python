@@ -61,6 +61,11 @@ def modern_subsample_state(
         if multiples_dir.exists() and count_files_in_dir(multiples_dir) >= 0:
             ret = SubSampleStateEnum.MULTIPLES_GENERATED
 
+    separation_approved = modern_fs.SEP_validated_file_path
+    if ret == SubSampleStateEnum.MULTIPLES_GENERATED:
+        if separation_approved.exists():
+            ret = SubSampleStateEnum.SEPARATION_VALIDATION_DONE
+
     return ret
 
 

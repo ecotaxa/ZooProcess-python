@@ -337,7 +337,15 @@ def mark_subsample(
     # Use current datetime if not provided
     validation_date = marking_data.validation_date or datetime.now()
     modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
-    modern_fs.mark_MSK_validated(validation_date)
+
+    state = modern_subsample_state(zoo_project, sample_name, subsample_name, modern_fs)
+    match state:
+        case SubSampleStateEnum.ACQUIRED if marking_data.status == "approved":
+            modern_fs.mark_MSK_validated(validation_date)
+        case SubSampleStateEnum.MULTIPLES_GENERATED if (
+            marking_data.status == "separated"
+        ):
+            modern_fs.mark_SEP_validated(validation_date)
 
     # Log the validation action
     logger.info(

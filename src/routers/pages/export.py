@@ -128,9 +128,7 @@ def export_scan(
     if not task_to_create:
         try:
             # Get the list of Zooscan projects
-            projects = client.list_zooscan_projects(
-                0
-            )  # 0 is a dummy value, not used by the method
+            projects = client.list_zooscan_projects()
 
             # Return the template with the authenticated state
             context = {

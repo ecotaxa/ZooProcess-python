@@ -527,7 +527,7 @@ def scans_from_legacy_project(
 
 def _process_legacy_meta(
     meta: Union[ScanCSVLine, SampleCSVLine], legacy_to_modern: dict
-) -> dict:
+) -> Dict[str, Any]:
     """
     Helper function to process legacy metadata using a mapping dictionary.
 
@@ -555,9 +555,10 @@ def _process_legacy_meta(
         else:
             modern_to_legacy[modern_key] = (legacy_key, None)
 
-    ret = {}
+    ret: Dict[str, Any] = {}
 
-    for key, value in meta.items():
+    value: str
+    for key, value in meta.items():  # type:ignore
         modern_key = legacy_to_modern.get(key)
         if modern_key is None:
             continue
@@ -567,7 +568,7 @@ def _process_legacy_meta(
             modern_key = modern_key[0]
 
         # Apply special transformations based on the legacy key
-        # noinspection PyUnreachableCode
+        new_value: str | float
         match key:
             case "longitude" | "longitude_end":
                 new_value = -convert_ddm_to_decimal_degrees(value)

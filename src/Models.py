@@ -341,7 +341,7 @@ class ProcessRsp(BaseModel):
 class MarkSubsampleReq(BaseModel):
     """Request model for marking a subsample"""
 
-    status: Literal["approved", "rejected"] = "approved"
+    status: Literal["approved", "rejected", "separated"]
     comments: Optional[str] = None
     validation_date: Optional[datetime] = None
 

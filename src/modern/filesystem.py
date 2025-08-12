@@ -19,6 +19,7 @@ V10_THUMBS_AFTER_SUBDIR = (
 )
 
 ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
+SEPARATION_VALIDATED_TXT = "separation_validated.txt"
 ML_MSK_OK_TXT = "MSK_validated.txt"
 
 
@@ -121,16 +122,6 @@ class ModernScanFileSystem:
         os.makedirs(multiples_dir, exist_ok=True)
         return multiples_dir
 
-    def mark_ML_separation_done(self):
-        """
-        Mark the ML separation process as done by creating an empty file
-        named "separation_done.txt" in the metadata directory.
-        """
-        metadata_dir = self.meta_dir
-        os.makedirs(metadata_dir, exist_ok=True)
-        separation_done_file = metadata_dir / ML_SEPARATION_DONE_TXT
-        separation_done_file.touch()
-
     def get_multiples_files_modified_before_separation_done(self) -> List[str]:
         """
         Get all files in the multiples visualization directory that were last modified
@@ -180,8 +171,21 @@ class ModernScanFileSystem:
         """
         Mark the MSK as validated by writing the date into a file
         """
-        metadata_dir = self.ensure_meta_dir()
+        self.ensure_meta_dir()
         validation_file = self.MSK_validated_file_path
+        with open(validation_file, "w") as f:
+            f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
+
+    def mark_ML_separation_done(self):
+        """
+        Mark the ML separation process as done
+        """
+        self.ensure_meta_dir()
+        self.SEP_generated_file_path.touch()
+
+    def mark_SEP_validated(self, event_date: datetime):
+        self.ensure_meta_dir()
+        validation_file = self.SEP_validated_file_path
         with open(validation_file, "w") as f:
             f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -192,3 +196,11 @@ class ModernScanFileSystem:
     @property
     def MSK_validated_file_path(self):
         return self.meta_dir / ML_MSK_OK_TXT
+
+    @property
+    def SEP_generated_file_path(self):
+        return self.meta_dir / ML_SEPARATION_DONE_TXT
+
+    @property
+    def SEP_validated_file_path(self):
+        return self.meta_dir / SEPARATION_VALIDATED_TXT

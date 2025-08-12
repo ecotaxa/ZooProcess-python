@@ -59,6 +59,7 @@ from routers.subsamples import router as subsamples_router
 from routers.tasks import router as tasks_router
 from routers.utils import validate_path_components
 from routers.vignettes import router as vignettes_router
+from routers.ecotaxa import router as ecotaxa_router
 from static.favicon import create_plankton_favicon
 
 JOB_INTERVAL = 2
@@ -144,6 +145,7 @@ api_router.include_router(instruments_router)
 api_router.include_router(images_router)
 api_router.include_router(tasks_router)
 api_router.include_router(vignettes_router)
+api_router.include_router(ecotaxa_router)
 app.include_router(api_router)
 
 app.include_router(pages_router)

@@ -20,6 +20,12 @@ class EcoTaxaApiClient(SimpleClient):
         self.email = email
         self.password = password
 
+    @classmethod
+    def from_token(cls, logger: Logger, url: str, token: str) -> "EcoTaxaApiClient":
+        ret = cls(logger, url, "", "")
+        ret.token = token
+        return ret
+
     def open(self):
         """
         Open a connection to the API by logging in.
@@ -75,7 +81,7 @@ class EcoTaxaApiClient(SimpleClient):
         )
         return rsp
 
-    def list_zooscan_projects(self, prj_id: int):
+    def list_zooscan_projects(self):
         rsp: List[ProjectModel] = self.get(
             List[ProjectModel], "/projects/search/?instrument_filter=Zooscan"
         )
