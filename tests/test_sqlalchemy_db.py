@@ -1,9 +1,8 @@
 import os
 
 from config_rdr import config
-from local_DB.sqlite_db import SQLAlchemyDB, init_db
-from local_DB.models import Example, User
-
+from local_DB.sqlite_db import SQLAlchemyDB
+from local_DB.models import Example, User, init_db
 
 """Test the SQLAlchemyDB class and SQLAlchemy ORM functionality."""
 

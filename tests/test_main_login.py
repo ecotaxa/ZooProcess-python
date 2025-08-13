@@ -12,7 +12,7 @@ def test_login_endpoint(app_client, local_db):
     login_data = {"email": "test@example.com", "password": "test_password"}
 
     # Make request to the login endpoint
-    response = app_client.post("/login", json=login_data)
+    response = app_client.post("/api/login", json=login_data)
 
     # Check that the response is successful
     assert response.status_code == 200

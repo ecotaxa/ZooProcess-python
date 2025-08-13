@@ -45,12 +45,12 @@ def test_create_subsample(mocker: MockFixture, app_client, local_db):
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Make a request to the create_subsample endpoint
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
+        f"/api/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -98,7 +98,7 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Prepare test data
@@ -123,7 +123,7 @@ def test_create_subsample_project_not_found(mocker: MockFixture, app_client, loc
 
     # Make request to the create_subsample endpoint
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
+        f"/api/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -165,7 +165,7 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Prepare test data
@@ -189,7 +189,7 @@ def test_create_subsample_sample_not_found(mocker: MockFixture, app_client, loca
 
     # Make request to the create_subsample endpoint
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
+        f"/api/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -222,7 +222,7 @@ def test_create_subsample_without_token(app_client):
 
     # Make request to the create_subsample endpoint without a token
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
+        f"/api/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
     )
 
@@ -244,7 +244,7 @@ def test_create_subsample_with_invalid_token(app_client):
 
     # Make request to the create_subsample endpoint with an invalid token
     response = app_client.post(
-        f"/projects/{project_hash}/samples/{sample_hash}/subsamples",
+        f"/api/projects/{project_hash}/samples/{sample_hash}/subsamples",
         json=subsample_data,
         headers={"Authorization": "Bearer invalid_token"},
     )

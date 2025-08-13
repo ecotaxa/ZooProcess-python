@@ -20,6 +20,9 @@ zooprocess_lib_path = Path(__file__).parent.parent.parent / "ZooProcess-lib" / "
 if zooprocess_lib_path.exists():
     sys.path.append(str(zooprocess_lib_path))
 
+os.environ.setdefault("APP_ENV", "dev")
+os.environ.setdefault("WORKING_DIR", "tests")
+
 from local_DB.models import Base, User
 from main import app
 

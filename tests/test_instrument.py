@@ -78,7 +78,7 @@ def test_get_instrument_by_id_not_found():
 # Test the instruments endpoint with full=False (default)
 def test_get_instruments_simplified():
     # Act
-    response = client.get("/instruments")
+    response = client.get("/api/instruments")
 
     # Assert
     assert response.status_code == 200
@@ -95,7 +95,7 @@ def test_get_instruments_simplified():
 # Test the instruments endpoint with full=True
 def test_get_instruments_full():
     # Act
-    response = client.get("/instruments?full=true")
+    response = client.get("/api/instruments?full=true")
 
     # Assert
     assert response.status_code == 200

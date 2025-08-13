@@ -9,7 +9,7 @@ def test_users_me_endpoint_with_valid_token(app_client, local_db):
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /users/me endpoint with the token
@@ -51,7 +51,7 @@ def test_users_me_endpoint_with_cookie(app_client, local_db):
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /users/me endpoint with the token in a cookie

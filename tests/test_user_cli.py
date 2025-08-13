@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from pytest_mock import MockFixture
 from sqlalchemy.exc import IntegrityError
 
-from commands.user_cli import app
+from user_cli import app
 from src.local_DB.models import User
 
 runner = CliRunner()

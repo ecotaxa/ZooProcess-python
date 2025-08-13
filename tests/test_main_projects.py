@@ -70,11 +70,13 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()  # The login endpoint returns the token as JSON
 
     # Make request to the /projects endpoint with the token
-    response = app_client.get("/projects", headers={"Authorization": f"Bearer {token}"})
+    response = app_client.get(
+        "/api/projects", headers={"Authorization": f"Bearer {token}"}
+    )
 
     # Check that the response is successful
     assert response.status_code == 200
@@ -95,7 +97,7 @@ def test_projects_endpoint_with_valid_token(mocker: MockFixture, app_client, loc
 def test_projects_endpoint_without_token(app_client):
     """Test that the /projects endpoint returns 401 without a token"""
     # Make request to the /projects endpoint without a token
-    response = app_client.get("/projects")
+    response = app_client.get("/api/projects")
 
     # Check that the response is 401 Unauthorized
     assert response.status_code == 401
@@ -105,7 +107,7 @@ def test_projects_endpoint_with_invalid_token(app_client):
     """Test that the /projects endpoint returns 401 with an invalid token"""
     # Make request to the /projects endpoint with an invalid token
     response = app_client.get(
-        "/projects", headers={"Authorization": "Bearer invalid_token"}
+        "/api/projects", headers={"Authorization": "Bearer invalid_token"}
     )
 
     # Check that the response is 401 Unauthorized

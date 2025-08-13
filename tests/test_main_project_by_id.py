@@ -95,12 +95,12 @@ def test_project_by_id_endpoint_with_valid_token(
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /projects/{project_id} endpoint with the token
     response = app_client.get(
-        f"/projects/{project_hash}", headers={"Authorization": f"Bearer {token}"}
+        f"/api/projects/{project_hash}", headers={"Authorization": f"Bearer {token}"}
     )
 
     # Check that the response is successful
@@ -142,7 +142,7 @@ def test_project_by_id_endpoint_with_invalid_drive(
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Use a dummy project hash (the actual value doesn't matter as we're mocking the cache)
@@ -150,7 +150,7 @@ def test_project_by_id_endpoint_with_invalid_drive(
 
     # Make request to the /projects/{project_id} endpoint with the token and a valid hash with an invalid drive
     response = app_client.get(
-        f"/projects/{invalid_drive_hash}",
+        f"/api/projects/{invalid_drive_hash}",
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -199,7 +199,7 @@ def test_project_by_id_endpoint_with_invalid_project(
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Use a dummy project hash (the actual value doesn't matter as we're mocking the cache)
@@ -207,7 +207,7 @@ def test_project_by_id_endpoint_with_invalid_project(
 
     # Make request to the /projects/{project_id} endpoint with the token and a valid hash with a non-existent project
     response = app_client.get(
-        f"/projects/{invalid_project_hash}",
+        f"/api/projects/{invalid_project_hash}",
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -237,12 +237,12 @@ def test_project_by_id_endpoint_with_invalid_format(app_client, local_db, mocker
 
     # First, get a valid token by logging in
     login_data = {"email": "test@example.com", "password": "test_password"}
-    login_response = app_client.post("/login", json=login_data)
+    login_response = app_client.post("/api/login", json=login_data)
     token = login_response.json()
 
     # Make request to the /projects/{project_id} endpoint with the token and a project_id in an invalid format
     response = app_client.get(
-        "/projects/invalid_format",
+        "/api/projects/invalid_format",
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -264,7 +264,7 @@ def test_project_by_id_endpoint_without_token(app_client, mocker):
     project_hash = "dummy_id"
 
     # Make request to the /projects/{project_id} endpoint without a token
-    response = app_client.get(f"/projects/{project_hash}")
+    response = app_client.get(f"/api/projects/{project_hash}")
 
     # Check that the response is 401 Unauthorized
     assert response.status_code == 401
@@ -282,7 +282,7 @@ def test_project_by_id_endpoint_with_invalid_token(app_client, mocker):
 
     # Make request to the /projects/{project_id} endpoint with an invalid token
     response = app_client.get(
-        f"/projects/{project_hash}",
+        f"/api/projects/{project_hash}",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
