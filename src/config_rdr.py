@@ -2,19 +2,25 @@ import os
 from pathlib import Path
 from typing import List
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # Get the environment (dev, prod, or None for testing)
 env = os.environ.get("APP_ENV")
 # Only load the .env file if APP_ENV is set
 if env:
-    if env in ["dev", "prod"]:
-        load_dotenv(".env." + env)
-    else:
+    if env not in ["dev", "prod"]:
         raise ValueError("Invalid APP_ENV value. Must be 'dev' or 'prod'.")
+    env_file = find_dotenv(".env." + env, True)
+    load_dotenv(env_file)
+else:
+    raise ValueError("APP_ENV not set.")
 
 # Get the working directory from the environment variable or use the current directory
 _WORKING_DIR = os.environ.get("WORKING_DIR", os.getcwd())
+if not _WORKING_DIR.startswith("/"):
+    # Consider a relative path is relative to the env file
+    _WORKING_DIR = (Path(env_file).parent / _WORKING_DIR).as_posix()
+    print("Working directory: " + _WORKING_DIR)
 # Get the database file name from the environment variable or use the default
 _DB_NAME = os.environ.get("DB_NAME", "v10.sqlite")
 # Get the drive list from the environment variable or use an empty list
@@ -24,7 +30,8 @@ _DBSERVER = os.environ.get("DBSERVER", "http://zooprocess.imev-mer.fr:8081/v1")
 # Get the public URL from the environment variable or use a default
 _PUBLIC_URL = os.environ.get("PUBLIC_URL", "http://localhost:5000")
 # Get the secret key for JWT token signing and verification
-_SECRET_KEY = os.environ.get("SECRET", "your-secret-key")
+_SECRET_KEY = os.environ.get("SECRET")
+assert _SECRET_KEY is not None, "SECRET_KEY not set"
 # Get the separator server URL from the environment variable or use a default
 _SEPARATOR_SERVER = os.environ.get("SEPARATOR_SERVER", "http://localhost:55000/")
 # Get the classifier server URL from the environment variable or use a default
