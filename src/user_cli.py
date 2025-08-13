@@ -26,10 +26,6 @@ from local_DB.sqlite_db import SQLAlchemyDB
 console = Console()
 
 
-def click_exit(code: int):
-    return click.exit(code)  # type:ignore
-
-
 @click.group(help="Manage users in the ZooProcess application")
 def app():
     """Manage users in the ZooProcess application."""
@@ -55,7 +51,7 @@ def add(name, email, password, confirm_password) -> None:
     """
     if password != confirm_password:
         console.print("[bold red]Passwords do not match![/bold red]")
-        click_exit(1)
+        exit(1)
 
     # Generate a unique ID for the user
     user_id = str(uuid.uuid4())
@@ -78,7 +74,7 @@ def add(name, email, password, confirm_password) -> None:
             )
         except IntegrityError:
             console.print("[bold red]Error: Email already exists![/bold red]")
-            click_exit(1)
+            exit(1)
 
 
 @app.command()
@@ -95,7 +91,7 @@ def update(id, name, email, password) -> None:
 
         if not user:
             console.print(f"[bold red]User with ID {id} not found![/bold red]")
-            click_exit(1)
+            exit(1)
 
         if name:
             user.name = name
@@ -107,7 +103,7 @@ def update(id, name, email, password) -> None:
             confirm_password = click.prompt("Confirm password", hide_input=True)
             if password != confirm_password:
                 console.print("[bold red]Passwords do not match![/bold red]")
-                click_exit(1)
+                exit(1)
             user.password = password  # In a real application, this should be hashed
 
         try:
@@ -115,7 +111,7 @@ def update(id, name, email, password) -> None:
             console.print(f"[bold green]User {id} updated successfully![/bold green]")
         except IntegrityError:
             console.print("[bold red]Error: Email already exists![/bold red]")
-            click_exit(1)
+            exit(1)
 
 
 @app.command()
@@ -130,7 +126,7 @@ def remove(id, force) -> None:
 
         if not user:
             console.print(f"[bold red]User with ID {id} not found![/bold red]")
-            click_exit(1)
+            exit(1)
 
         if not force:
             confirm = click.confirm(
@@ -138,7 +134,7 @@ def remove(id, force) -> None:
             )
             if not confirm:
                 console.print("[bold yellow]Operation cancelled![/bold yellow]")
-                click_exit(0)
+                exit(0)
 
         db.session.delete(user)
         db.session.commit()
