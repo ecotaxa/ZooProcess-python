@@ -11,7 +11,6 @@ from local_DB.models import User
 from helpers.logger import logger
 from providers.ecotaxa_client import EcoTaxaApiClient
 from routers.pages.common import templates
-from routers.tasks import create_task
 
 # Create a router instance
 router = APIRouter()
@@ -168,9 +167,11 @@ def export_scan(
     )
 
     # Submit the task
-    task_response = create_task(task_req, _user, db)
-
+    # task_response = create_task(task_req, _user, db)
+    #
     # Redirect to the task monitoring page
     return RedirectResponse(
-        url=f"/ui/tasks/{task_response.id}", status_code=303  # HTTP 303 See Other
+        #     url=f"/ui/tasks/{task_response.id}", status_code=303  # HTTP 303 See Other
+        url=f"/ui/",
+        status_code=303,  # HTTP 303 See Other
     )
