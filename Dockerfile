@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src /app
 # Fetch compiled front-end from GH
-ADD https://github.com/ecotaxa/ZooProcess-front/releases/download/v0.0.3/dist.tgz client.tgz
+ADD https://github.com/ecotaxa/ZooProcess-front/releases/latest/download/dist.tgz client.tgz
 RUN cd / && tar xvf app/client.tgz && rm app/client.tgz
 COPY src/static /static
 
