@@ -32,5 +32,5 @@ COPY src/static /static
 EXPOSE 80
 
 ENV APP_ENV=prod
-RUN python user_cli.py add --name admin --email admin@nowhere.com --password password --confirm-password password
+# TODO RUN python user_cli.py add --name admin --email admin@nowhere.com --password password --confirm-password password
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]

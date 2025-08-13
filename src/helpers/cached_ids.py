@@ -21,7 +21,7 @@ class CachedIds:
 
     def _get_cache_path(self) -> Path:
         """Get the path to the cache file for this entity."""
-        cache_dir = Path(config.WORKING_DIR) / "logs"
+        cache_dir = Path(config.WORKING_DIR) / "ids"
         cache_dir.mkdir(exist_ok=True, parents=True)
         return cache_dir / f"{self.entity}_cache.pkl"
 
