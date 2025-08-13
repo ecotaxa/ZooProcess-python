@@ -74,16 +74,19 @@ def scan_name_from_subsample_name(subsample_name: str) -> str:
     return f"{subsample_name}_{THE_SCAN_PER_SUBSAMPLE}"
 
 
+def hash_from_user_name(user_name):
+    return name_from_hash(user_name)
+
+
+samples_cache = CachedIds("samples")
+
+
 def hash_from_sample_name(sample_name: str) -> str:
-    return hash_from_name(sample_name)
+    return samples_cache.id_from_name(sample_name)
 
 
 def sample_name_from_sample_hash(sample_hash: str) -> str:
-    return name_from_hash(sample_hash)
-
-
-def hash_from_user_name(user_name):
-    return name_from_hash(user_name)
+    return samples_cache.name_from_id(sample_hash)
 
 
 subsamples_cache = CachedIds("subsamples")
