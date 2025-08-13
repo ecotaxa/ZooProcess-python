@@ -17,7 +17,7 @@ from legacy.ids import (
     ecotaxa_tsv_file_name,
 )
 from modern.filesystem import ModernScanFileSystem
-from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
+from modern.ids import scan_name_from_subsample_name
 from modern.jobs.VignettesToAutoSep import (
     get_scan_and_backgrounds,
     convert_scan_and_backgrounds,
@@ -39,7 +39,9 @@ class VerifiedSeparationToEcoTaxa(Job):
         token: str,
         dst_project_id: int,
     ):
-        super().__init__((zoo_project, sample_name, subsample_name))
+        super().__init__(
+            (zoo_project, sample_name, subsample_name, token, dst_project_id)
+        )
         # Params
         self.zoo_project = zoo_project
         self.sample_name = sample_name
@@ -55,7 +57,9 @@ class VerifiedSeparationToEcoTaxa(Job):
         """
         Start the job execution.
         """
-        prj_path = self.zoo_project.path
+        self.logger = self._setup_job_logger(
+            self.modern_fs.ensure_meta_dir() / "upload_job.log"
+        )
         # Mark the job as started
         self.mark_started()
 
@@ -152,8 +156,9 @@ class VerifiedSeparationToEcoTaxa(Job):
         # Upload to EcoTaxa
         assert self.token is not None, "No connection to EcoTaxa"
 
-        client = EcoTaxaApiClient(self.logger, config.ECOTAXA_SERVER, "", "")
-        client.token = self.token
+        client = EcoTaxaApiClient.from_token(
+            self.logger, config.ECOTAXA_SERVER, self.token
+        )
         self.logger.info(f"Connected as {client.whoami()}")
         # Upload the zip file
         remote_ref = client.put_file(zip_file)

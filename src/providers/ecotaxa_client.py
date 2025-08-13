@@ -81,7 +81,7 @@ class EcoTaxaApiClient(SimpleClient):
         )
         return rsp
 
-    def list_zooscan_projects(self):
+    def list_zooscan_projects(self) -> List[ProjectModel]:
         rsp: List[ProjectModel] = self.get(
             List[ProjectModel], "/projects/search/?instrument_filter=Zooscan"
         )
@@ -110,7 +110,7 @@ class EcoTaxaApiClient(SimpleClient):
 
     def put_file(self, zip_file: Path) -> str:
         with open(zip_file, "rb") as fin:
-            upload_rsp = self.post(str, "/my_files/", files={"file": fin})
+            upload_rsp = self.post(str, "/my_files", files={"file": fin})
             return cast(str, upload_rsp)
 
     def import_my_file_into_project(
@@ -123,6 +123,6 @@ class EcoTaxaApiClient(SimpleClient):
         job_status: ImportRsp = self.post(
             ImportRsp, "/file_import/%d" % dst_prj_id, json=req
         )
-        assert job_status.errors, "No error list returned!"
+        assert job_status.errors is not None, "No error list returned!"
         assert len(job_status.errors) == 0, job_status.errors
         return job_status.job_id

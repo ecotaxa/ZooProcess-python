@@ -10,6 +10,7 @@ from helpers.logger import logger
 from local_DB.db_dependencies import get_db
 from providers.EcoTaxa.ecotaxa_model import ProjectModel, LoginReq
 from providers.ecotaxa_client import EcoTaxaApiClient
+from helpers.auth import decode_jwt_token
 
 # Create a routers instance
 router = APIRouter(
@@ -22,19 +23,25 @@ router = APIRouter(
 def get_projects(
     token: str,
     _user=Depends(get_current_user_from_credentials),
-    _db: Session = Depends(get_db),
-) -> List[Project]:
+    db: Session = Depends(get_db),
+) -> List[ProjectModel]:
     """
     Get a list of ZooScan projects from EcoTaxa.
 
     Args:
+        token: EcoTaxa API token (JWT-encoded).
         _user: The authenticated user
-        _db: The database session
+        db: The database session
 
     Returns:
         List[Project]: A list of ZooScan projects
     """
-    client = EcoTaxaApiClient.from_token(logger, config.ECOTAXA_SERVER, token)
+    # Decode the JWT token to get the actual EcoTaxa token
+    decoded_token = decode_jwt_token(token, db)
+    ecotaxa_token = decoded_token.get("ecotaxa_token")
+    assert isinstance(ecotaxa_token, str), "Failed to decode JWT-encoded EcoTaxa token"
+
+    client = EcoTaxaApiClient.from_token(logger, config.ECOTAXA_SERVER, ecotaxa_token)
     return client.list_zooscan_projects()
 
 

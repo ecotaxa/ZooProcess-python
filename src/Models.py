@@ -346,6 +346,20 @@ class MarkSubsampleReq(BaseModel):
     validation_date: Optional[datetime] = None
 
 
+class ExportSubsampleReq(BaseModel):
+    """Request model for exporting a subsample"""
+
+    token: str
+    projid: int
+
+
+class ExportSubsampleRsp(BaseModel):
+    """Response model for exporting a subsample, a task and the subsample"""
+
+    task: TaskRsp
+    subsample: SubSample
+
+
 class MultiplesSeparatorPrediction(BaseModel):
     """Model for a single prediction in the separation response"""
 
