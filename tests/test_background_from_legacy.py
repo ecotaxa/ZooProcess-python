@@ -3,7 +3,6 @@ from pathlib import Path
 from pytest_mock import MockFixture
 
 from Models import Drive
-
 from modern.from_legacy import backgrounds_from_legacy_project
 
 
@@ -45,9 +44,6 @@ def test_background_from_legacy_project(mocker: MockFixture):
         },
     }
 
-    # Mock the config.PUBLIC_URL
-    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "http://localhost:5000")
-
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
         "modern.from_legacy.extract_serial_number"
@@ -69,7 +65,7 @@ def test_background_from_legacy_project(mocker: MockFixture):
     assert backgrounds[0].name == "20230101_1200_final"
     assert (
         backgrounds[0].url
-        == "http://localhost:5000/projects/test_drive|test_project/background/20230101_1200_fnl.jpg"
+        == "/api/projects/test_drive|test_project/background/20230101_1200_fnl.jpg"
     )
     assert backgrounds[0].createdAt.strftime("%Y%m%d_%H%M") == "20230101_1200"
     assert backgrounds[0].user.id == "user1"
@@ -80,7 +76,7 @@ def test_background_from_legacy_project(mocker: MockFixture):
     assert backgrounds[1].name == "20230102_1300_final"
     assert (
         backgrounds[1].url
-        == "http://localhost:5000/projects/test_drive|test_project/background/20230102_1300_fnl.jpg"
+        == "/api/projects/test_drive|test_project/background/20230102_1300_fnl.jpg"
     )
     assert backgrounds[1].createdAt.strftime("%Y%m%d_%H%M") == "20230102_1300"
     assert backgrounds[1].user.id == "user1"
@@ -116,7 +112,7 @@ def test_background_from_legacy_project_no_backgrounds(mocker: MockFixture):
     mock_back_folder.content = {}
 
     # Mock the config.PUBLIC_URL
-    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "http://localhost:5000")
+    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "/api")
 
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(
@@ -169,7 +165,7 @@ def test_background_from_legacy_project_no_final_background(mocker: MockFixture)
     }
 
     # Mock the config.PUBLIC_URL
-    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "http://localhost:5000")
+    mocker.patch("modern.from_legacy.config.PUBLIC_URL", "/api")
 
     # Mock the extract_serial_number function
     mock_extract_serial_number = mocker.patch(

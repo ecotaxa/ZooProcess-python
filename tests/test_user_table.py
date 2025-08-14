@@ -11,15 +11,13 @@ def test_user_table_exists():
     Test if the User table exists in the database and has the correct structure.
     """
     # Import the modules after setting up the environment
-    from local_DB.sqlite_db import db_path, init_db
+    from local_DB.models import init_db
 
     # Initialize the database
-    db_file = init_db()
+    db_path = init_db()
 
     # Check if the database file exists
     assert os.path.exists(db_path), f"Database file does not exist at: {db_path}"
-    assert os.path.exists(db_file), f"Database file does not exist at: {db_file}"
-    assert db_path == db_file, f"Database paths do not match: {db_path} != {db_file}"
 
     # Connect to the database
     conn = sqlite3.connect(db_path)

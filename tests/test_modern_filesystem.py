@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import pytest
+from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 
 from modern.filesystem import (
     ModernScanFileSystem,
@@ -13,23 +14,54 @@ from modern.filesystem import (
 )
 
 
+def make_fake_zooscan_project(
+    base_dir: Path, project_name: str = "TestProject"
+) -> ZooscanProjectFolder:
+    """Create a minimal Zooscan project folder structure suitable for tests.
+
+    It ensures Zooscan_config/process_install_both_config.txt exists, then returns
+    a ZooscanProjectFolder pointing to the created project.
+    """
+    project_root = Path(base_dir) / project_name
+    config_dir = project_root / "Zooscan_config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    install_cfg = config_dir / "process_install_both_config.txt"
+    if not install_cfg.exists():
+        install_cfg.write_text(
+            "\n".join(
+                [
+                    "background_process= last",
+                    "minsizeesd_mm= 0.001",
+                    "maxsizeesd_mm= 0.001",
+                    "upper= 243",
+                    "resolution= 1000",
+                    "longline_mm= 0.001",
+                ]
+            )
+        )
+    return ZooscanProjectFolder(Path(base_dir), project_name)
+
+
 def test_mark_ML_separation_done():
     """Test that mark_ML_separation_done creates the expected file."""
     # Create a temporary directory for testing
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Create a ModernScanFileSystem instance with the temporary directory
-        fs = ModernScanFileSystem(Path(temp_dir))
+        # Create a ModernScanFileSystem instance with a temporary Zooscan project
+        project = make_fake_zooscan_project(Path(temp_dir))
+        fs = ModernScanFileSystem(
+            project, sample_name="Sample1", subsample_name="Sample1_sub1"
+        )
 
         # Call the method to test
         fs.mark_ML_separation_done()
 
         # Check that the metadata directory was created
-        metadata_dir = Path(temp_dir) / V10_METADATA_SUBDIR
+        metadata_dir = fs.meta_dir
         assert metadata_dir.exists(), "Metadata directory was not created"
         assert metadata_dir.is_dir(), "Metadata path is not a directory"
 
         # Check that the separation_done.txt file was created
-        separation_done_file = metadata_dir / ML_SEPARATION_DONE_TXT
+        separation_done_file = fs.SEP_generated_file_path
         assert separation_done_file.exists(), "txt file was not created"
         assert separation_done_file.is_file(), "txt is not a file"
 
@@ -38,11 +70,14 @@ def test_get_files_modified_before_separation_done():
     """Test that get_files_modified_before_separation_done returns the expected files."""
     # Create a temporary directory for testing
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Create a ModernScanFileSystem instance with the temporary directory
-        fs = ModernScanFileSystem(Path(temp_dir))
+        # Create a ModernScanFileSystem instance with a temporary Zooscan project
+        project = make_fake_zooscan_project(Path(temp_dir))
+        fs = ModernScanFileSystem(
+            project, sample_name="Sample1", subsample_name="Sample1_sub1"
+        )
 
         # Create the multiples visualization directory
-        multiples_dir = Path(temp_dir) / V10_THUMBS_TO_CHECK_SUBDIR
+        multiples_dir = fs.multiples_vis_dir
         os.makedirs(multiples_dir, exist_ok=True)
 
         # Create some test files in the multiples directory

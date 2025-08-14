@@ -10,7 +10,7 @@ from pytest_mock import MockFixture
 from sqlalchemy.exc import IntegrityError
 
 from user_cli import app
-from src.local_DB.models import User
+from local_DB.models import User
 
 runner = CliRunner()
 
@@ -43,7 +43,7 @@ def db_session(mocker: MockFixture, local_db):
     mock_db_class.__exit__.return_value = None
 
     # Create a mock for the SQLAlchemyDB constructor
-    mock_sqlalchemy_db_constructor = mocker.patch("commands.user_cli.SQLAlchemyDB")
+    mock_sqlalchemy_db_constructor = mocker.patch("user_cli.SQLAlchemyDB")
     mock_sqlalchemy_db_constructor.return_value = mock_db_class
 
     yield mock_db
@@ -66,7 +66,7 @@ def test_add_user_success(db_session, mocker: MockFixture):
 
     # Act
     # Mock click.exit to prevent it from exiting the test
-    mocker.patch("commands.user_cli.click.exit")
+    mocker.patch("user_cli.click.exit")
     result = runner.invoke(
         app,
         ["add", "--name", "Test User", "--email", "unique@example.com"],
@@ -161,7 +161,7 @@ def test_update_user_success(db_session, mocker: MockFixture):
 
     # Act
     # Mock click.exit to prevent it from exiting the test
-    mocker.patch("commands.user_cli.click.exit")
+    mocker.patch("user_cli.click.exit")
     result = runner.invoke(
         app,
         [
@@ -236,7 +236,7 @@ def test_remove_user_success(db_session, mocker: MockFixture):
 
     # Act
     # Mock click.exit to prevent it from exiting the test
-    mocker.patch("commands.user_cli.click.exit")
+    mocker.patch("user_cli.click.exit")
     result = runner.invoke(app, ["remove", "--id", "test-id", "--force"])
 
     # Assert
@@ -281,7 +281,7 @@ def test_list_users_success(db_session, mocker: MockFixture):
 
     # Since we can't control the exact output format of the rich table,
     # we'll mock the console.print method to capture what would be printed
-    mock_console_print = mocker.patch("commands.user_cli.console.print")
+    mock_console_print = mocker.patch("user_cli.console.print")
 
     # Create mock users
     mock_user1 = mocker.MagicMock(spec=User)

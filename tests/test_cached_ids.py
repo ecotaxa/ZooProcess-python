@@ -75,7 +75,7 @@ def test_id_from_name_new(mock_config, monkeypatch):
     assert cache.id_to_name[mock_id] == name
 
     # Verify that the cache was saved
-    cache_path = Path(mock_config.WORKING_DIR) / "logs" / f"{entity}_cache.pkl"
+    cache_path = Path(mock_config.WORKING_DIR) / "ids" / f"{entity}_cache.pkl"
     assert cache_path.exists()
 
 
