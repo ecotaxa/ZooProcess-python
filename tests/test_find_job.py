@@ -1,10 +1,10 @@
 import pytest
 
-from src.modern.tasks import JobScheduler, Job
+from modern.tasks import JobScheduler, Job
 
 
 # Define a mock job class for testing
-class TestJob(Job):
+class FakeTestJob(Job):
     def __init__(self, param1, param2):
         super().__init__((param1, param2))
         self.param1 = param1
@@ -41,13 +41,13 @@ def clear_jobs():
 
 def test_find_job_same_class_and_params(clear_jobs):
     # Create a job
-    job1 = TestJob(param1="value1", param2="value2")
+    job1 = FakeTestJob(param1="value1", param2="value2")
 
     # Submit the job to the scheduler
     JobScheduler.submit(job1)
 
     # Create another job with the same parameters
-    job2 = TestJob(param1="value1", param2="value2")
+    job2 = FakeTestJob(param1="value1", param2="value2")
 
     # Find the job using the find_job method
     found_job = JobScheduler.find_effective_jobs_like(job2)
@@ -59,13 +59,13 @@ def test_find_job_same_class_and_params(clear_jobs):
 
 def test_find_job_different_params(clear_jobs):
     # Create a job
-    job1 = TestJob(param1="value1", param2="value2")
+    job1 = FakeTestJob(param1="value1", param2="value2")
 
     # Submit the job to the scheduler
     JobScheduler.submit(job1)
 
     # Create another job with different parameters
-    job2 = TestJob(param1="value1", param2="different_value")
+    job2 = FakeTestJob(param1="value1", param2="different_value")
 
     # Find the job using the find_job method
     found_job = JobScheduler.find_effective_jobs_like(job2)
@@ -76,7 +76,7 @@ def test_find_job_different_params(clear_jobs):
 
 def test_find_job_different_class(clear_jobs):
     # Create a job
-    job1 = TestJob(param1="value1", param2="value2")
+    job1 = FakeTestJob(param1="value1", param2="value2")
 
     # Submit the job to the scheduler
     JobScheduler.submit(job1)

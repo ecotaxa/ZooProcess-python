@@ -18,7 +18,7 @@ else:
 # Get the working directory from the environment variable or use the current directory
 _WORKING_DIR = os.environ.get("WORKING_DIR", os.getcwd())
 if not _WORKING_DIR.startswith("/"):
-    # Consider a relative path is relative to the env file
+    # Consider that a relative path is relative to the env file
     _WORKING_DIR = (Path(env_file).parent / _WORKING_DIR).as_posix()
     print("Working directory: " + _WORKING_DIR)
 # Get the database file name from the environment variable or use the default

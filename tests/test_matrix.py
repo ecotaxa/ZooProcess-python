@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from src.helpers.matrix import (
+from helpers.matrix import (
     save_matrix_as_gzip,
     load_matrix_from_gzip,
     load_matrix_from_compressed,
