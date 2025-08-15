@@ -300,14 +300,15 @@ def subsample_from_legacy(
     # Extract scans from the legacy project folder
     scans = scans_from_legacy_subsample(zoo_project, sample_name, subsample_name, user)
     # Client-side also expects _the_ chosen background to be returned as an extra "scan" with OK type
-    bg_id = get_background_id(
-        db,
-        drive_from_project_path(zoo_project.path),
-        zoo_project.project,
-        scan_name_from_subsample_name(subsample_name),
-    )
-    if bg_id is not None:
-        scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user))
+    # TODO: Reconsider all this, so far with only a FS we determine background based on dates
+    # bg_id = get_background_id(
+    #     db,
+    #     drive_from_project_path(zoo_project.path),
+    #     zoo_project.project,
+    #     scan_name_from_subsample_name(subsample_name),
+    # )
+    # if bg_id is not None:
+    #     scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user))
     # Client-side also expects some produced files as pseudo-scans
     extra_scans = work_images_from_legacy_as_scans(
         zoo_project, sample_name, subsample_name

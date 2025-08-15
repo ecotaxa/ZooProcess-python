@@ -1,4 +1,5 @@
 # A Datasource which mixes legacy scan CSV table with modern additions
+from functools import lru_cache
 from typing import List, Optional, NamedTuple, cast, Dict
 
 from sqlalchemy.orm import Session
@@ -19,6 +20,7 @@ class FracIdComponents(NamedTuple):
     denominator: Optional[int] = None
 
 
+@lru_cache(maxsize=1, typed=True)
 def get_project_scans_metadata(
     db: Session,
     zoo_project: ZooscanProjectFolder,
@@ -51,7 +53,7 @@ def get_project_scans_metadata(
         .all()
     )
 
-    # Create a dictionary for quick lookup
+    # Create a dictionary for a quick lookup
     in_flight_scans_dict = {scan.scan_id: scan for scan in in_flight_scans}
 
     # Create a set of scan IDs that are already in the scans metadata
