@@ -598,7 +598,7 @@ def link_subsample_to_background(
     db: Session = Depends(get_db),
 ) -> LinkBackgroundReq:
     """
-    Link a scan to its background.
+    Link a scan to its background. The background is identified by a MongoDB ID.
 
     Args:
         project_hash (str): The hash of the project.

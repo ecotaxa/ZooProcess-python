@@ -3,7 +3,7 @@
 #
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Tuple, Any, Union, cast
 
 from sqlalchemy.orm import Session
 
@@ -40,7 +40,6 @@ from legacy.scans import (
     ScanCSVLine,
     sub_scans_metadata_table_for_sample,
 )
-from local_DB.data_utils import get_background_id
 from modern.app_urls import (
     generate_scan_url,
     generate_background_url,
@@ -53,7 +52,6 @@ from modern.ids import (
     scan_name_from_subsample_name,
     hash_from_sample_name,
     hash_from_subsample_name,
-    drive_from_project_path,
     THE_SCAN_PER_SUBSAMPLE,
 )
 from modern.instrument import get_instrument_by_id, INSTRUMENTS
@@ -252,14 +250,12 @@ def work_images_from_legacy_as_scans(
     zoo_project: ZooscanProjectFolder,
     sample_name: str,
     subsample_name: str,
+    work_files: Dict[str, Path],
 ) -> List[Scan]:
     ret = []
     project_hash = hash_from_project(zoo_project.path)
     sample_hash = hash_from_sample_name(sample_name)
     subsample_hash = hash_from_subsample_name(subsample_name)
-    work_files = zoo_project.zooscan_scan.work.get_files(
-        subsample_name, THE_SCAN_PER_SUBSAMPLE
-    )
     for lgcy_type, modern_type in legacy_work_image_type_to_modern.items():
         if lgcy_type not in work_files:
             continue
@@ -290,11 +286,11 @@ def subsample_from_legacy(
     subsample_paths = [
         zoo_project.zooscan_scan.raw.get_file(subsample_name, THE_SCAN_PER_SUBSAMPLE)
     ]
-    subsample_paths.extend(
-        zoo_project.zooscan_scan.work.get_files(
-            subsample_name, THE_SCAN_PER_SUBSAMPLE
-        ).values()  # type:ignore
+    files_in_work = cast(
+        Dict[str, Path],
+        zoo_project.zooscan_scan.work.get_files(subsample_name, THE_SCAN_PER_SUBSAMPLE),
     )
+    subsample_paths.extend(files_in_work.values())
     created_at, updated_at = min_max_dates(subsample_paths)
     user = user_with_name(modern_metadata["operator"])
     # Extract scans from the legacy project folder
@@ -311,7 +307,7 @@ def subsample_from_legacy(
     #     scans.append(background_from_legacy_as_scan(zoo_project, bg_id, user))
     # Client-side also expects some produced files as pseudo-scans
     extra_scans = work_images_from_legacy_as_scans(
-        zoo_project, sample_name, subsample_name
+        zoo_project, sample_name, subsample_name, files_in_work
     )
     scans.extend(extra_scans)
     # Complete with modern files, as they share the FS somehow

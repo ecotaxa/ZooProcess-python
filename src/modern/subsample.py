@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 
 from Models import SubSampleIn
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from helpers.logger import logger
 from legacy.scans import ScanCSVLine, read_scans_metadata_table
 from local_DB.models import InFlightScan
-from helpers.logger import logger
 from modern.ids import scan_name_from_subsample_name
 from modern.to_legacy import reconstitute_csv_line, reconstitute_fracid
 
@@ -75,6 +75,7 @@ def get_project_scans_metadata(
     return result
 
 
+@lru_cache(maxsize=1, typed=True)
 def get_project_scans(db: Session, zoo_project: ZooscanProjectFolder) -> List[str]:
     ret = list(zoo_project.list_scans_with_state())
 

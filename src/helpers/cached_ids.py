@@ -26,7 +26,7 @@ class CachedIds:
         return cache_dir / f"{self.entity}_cache.pkl"
 
     def _load_cache(self) -> None:
-        """Load cached data from pickle file if it exists."""
+        """Load cached data from the pickle file if it exists."""
         cache_path = self._get_cache_path()
         if cache_path.exists():
             try:
@@ -38,7 +38,7 @@ class CachedIds:
                 print(f"Error loading cache for {self.entity}: {e}")
 
     def _save_cache(self) -> None:
-        """Save cached data to pickle file."""
+        """Save cached data to the pickle file."""
         cache_path = self._get_cache_path()
         try:
             with open(cache_path, "wb") as f:
