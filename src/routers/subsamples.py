@@ -343,7 +343,7 @@ def mark_subsample(
 
     state = modern_subsample_state(zoo_project, sample_name, subsample_name, modern_fs)
     match state:
-        case SubSampleStateEnum.ACQUIRED if marking_data.status == "approved":
+        case SubSampleStateEnum.SEGMENTED if marking_data.status == "approved":
             modern_fs.mark_MSK_validated(validation_date)
         case SubSampleStateEnum.MULTIPLES_GENERATED if (
             marking_data.status == "separated"
