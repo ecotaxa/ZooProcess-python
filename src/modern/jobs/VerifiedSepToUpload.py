@@ -159,12 +159,13 @@ class VerifiedSeparationToEcoTaxa(Job):
         client = EcoTaxaApiClient.from_token(
             self.logger, config.ECOTAXA_SERVER, self.token
         )
-        self.logger.info(f"Connected as {client.whoami()}")
-        # Upload the zip file
-        remote_ref = client.put_file(zip_file)
-        self.logger.info(f"Zip file uploaded as {remote_ref}")
+        self.logger.info(f"Connected as {client.whoami().name}")
+        # Upload the zip file into a directory, it automatically uncompresses there
+        dest_user_dir = f"/{self.subsample_name}/"
+        remote_ref = client.put_file(zip_file, dest_user_dir)
+        self.logger.info(f"Zip file uploaded into {dest_user_dir} as {remote_ref}")
         # Start an import task with the file
-        job_id = client.import_my_file_into_project(self.dst_project_id, remote_ref)
+        job_id = client.import_my_file_into_project(self.dst_project_id, dest_user_dir)
         self.logger.info(f"Waiting for job {job_id}")
         final_job_state = client.wait_for_job_done(job_id)
         if final_job_state.state != "F":

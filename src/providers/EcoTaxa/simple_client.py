@@ -66,7 +66,7 @@ class SimpleClient(object):
 
     def get(self, model, entry_point: str, **kwargs):
         url, headers = self._url_headers_args(entry_point, kwargs)
-        rsp = self.session.get(url, headers=headers, **kwargs)
+        rsp = self.session.get(url, timeout=30, headers=headers, **kwargs)
         if rsp.status_code == 200:
             if model == typing.IO:
                 return rsp.content
@@ -88,7 +88,7 @@ class SimpleClient(object):
 
     def post(self, model, entry_point: str, **kwargs):
         url, headers = self._url_headers_args(entry_point, kwargs)
-        rsp = self.session.post(url, headers=headers, **kwargs)
+        rsp = self.session.post(url, timeout=60, headers=headers, **kwargs)
         if rsp.status_code == 200:
             json_rsp = rsp.json()
             if model not in (str, int):

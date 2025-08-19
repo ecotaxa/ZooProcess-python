@@ -53,10 +53,14 @@ class EcoTaxaApiClient(SimpleClient):
     def wait_for_job_done(self, job_id: int) -> JobModel:
         self.logger.info("Waiting for job #%d", job_id)
         while True:
-            rsp: JobModel = self.get(JobModel, "/jobs/%d/" % job_id)
+            try:
+                rsp: JobModel = self.get(JobModel, "/jobs/%d/" % job_id)
+            except ConnectionError:
+                time.sleep(10)
+                continue
             if rsp.state in ("E", "F"):  # Final states: Error or Finished
                 return rsp
-            time.sleep(5)
+            time.sleep(10)
 
     def get_task_file(self, job_id: int):
         rsp = self.get(IO, "/jobs/%d/file" % job_id, stream=False)
@@ -108,9 +112,14 @@ class EcoTaxaApiClient(SimpleClient):
         rsp = self.post(ObjectSetQueryRsp, qry, json=filters)
         return cast(List[ObjectModel], rsp)
 
-    def put_file(self, zip_file: Path) -> str:
+    def put_file(self, zip_file: Path, remote_dir: str) -> str:
         with open(zip_file, "rb") as fin:
-            upload_rsp = self.post(str, "/my_files", files={"file": fin})
+            upload_rsp = self.post(
+                str,
+                "/user_files/",
+                files={"file": fin},
+                data={"path": remote_dir + "/" + zip_file.name},
+            )
             return cast(str, upload_rsp)
 
     def import_my_file_into_project(
