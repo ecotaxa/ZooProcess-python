@@ -18,6 +18,7 @@ from ZooProcess_lib.img_tools import (
     save_jpg_or_png_image,
     borders_of_original,
 )
+from helpers.logger import logger
 from helpers.matrix import (
     save_matrix_as_gzip,
     is_valid_compressed_matrix,
@@ -27,13 +28,12 @@ from helpers.web import get_stream, raise_422, raise_500
 from img_proc.drawing import apply_matrix_onto
 from legacy.ids import measure_file_name
 from local_DB.db_dependencies import get_db
-from helpers.logger import logger
 from modern.filesystem import (
     ModernScanFileSystem,
     V10_THUMBS_TO_CHECK_SUBDIR,
     V10_THUMBS_SUBDIR,
 )
-from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
+from modern.ids import scan_name_from_subsample_name
 from providers.ML_multiple_separator import BGR_RED_COLOR, RGB_RED_COLOR
 from .utils import validate_path_components
 
@@ -83,7 +83,8 @@ async def get_vignettes(
     subsample_hash: str,
     db: Session = Depends(get_db),
 ) -> VignetteResponse:
-    """Get reference to the vignettes to validate for a specific subsample
+    """Get reference to the vignettes for a specific subsample.
+    All vignettes are returned, either with an automatic separator drawn or not.
 
     Args:
         project_hash (str): The ID of the project
@@ -101,31 +102,43 @@ async def get_vignettes(
     processor, thumbs_dir, multiples_to_check_dir, _ = processing_context(
         zoo_project, sample_name, subsample_name
     )
+    # Get multiples first
     assert multiples_to_check_dir is not None
-    multiples = all_pngs_in_dir(multiples_to_check_dir)
+    multiples_set = set(all_pngs_in_dir(multiples_to_check_dir))
     api_vignettes = []
     base_api_path = f"/{project_hash}/{sample_hash}/{subsample_hash}/"
-    for a_multiple in multiples:
-        # Segmenter
-        sep_img_path = multiples_to_check_dir / a_multiple
-        assert sep_img_path.is_file()
-        _, rois = segment_mask(processor, sep_img_path)
-        segmenter_output = []
-        for i in range(len(rois)):
-            seg_name = (
+    # Get all vignettes
+    assert thumbs_dir is not None
+    all_vignettes = all_pngs_in_dir(thumbs_dir)
+    for a_vignette in sorted(all_vignettes):
+        if a_vignette in multiples_set:
+            # Segmenter
+            sep_img_path = multiples_to_check_dir / a_vignette
+            assert sep_img_path.is_file()
+            _, rois = segment_mask(processor, sep_img_path)
+            segmenter_output = []
+            for i in range(len(rois)):
+                seg_name = (
+                    V10_THUMBS_TO_CHECK_SUBDIR
+                    + API_PATH_SEP
+                    + a_vignette
+                    + f"_{i}{SEG_SUFFIX_FROM_API}"
+                )
+                segmenter_output.append(seg_name)
+            matrix = (
                 V10_THUMBS_TO_CHECK_SUBDIR
                 + API_PATH_SEP
-                + a_multiple
-                + f"_{i}{SEG_SUFFIX_FROM_API}"
+                + a_vignette
+                + MSK_SUFFIX_TO_API
             )
-            segmenter_output.append(seg_name)
+            mask = V10_THUMBS_TO_CHECK_SUBDIR + API_PATH_SEP + a_vignette
+        else:
+            segmenter_output = []
+            matrix = mask = None
         vignette_data = VignetteData(
-            scan=V10_THUMBS_SUBDIR + API_PATH_SEP + a_multiple,
-            matrix=V10_THUMBS_TO_CHECK_SUBDIR
-            + API_PATH_SEP
-            + a_multiple
-            + MSK_SUFFIX_TO_API,
-            mask=V10_THUMBS_TO_CHECK_SUBDIR + API_PATH_SEP + a_multiple,
+            scan=V10_THUMBS_SUBDIR + API_PATH_SEP + a_vignette,
+            matrix=matrix,
+            mask=mask,
             vignettes=segmenter_output,
         )
         api_vignettes.append(vignette_data)
@@ -264,7 +277,7 @@ async def update_a_vignette_mask(
         project_hash (str): The ID of the project
         sample_hash (str): The hash of the sample
         subsample_hash (str): The hash of the subsample
-        img_path (str): The path to the image
+        img_path (str): The path to the original image
         file (UploadFile): The uploaded file containing the mask
         db (Session): Database session
 
@@ -279,9 +292,10 @@ async def update_a_vignette_mask(
         db, project_hash, sample_hash, subsample_hash
     )
     img_path = img_path.replace(API_PATH_SEP, "/")
-    assert img_path.startswith(V10_THUMBS_TO_CHECK_SUBDIR)  # Convention with UI
-    assert img_path.endswith(MSK_SUFFIX_TO_API)
-    img_path = img_path[: -len(MSK_SUFFIX_TO_API)]
+    assert img_path.startswith(
+        V10_THUMBS_SUBDIR
+    )  # Convention with UI, ref is original image in cut directory
+    assert img_path.endswith(".png")
     _, img_name = img_path.rsplit("/", 1)
     processor, thumbs_dir, multiples_to_check_dir, meta_dir = processing_context(
         zoo_project, sample_name, subsample_name

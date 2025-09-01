@@ -10,9 +10,7 @@ from legacy.ids import mask_file_name
 from modern.ids import THE_SCAN_PER_SUBSAMPLE
 
 V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
-V10_THUMBS_TO_CHECK_SUBDIR = (
-    "v10_multiples"  # Where and how ML determined we should separate, RGB PNGs
-)
+V10_THUMBS_TO_CHECK_SUBDIR = "v10_multiples"  # Where and how ML (or user) determined we should separate, RGB PNGs
 V10_METADATA_SUBDIR = "v10_meta"  # For unique files
 V10_THUMBS_AFTER_SUBDIR = (
     "v10_cut_after"  # Output of full image segmented, after separation
