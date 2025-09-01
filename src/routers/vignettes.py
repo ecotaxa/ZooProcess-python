@@ -1,7 +1,8 @@
 import os
 import tempfile
+import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import cv2
 import numpy as np
@@ -81,6 +82,7 @@ async def get_vignettes(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
+    only: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> VignetteResponse:
     """Get reference to the vignettes for a specific subsample.
@@ -90,6 +92,7 @@ async def get_vignettes(
         project_hash (str): The ID of the project
         sample_hash (str): The hash of the sample
         subsample_hash (str): The hash of the subsample
+        only (str): Restrict output to this single image (by name)
         db (Session): Database session
 
     Returns:
@@ -105,11 +108,15 @@ async def get_vignettes(
     # Get multiples first
     assert multiples_to_check_dir is not None
     multiples_set = set(all_pngs_in_dir(multiples_to_check_dir))
-    api_vignettes = []
     base_api_path = f"/{project_hash}/{sample_hash}/{subsample_hash}/"
-    # Get all vignettes
-    assert thumbs_dir is not None
-    all_vignettes = all_pngs_in_dir(thumbs_dir)
+    if only is None:
+        # Get all vignettes
+        assert thumbs_dir is not None
+        all_vignettes = all_pngs_in_dir(thumbs_dir)
+    else:
+        # Focus on the requested one
+        all_vignettes = [only]
+    api_vignettes = []
     for a_vignette in sorted(all_vignettes):
         if a_vignette in multiples_set:
             # Segmenter
@@ -135,6 +142,12 @@ async def get_vignettes(
         else:
             segmenter_output = []
             matrix = mask = None
+        # Anti-cache measures
+        if only is not None:
+            stamp = "?t=" + str(time.time())
+            if mask is not None:
+                mask += stamp
+            segmenter_output = [seg + stamp for seg in segmenter_output]
         vignette_data = VignetteData(
             scan=V10_THUMBS_SUBDIR + API_PATH_SEP + a_vignette,
             matrix=matrix,
@@ -148,7 +161,7 @@ async def get_vignettes(
 
 
 @router.get("/vignette/{project_hash}/{sample_hash}/{subsample_hash}/{img_path}")
-async def get_a_vignette(
+async def get_vignette_image(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
@@ -213,6 +226,7 @@ async def get_a_vignette(
     file_like, length, media_type = get_stream(img_file)
     # The naming is quite unpredictable as all could change, from raw scan
     # to segmentation and separation, so avoid caching on client side.
+    # TODO: Dig more, this seems inefficient
     headers = {
         "content-length": str(length),
         "Cache-Control": "no-cache, no-store, must-revalidate",
