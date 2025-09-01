@@ -1,4 +1,4 @@
-name: CI - Tests (Docker build disabled on tags)
+name: CI - Tests - Docker
 
 on:
   push:
@@ -31,7 +31,6 @@ jobs:
         pytest -q
 
   docker_build_on_tag:
-     # Disabled per request: comment the docker build on tag set.
      if: startsWith(github.ref, 'refs/tags/')
      runs-on: ubuntu-latest
      steps:
@@ -47,5 +46,5 @@ jobs:
          context: .
          push: true
          tags: |
-           ${{ secrets.DOCKERHUB_USERNAME }}/gateway_api:latest
-           ${{ secrets.DOCKERHUB_USERNAME }}/gateway_api:${{ github.sha }}
+           ${{ secrets.DOCKERHUB_USERNAME }}/zooprocess_v10:latest
+           ${{ secrets.DOCKERHUB_USERNAME }}/zooprocess_v10:${{github.ref_name}}
