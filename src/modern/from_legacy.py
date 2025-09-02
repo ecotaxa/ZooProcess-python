@@ -65,6 +65,10 @@ from modern.utils import (
     FAR_DATE,
 )
 
+DEPTH_PROJECTS = 1
+DEPTH_SAMPLES = 2
+DEPTH_ALL = 8
+
 
 def drives_from_legacy() -> list[Drive]:
     """
@@ -90,7 +94,10 @@ def drive_from_legacy(drive_path: Path) -> Drive:
 
 
 def project_from_legacy(
-    db: Session, a_prj_path: Path, serial_number: Optional[str] = None
+    db: Session,
+    a_prj_path: Path,
+    depth: int = DEPTH_ALL,
+    serial_number: Optional[str] = None,
 ) -> Project:
     project_name = a_prj_path.name
     # Extract serial number from project name if not provided
@@ -109,7 +116,9 @@ def project_from_legacy(
     if instrument_model is None:
         instrument_model = Instrument(id=serial_number, name=serial_number, sn="xxxx")
 
-    sample_models = samples_from_legacy_project(db, zoo_project)
+    sample_models = (
+        samples_from_legacy_project(db, zoo_project) if depth >= DEPTH_SAMPLES else []
+    )
     project_hash = hash_from_project(a_prj_path)
     crea_dates = [creation_time] + [
         a_sub.createdAt for a_sub in sample_models if a_sub.createdAt

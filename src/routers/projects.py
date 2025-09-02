@@ -8,18 +8,19 @@ from sqlalchemy.orm import Session
 
 from Models import Project, Background, Scan
 from ZooProcess_lib.ZooscanFolder import ZooscanDrive
-from helpers.auth import get_current_user_from_credentials
 from config_rdr import config
+from helpers.auth import get_current_user_from_credentials
+from helpers.logger import logger
 from helpers.web import raise_404, get_stream
 from img_proc.convert import convert_tiff_to_jpeg
 from legacy.backgrounds import find_final_background_file, find_raw_background_file
 from legacy_to_remote.importe import import_old_project
 from local_DB.db_dependencies import get_db
-from helpers.logger import logger
 from modern.from_legacy import (
     project_from_legacy,
     backgrounds_from_legacy_project,
     scans_from_legacy_project,
+    DEPTH_ALL,
 )
 from remote.DB import DB
 from .utils import validate_path_components
@@ -31,7 +32,9 @@ router = APIRouter(
 )
 
 
-def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]:
+def list_all_projects(
+    db: Session, drives_to_check: List[Path], depth: int
+) -> List[Project]:
     """
     List all projects from the specified drives.
 
@@ -48,7 +51,7 @@ def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]
     for drive_path in drives_to_check:
         zoo_drive = ZooscanDrive(drive_path)
         for a_prj_path in zoo_drive.list():
-            project = project_from_legacy(db, a_prj_path)
+            project = project_from_legacy(db, a_prj_path, depth)
             all_projects.append(project)
 
     return all_projects
@@ -56,6 +59,7 @@ def list_all_projects(db: Session, drives_to_check: List[Path]) -> List[Project]
 
 @router.get("")
 def get_projects(
+    depth: int = DEPTH_ALL,
     _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> List[Project]:
@@ -64,7 +68,7 @@ def get_projects(
 
     This endpoint requires authentication using a JWT token obtained from the /login endpoint.
     """
-    return list_all_projects(db, config.get_drives())
+    return list_all_projects(db, config.get_drives(), depth)
 
 
 @router.get("/{project_hash}")

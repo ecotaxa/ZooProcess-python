@@ -118,6 +118,8 @@ async def get_vignettes(
         all_vignettes = [only]
     api_vignettes = []
     for a_vignette in sorted(all_vignettes):
+        matrix: Optional[str]
+        mask: Optional[str]
         if a_vignette in multiples_set:
             # Segmenter
             sep_img_path = multiples_to_check_dir / a_vignette
