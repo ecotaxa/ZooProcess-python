@@ -42,7 +42,7 @@ class ModernScanFileSystem:
             / TOP_V10_DIR
         )
         if not self.work_dir.exists():
-            os.mkdir(self.work_dir)
+            os.makedirs(self.work_dir, exist_ok=True)
 
     @property
     def meta_dir(self) -> Path:
