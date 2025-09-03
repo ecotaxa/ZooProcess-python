@@ -9,15 +9,16 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.ids import mask_file_name
 from modern.ids import THE_SCAN_PER_SUBSAMPLE
 
+TOP_V10_DIR = "ZPv10"  # For unique files
 V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
 V10_THUMBS_TO_CHECK_SUBDIR = "v10_multiples"  # Where and how ML (or user) determined we should separate, RGB PNGs
-V10_METADATA_SUBDIR = "v10_meta"  # For unique files
 V10_THUMBS_AFTER_SUBDIR = (
     "v10_cut_after"  # Output of full image segmented, after separation
 )
 
 ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
 SEPARATION_VALIDATED_TXT = "separation_validated.txt"
+SCORE_PER_IMAGE = "score_per_image.json"
 ML_MSK_OK_TXT = "MSK_validated.txt"
 
 
@@ -34,19 +35,24 @@ class ModernScanFileSystem:
         Initialize with a legacy work directory.
         """
         self.subsample_name = subsample_name
-        self.work_dir = zoo_project.zooscan_scan.work.get_sub_directory(
-            subsample_name, THE_SCAN_PER_SUBSAMPLE
+        self.work_dir = (
+            zoo_project.zooscan_scan.work.get_sub_directory(
+                subsample_name, THE_SCAN_PER_SUBSAMPLE
+            )
+            / TOP_V10_DIR
         )
+        if not self.work_dir.exists():
+            os.mkdir(self.work_dir)
 
     @property
     def meta_dir(self) -> Path:
         """
-        Get the metadata directory path.
+        Get the metadata directory path, where all single files are.
 
         Returns:
             Path to the metadata directory
         """
-        return self.work_dir / V10_METADATA_SUBDIR
+        return self.work_dir
 
     @property
     def cut_dir(self) -> Path:
@@ -202,3 +208,7 @@ class ModernScanFileSystem:
     @property
     def SEP_validated_file_path(self):
         return self.meta_dir / SEPARATION_VALIDATED_TXT
+
+    @property
+    def scores_file_path(self):
+        return self.meta_dir / SCORE_PER_IMAGE
