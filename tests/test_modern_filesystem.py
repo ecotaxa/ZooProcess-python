@@ -8,9 +8,6 @@ from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 
 from modern.filesystem import (
     ModernScanFileSystem,
-    V10_METADATA_SUBDIR,
-    V10_THUMBS_TO_CHECK_SUBDIR,
-    ML_SEPARATION_DONE_TXT,
 )
 
 

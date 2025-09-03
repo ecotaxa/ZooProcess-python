@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from logging import Logger
@@ -7,8 +8,8 @@ from typing import Tuple, Optional, List, NamedTuple
 import requests
 
 from Models import MultiplesClassifierRsp
-from providers.ImageList import ImageList
 from config_rdr import config
+from providers.ImageList import ImageList
 from providers.server import ping_DeepAAS_server
 
 BASE_URI = "v2/models/zooprocess_multiple_classifier/predict/"
@@ -22,6 +23,7 @@ class NameAndScore(NamedTuple):
 def classify_all_images_from(
     logger: Logger,
     img_path: Path,
+    scores_path: Path,
     min_score: float,
     image_names: Optional[List[str]] = None,
 ) -> Tuple[List[NameAndScore], Optional[str]]:
@@ -32,6 +34,7 @@ def classify_all_images_from(
         logger: Logger instance
         min_score: Minimum classification score, images above this score are discarded
         img_path: Directory containing the images
+        scores_path: Pickle file containing the score for each image
         image_names: Only use specified images, by file name. If not provided, all PNGs in img_path are used
 
     Returns:
@@ -56,11 +59,14 @@ def classify_all_images_from(
     logger.info(f"Successfully processed {zip_path}")
     nb_predictions = len(separation_response.scores)
     logger.info(f"Found {nb_predictions} predictions")
+    all_scores = dict(zip(separation_response.names, separation_response.scores))
     above_threshold = [
-        NameAndScore(assoc[0], assoc[1])
-        for assoc in zip(separation_response.names, separation_response.scores)
-        if assoc[1] > min_score
+        NameAndScore(name, score)
+        for name, score in all_scores.items()
+        if score > min_score
     ]
+    with open(scores_path, "w") as scores_file:
+        json.dump(all_scores, scores_file)
     os.unlink(zip_path)
     return above_threshold, error
 

@@ -395,6 +395,7 @@ class VignetteData(BaseModel):
     """Model for vignette data"""
 
     scan: str  # The vignette output from segmenter, 3 channels image with all chans ==
+    score: float  # The vignette score during ML classification (i.e. likely a multiple)
     matrix: Optional[str] = (
         None  # Same size as vignette, 0 = not a separator 1 = separator, gzipped with image header
     )

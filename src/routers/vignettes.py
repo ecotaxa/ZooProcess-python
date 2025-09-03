@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import time
@@ -85,7 +86,7 @@ async def get_vignettes(
     only: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> VignetteResponse:
-    """Get reference to the vignettes for a specific subsample.
+    """Get references to the vignettes for a specific subsample.
     All vignettes are returned, either with an automatic separator drawn or not.
 
     Args:
@@ -117,6 +118,12 @@ async def get_vignettes(
         # Focus on the requested one
         all_vignettes = [only]
     api_vignettes = []
+    try:
+        modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
+        with open(modern_fs.scores_file_path, "r") as f:
+            scores = json.load(f)
+    except FileNotFoundError:
+        scores = {}
     for a_vignette in sorted(all_vignettes):
         matrix: Optional[str]
         mask: Optional[str]
@@ -152,6 +159,7 @@ async def get_vignettes(
             segmenter_output = [seg + stamp for seg in segmenter_output]
         vignette_data = VignetteData(
             scan=V10_THUMBS_SUBDIR + API_PATH_SEP + a_vignette,
+            score=scores.get(a_vignette, 0.0),
             matrix=matrix,
             mask=mask,
             vignettes=segmenter_output,

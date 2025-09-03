@@ -47,6 +47,7 @@ class VignettesToAutoSeparated(Job):
         self.cut_dir: Path = self.modern_fs.cut_dir
         # Output
         self.multiples_dir: Path = self.modern_fs.multiples_vis_dir
+        self.scores_file: Path = self.modern_fs.scores_file_path
 
     def prepare(self):
         """
@@ -73,7 +74,7 @@ class VignettesToAutoSeparated(Job):
         self.logger.info(f"Determining multiples")
         # First ML step, send all images to the multiple classifier
         maybe_multiples, error = classify_all_images_from(
-            self.logger, self.cut_dir, 0.4
+            self.logger, self.cut_dir, self.scores_file, 0.4
         )
         assert error is None, error
 
@@ -87,7 +88,9 @@ class VignettesToAutoSeparated(Job):
         start_time = time.time()
         for a_chunk in image_list.split(12):
             results, error = separate_all_images_from(self.logger, a_chunk)
-            assert error is None, error
+            assert (
+                error is None
+            ), error  # TODO: In case of problem, the subsample state is wrong (mutiples generated)
             assert results is not None  # mypy
             show_separations_in_images(self.cut_dir, results, multiples_vis_dir)
             processed += len(a_chunk.get_images())
