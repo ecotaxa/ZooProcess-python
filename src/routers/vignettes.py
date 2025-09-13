@@ -108,7 +108,10 @@ async def get_vignettes(
     )
     # Get multiples first
     assert multiples_to_check_dir is not None
-    multiples_set = set(all_pngs_in_dir(multiples_to_check_dir))
+    if multiples_to_check_dir.exists():
+        multiples_set = set(all_pngs_in_dir(multiples_to_check_dir))
+    else:
+        multiples_set = set()
     base_api_path = f"/{project_hash}/{sample_hash}/{subsample_hash}/"
     if only is None:
         # Get all vignettes

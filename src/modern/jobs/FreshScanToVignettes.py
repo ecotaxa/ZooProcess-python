@@ -13,6 +13,7 @@ from modern.jobs.VignettesToAutoSep import (
 )
 from modern.tasks import Job
 from modern.to_legacy import save_mask_image
+from providers.ML_multiple_classifier import classify_all_images_from
 
 
 class FreshScanToVignettes(Job):
@@ -37,6 +38,7 @@ class FreshScanToVignettes(Job):
         self.bg_scans: List[Path] = []
         # Outputs
         self.msk_file_path = self.modern_fs.MSK_file_path
+        self.scores_file: Path = self.modern_fs.scores_file_path
 
     def prepare(self):
         """
@@ -44,7 +46,7 @@ class FreshScanToVignettes(Job):
         Pre-requisites:
             - 2 RAW backgrounds
             - 1 RAW scan
-        Process a scan from its background until first segmentation and automatic separation.
+        Process a scan from its background until the first segmentation and automatic separation.
         """
         self.logger = self._setup_job_logger(
             self.modern_fs.ensure_meta_dir() / "mask_gen_job.log"
@@ -88,16 +90,23 @@ class FreshScanToVignettes(Job):
         )
         # "Vignettes"
         self.logger.info(f"Producing thumbnails")
+        cut_dir = modern_fs.fresh_empty_cut_dir()
         produce_cuts_and_index(
             self.logger,
             processor,
-            modern_fs.fresh_empty_cut_dir(),
+            cut_dir,
             modern_fs.meta_dir,
             scan_without_background,
             scan_resolution,
             rois,
             self.scan_name,
         )
+        # Multiples classification
+        self.logger.info(f"Classifying thumbnails")
+        maybe_multiples, error = classify_all_images_from(
+            self.logger, cut_dir, self.scores_file, 0.4
+        )
+        assert error is None, error
 
     def _cleanup_work(self):
         """Clean up the files that the present process is going to (re) create"""
