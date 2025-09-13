@@ -88,9 +88,7 @@ class VignettesToAutoSeparated(Job):
         start_time = time.time()
         for a_chunk in image_list.split(12):
             results, error = separate_all_images_from(self.logger, a_chunk)
-            assert (
-                error is None
-            ), error  # TODO: In case of problem, the subsample state is wrong (mutiples generated)
+            assert error is None, error
             assert results is not None  # mypy
             show_separations_in_images(self.cut_dir, results, multiples_vis_dir)
             processed += len(a_chunk.get_images())
