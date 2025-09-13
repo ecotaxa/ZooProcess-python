@@ -218,40 +218,48 @@ def delete_subsample(
     db: Session = Depends(get_db),
 ) -> dict:
     """
-    Delete a specific subsample from a sample.
+    Delete specific subsample. So far we just delete (some) v10 data.
 
     Args:
         user: Security dependency to get the current user.
         db: Database dependency.
         project_hash (str): The ID of the project.
         sample_hash (str): The hash of the sample.
-        subsample_hash (str): The hash of the subsample to delete.
+        subsample_hash (str): The hash of the subsample to delete the MSK for.
 
     Returns:
-        dict: A message indicating the subsample was deleted.
+        dict: A message indicating the MSK file deletion result.
 
     Raises:
         HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
     """
     # Validate the project, sample, and subsample hashes
-    zoo_drive, project_name, sample_name, subsample_name = validate_path_components(
+    _zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
 
-    logger.info(
-        f"Deleting subsample {subsample_name} for sample {sample_name} in project {project_name}"
-    )
+    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
+    msk_path = modern_fs.MSK_file_path
 
-    # Create a DB instance
-    db_instance = DB(bearer=user.id)
+    try:
+        if msk_path.exists():
+            msk_path.unlink()
+            logger.info(
+                f"Deleted MSK file for subsample {subsample_name} in sample {sample_name}: {msk_path}"
+            )
+            result = "deleted"
+        else:
+            logger.info(
+                f"No MSK file found to delete for subsample {subsample_name} in sample {sample_name}: {msk_path}"
+            )
+            result = "not_found"
+    except Exception as e:
+        logger.error(
+            f"Error deleting MSK file for subsample {subsample_name} in sample {sample_name}: {e}"
+        )
+        raise HTTPException(status_code=500, detail=str(e))
 
-    # Try to delete the subsample from the database
-    # This is a placeholder - in a real implementation, you would delete the subsample from a database
-    # For example: db_instance.delete(f"/projects/{project_hash}/samples/{sample_hash}/subsamples/{subsample_hash}")
-    # For now, we'll just return a success message
-    pass
-
-    return {"message": f"Subsample {subsample_name} deleted successfully"}
+    return {"message": f"MSK file for subsample {subsample_name} {result}"}
 
 
 @router.post("/{subsample_hash}/process")
