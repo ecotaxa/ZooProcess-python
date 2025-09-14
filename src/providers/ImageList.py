@@ -1,7 +1,7 @@
+import io
 import os
 import tempfile
 import zipfile
-import io
 from logging import Logger
 from pathlib import Path
 from typing import List, Optional
@@ -15,26 +15,9 @@ class ImageList:
     A class that lists PNG images from a given directory and stores them internally.
 
     Attributes:
-        directory_path (Path): Path to the directory containing images
-        images (List[Path]): List of paths to PNG images in the directory
-        _temp_zip_path (Path): Path to the temporary zip file (class variable)
+        directory_path (Path): Path to the directory containing images.
+        images (List[Path]): List of paths to PNG or JPG images in the directory
     """
-
-    _temp_zip_path: Optional[Path] = None
-
-    @classmethod
-    def cleanup_temp_zip(cls):
-        """
-        Clean up the temporary zip file if it exists.
-        This method should be called when the program exits or when the temporary file is no longer needed.
-        """
-        if cls._temp_zip_path is not None and cls._temp_zip_path.exists():
-            try:
-                cls._temp_zip_path.unlink()
-                cls._temp_zip_path = None
-            except Exception:
-                # Ignore errors when cleaning up
-                pass
 
     def __init__(self, directory_path: Path, images: Optional[List[str]] = None):
         """
@@ -102,8 +85,7 @@ class ImageList:
 
     def split(self, size: int):
         """
-        EcoTaxa that splits the images into sublists of specified size and yields ImageList instances.
-
+        Split the images into sublists of specified size and yields ImageList instances.
         Args:
             size (int): Size of each sublist
 
@@ -123,38 +105,32 @@ class ImageList:
         """
         Zips flat all images from this ImageList to a temporary zip file.
         Images are converted to RGB if it's not their format.
-        Reuses the same temporary zip file if it already exists.
+        A fresh, unique temporary zip file is created for each call (thread-safe).
 
         Args:
             logger: for messages
+            force_RGB: ensure gray-level images are converted to RGB before zipping
 
         Returns:
             Path to the temporary zip file
         """
         logger.debug(f"Zipping images from directory: {self.directory_path}")
 
-        # Create a temporary file with .zip extension if it doesn't exist yet
-        if ImageList._temp_zip_path is None or not ImageList._temp_zip_path.exists():
-            temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
-            ImageList._temp_zip_path = Path(temp_zip.name)
-            temp_zip.close()
-            logger.debug(
-                f"Created new temporary zip file at {ImageList._temp_zip_path}"
-            )
-        else:
-            logger.debug(
-                f"Reusing existing temporary zip file at {ImageList._temp_zip_path}"
-            )
+        # Always create a unique temporary zip file per call (thread-safe)
+        temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+        temp_zip_path = Path(temp_zip.name)
+        temp_zip.close()
+        logger.debug(f"Created temporary zip file at {temp_zip_path}")
 
         try:
             image_names = self.get_images()
 
-            if not image_names:
-                logger.warning("No images found in the ImageList")
-                return ImageList._temp_zip_path
-
-            # Create a zip file (overwriting if it already exists)
-            with zipfile.ZipFile(ImageList._temp_zip_path, "w") as zip_file:
+            # Create the zip file (valid even if there are no images)
+            with zipfile.ZipFile(temp_zip_path, "w") as zip_file:
+                if not image_names:
+                    logger.warning(
+                        "No images found in the ImageList; creating empty zip"
+                    )
                 # Add each image to the zip file
                 for image_name in image_names:
                     image_path = self.directory_path / image_name
@@ -170,11 +146,11 @@ class ImageList:
                         zip_file.write(image_path, arcname=image_name)
 
             logger.debug(
-                f"Successfully created zip file with {len(image_names)} images from ImageList at {ImageList._temp_zip_path}"
+                f"Successfully created zip file with {len(image_names)} images from ImageList at {temp_zip_path}"
             )
-            return ImageList._temp_zip_path
+            return temp_zip_path
 
         except Exception as e:
             logger.error(f"Error creating zip file: {str(e)}")
             # If an error occurs, return the path anyway so the caller can handle it
-            return ImageList._temp_zip_path
+            return temp_zip_path

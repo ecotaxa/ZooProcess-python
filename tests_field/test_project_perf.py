@@ -18,7 +18,7 @@ def test_project_perf():
     from routers.projects import list_all_projects
 
     # Get the list of projects using the actual implementation
-    projects = list_all_projects(next(get_db()), config_rdr.config.get_drives())
+    projects = list_all_projects(next(get_db()), config_rdr.config.get_drives(), 3)
 
     # Ensure we have at least one project to test with
     assert len(projects) > 0, "No projects found in the configured drives"

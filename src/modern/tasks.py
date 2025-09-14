@@ -5,6 +5,7 @@
 import logging
 import threading
 import time
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -17,6 +18,9 @@ from helpers.logger import logger, logs_dir, NullLogger
 
 # Typings, to be clear that these are not e.g. task IDs
 JobIDT = int
+
+# Concurrency cap (configurable through env)
+MAX_CONCURRENCY: int = int(os.getenv("JOB_MAX_CONCURRENCY", "4"))
 
 
 class JobStateEnum(str, Enum):
@@ -130,7 +134,7 @@ class Job(ABC):
 
 class JobRunner(Thread):
     """
-    Run a job in dedicated thread
+    Run a job in a dedicated thread
     """
 
     def __init__(self, a_job: Job):
@@ -140,6 +144,7 @@ class JobRunner(Thread):
     def run(self) -> None:
         job = self.job
         try:
+            job.mark_started()
             job.prepare()
         except Exception as te:
             self.tech_error(te)
@@ -167,12 +172,13 @@ class JobRunner(Thread):
 
 class JobScheduler:
     """
-    In charge of launching/monitoring sub processes i.e. keep sync b/w processes and their images in memory.
+    In charge of launching/monitoring subprocesses i.e. keep sync b/w processes and their images in memory.
     These are not really processes, just threads, so far.
     """
 
-    # A single runner per process
-    the_runner: Optional[JobRunner] = None  # Only written by JobTimer_s_
+    # Track multiple concurrent runners
+    active_runners: set[JobRunner] = set()  # Only written by JobTimer_s_
+
     the_timer: Optional[threading.Timer] = (
         None  # First creation by Main, replacements by JobTimer_s_
     )
@@ -182,42 +188,65 @@ class JobScheduler:
     _next_id: int = 1
     # In-memory storage for jobs
     _jobs: list[Job] = []
-    # Mutex for _jobs access
+    # Mutex for _jobs access (also protects active_runners)
     jobs_lock: threading.RLock = threading.RLock()
+
+    @classmethod
+    def _prune_finished(cls) -> None:
+        """Remove completed/terminated runners from the active set."""
+        with cls.jobs_lock:
+            dead = {r for r in cls.active_runners if not r.is_alive()}
+            if dead:
+                for r in dead:
+                    try:
+                        r.join(timeout=0)
+                    except Exception:
+                        pass
+                cls.active_runners.difference_update(dead)
+
+    @classmethod
+    def _pick_a_pending(cls) -> Optional[Job]:
+        """Pick a single pending job and mark it Running under the lock.
+        Returns the job if found, otherwise None.
+        """
+        with cls.jobs_lock:
+            for job in cls._jobs:
+                if job.state == JobStateEnum.Pending:
+                    job.state = JobStateEnum.Running
+                    return job
+        return None
 
     @classmethod
     def _run_one(cls) -> None:
         """
-        Pick first pending job and run it, except if already running.
-        This is an instance method.
+        Fill available concurrency slots with pending jobs.
         Current thread: JobTimer
         """
-        if cls.the_runner is not None:
-            # A single runner at a time
-            if cls.the_runner.is_alive():
-                return
-            cls.the_runner = None
-        # Pick the first pending job from the in-memory storage
-        the_job: Optional[Job] = None
+        # 1) Remove completed runners
+        cls._prune_finished()
+
+        # 2) How many new jobs can we start?
         with cls.jobs_lock:
-            for job in cls._jobs:
-                if job.state == JobStateEnum.Pending:
-                    the_job = job
-                    break
-        if the_job is None:
+            running_count = len(cls.active_runners)
+            free_slots = max(MAX_CONCURRENCY - running_count, 0)
+
+        if free_slots <= 0:
             return
-        logger.info("Found job to run: %s", str(the_job))
-        # Update job state
-        the_job.state = JobStateEnum.Running
-        # Run the job
-        cls.the_runner = JobRunner(the_job)
-        cls.the_runner.start()
+
+        # 3) Start at most one pending job per tick (queue will fill others)
+        job = cls._pick_a_pending()
+        if job is not None:
+            logger.info("Found job to run: %s", str(job))
+            runner = JobRunner(job)
+            runner.start()
+            with cls.jobs_lock:
+                cls.active_runners.add(runner)
 
     @classmethod
     def launch_at_interval(cls, interval: int) -> None:
         """
-        Launch a job if possible, then wait a bit before accessing next one.
-        Current thread: Main for first launch, JobTimer (_different ones_) for others
+        Launch a job if possible, then wait a bit before accessing the next one.
+        Current thread: Main for the first launch, JobTimer (_different ones_) for others
         """
         cls.do_run.set()
         cls._create_and_launch_timer(interval)
@@ -239,9 +268,16 @@ class JobScheduler:
         except Exception as e:
             logger.exception("Job run() exception: %s", e)
         if not cls.do_run.is_set():
-            if cls.the_runner is not None:
-                cls.the_runner.join()
-                cls.the_runner = None
+            # Join all active runners before stopping
+            with cls.jobs_lock:
+                runners = list(cls.active_runners)
+            for r in runners:
+                try:
+                    r.join()
+                except Exception:
+                    pass
+            with cls.jobs_lock:
+                cls.active_runners.clear()
             cls.the_timer = None
         else:
             cls._create_and_launch_timer(interval)

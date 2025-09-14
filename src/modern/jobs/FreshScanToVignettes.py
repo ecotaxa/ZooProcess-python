@@ -51,8 +51,6 @@ class FreshScanToVignettes(Job):
         self.logger = self._setup_job_logger(
             self.modern_fs.ensure_meta_dir() / "mask_gen_job.log"
         )
-        # Mark the job as started
-        self.mark_started()
         # Log the start of the job execution
         self.logger.info(
             f"Starting post-scan check generation for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"

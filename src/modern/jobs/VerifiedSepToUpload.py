@@ -60,9 +60,6 @@ class VerifiedSeparationToEcoTaxa(Job):
         self.logger = self._setup_job_logger(
             self.modern_fs.ensure_meta_dir() / "upload_job.log"
         )
-        # Mark the job as started
-        self.mark_started()
-
         # Log the start of the job execution
         self.logger.info(
             f"Starting post-manual processing for project: {self.zoo_project.name}, sample: {self.sample_name}, subsample: {self.subsample_name}"
