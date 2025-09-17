@@ -20,6 +20,7 @@ from Models import (
     ExportSubsampleReq,
     ExportSubsampleRsp,
 )
+from ZooProcess_lib.Processor import Processor
 from helpers.auth import get_current_user_from_credentials, decode_jwt_token
 from helpers.logger import logger
 from helpers.web import raise_404, get_stream, raise_422
@@ -480,9 +481,16 @@ async def get_subsample_scan(
     if img_name == SCAN_JPEG:
         real_file = zoo_project.zooscan_scan.get_8bit_file(
             subsample_name, THE_SCAN_PER_SUBSAMPLE
-        )  # TODO: Might disappear, better return the _vis1.zip
+        )
         if not real_file.exists():
-            raise_404(f"Scan image not found for subsample {subsample_name}")
+            processor = Processor.from_legacy_config(
+                zoo_project.zooscan_config.read(),
+                zoo_project.zooscan_config.read_lut(),
+            )
+            raw_sample_file = zoo_project.zooscan_scan.raw.get_file(
+                subsample_name, THE_SCAN_PER_SUBSAMPLE
+            )
+            processor.converter.do_file_to_file(raw_sample_file, real_file)
     else:
         real_files: List[Path] = list(
             filter(
