@@ -1,20 +1,97 @@
 import csv
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 from ZooProcess_lib.Extractor import Extractor
 from ZooProcess_lib.Features import ECOTAXA_TSV_ROUNDINGS
+from ZooProcess_lib.Legacy import averaged_median_mean
 from ZooProcess_lib.ROI import ROI
 from ZooProcess_lib.Segmenter import Segmenter
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
+from ZooProcess_lib.img_tools import minAndMax, load_tiff_image_and_info
 from legacy.samples import read_samples_metadata_table, find_sample_metadata
 from legacy.scans import find_scan_metadata, read_scans_metadata_table
 from modern.from_legacy import sample_from_legacy_meta
 from modern.ids import THE_SCAN_PER_SUBSAMPLE
 from version import version_hash
 
-SOFTWARE_FOR_TSVS = "ZooProcess v10"
+SOFTWARE_FOR_TSVS = "zooprocess_10_0"
+
+
+def get_hardware(scanner: Union[str, None]) -> str:
+    """
+    Ported from legacy macro Zooscan_define_zooscan_version.txt.
+    Map scanner model names to Zooscan hardware generation names.
+
+    Known inputs include:
+      - Photosmart5520, Photosmart4870 -> Other
+      - no_scanner -> Zooscan_not_connected
+      - Perfection2450 -> CNRS_prototype
+      - Perfection4990 -> Hydroptic_V1
+      - Perfection4490 -> Hydroptic_V2
+      - PerfectionV700, PerfectionV750, GT-X900, GT-X970 -> Hydroptic_V3
+      - PerfectionV800, PerfectionV850, GT-X980 -> Hydroptic_V4
+
+    The input string can come from ScanLog scanner source and
+    may include vendor prefixes, spaces or hyphens; matching is case-insensitive.
+    """
+    if not scanner:
+        return "unknown"
+
+    s = scanner.strip().lower()
+    # Remove common vendor prefixes and extra spaces
+    for vendor in ("epson", "hewlett-packard", "hewlett packard", "hp"):
+        if s.startswith(vendor):
+            s = s[len(vendor) :].strip()
+            break
+    # Normalize separators and remove spaces
+    s_norm = (
+        s.replace(" ", "").replace("_", "").replace("-", "-")
+    )  # keep hyphen for GT-X models
+    # Also a version without hyphen for easier matching
+    s_flat = s_norm.replace("-", "")
+
+    def any_in(*keys: str) -> bool:
+        return any(k in s_flat for k in keys)
+
+    if any_in("photosmart5520", "photosmart4870"):
+        return "Other"
+    if any_in("noscanner"):
+        return "Zooscan_not_connected"
+    if any_in("perfection2450"):
+        return "CNRS_prototype"
+    if any_in("perfection4990"):
+        return "Hydroptic_V1"
+    if any_in("perfection4490"):
+        return "Hydroptic_V2"
+    if any_in("perfectionv700", "perfectionv750", "gtx900", "gtx970"):
+        return "Hydroptic_V3"
+    if any_in("perfectionv800", "perfectionv850", "gtx980"):
+        return "Hydroptic_V4"
+
+    # Fallback: try direct exact tokens present in original string
+    tokens = {
+        "PerfectionV700": "Hydroptic_V3",
+        "PerfectionV750": "Hydroptic_V3",
+        "GT-X900": "Hydroptic_V3",
+        "GT-X970": "Hydroptic_V3",
+        "PerfectionV800": "Hydroptic_V4",
+        "PerfectionV850": "Hydroptic_V4",
+        "GT-X980": "Hydroptic_V4",
+        "Perfection4990": "Hydroptic_V1",
+        "Perfection4490": "Hydroptic_V2",
+        "Perfection2450": "CNRS_prototype",
+        "no_scanner": "Zooscan_not_connected",
+        "Photosmart5520": "Other",
+        "Photosmart4870": "Other",
+    }
+    for k, v in tokens.items():
+        if k.lower().replace(" ", "") in s_flat:
+            return v
+
+    return "unknown"
+
 
 LEGACY_COLUMNS = (
     # Refs
@@ -64,11 +141,42 @@ LEGACY_COLUMNS = (
 )
 TSV_HEADER = LEGACY_COLUMNS.rstrip(",").split(",")
 
+LEGACY_EXCLUDED_COLUMNS = (
+    # Refs
+    # Features
+    "object_xm,object_ym,"
+    "object_skelarea,object_slope,object_histcum1,object_histcum2,object_histcum3,object_xmg5,object_ymg5,"
+    "object_nb1,object_nb2,object_nb3,"
+    "object_compentropy,object_compmean,object_compslope,"
+    "object_compm1,object_compm2,object_compm3,"
+    "object_symetrieh,object_symetriev,"  # TODO See ClickUp
+    "object_symetriehc,object_symetrievc,object_convperim,"
+    "object_fcons,"
+    "object_thickr,"  # TODO See ClickUp
+    "object_tag,"
+    "object_centroids,"
+    "object_cdexc,"
+    # Process
+    "process_img_od_grey,process_img_od_std,"
+    "process_particle_sep_mask,process_particle_bw_ratio,"
+    # Acquisition
+    # Sample
+    "sample_ctdrosettefilename,sample_other_ref,"
+    "sample_dataportal_descriptor,sample_open"
+)
+
 
 def round_for_tsv(feature: Dict[str, Any]) -> Dict[str, Any]:
     for k, v in feature.items():
         feature[k] = round(v, ECOTAXA_TSV_ROUNDINGS.get(k, 10))
     return feature
+
+
+def float_or_int(value: Union[float, str]) -> Union[float, int]:
+    ret = float(value)
+    if float.is_integer(ret):
+        return int(ret)
+    return ret
 
 
 class EcoTaxaTSV:
@@ -169,9 +277,17 @@ class EcoTaxaTSV:
             "object_lon_end": modern_meta["longitude_end"],
         }
 
-    def ini_date_to_tsv_date_and_time(self, csv_datetime):
+    @classmethod
+    def ini_date_to_tsv_date_and_time(cls, csv_datetime):
         tsv_date, tsv_time = csv_datetime.split("-")
         # 1200 -> 12:00:00.000
+        tsv_time = tsv_time[:2] + ":" + tsv_time[2:] + ":00.000"
+        return tsv_date, tsv_time
+
+    @classmethod
+    def scanlog_date_to_tsv_date_and_time(cls, csv_datetime):
+        tsv_date, tsv_time = csv_datetime.split("_")
+        # 20240529_1541 -> 20240529 15:41:00.000
         tsv_time = tsv_time[:2] + ":" + tsv_time[2:] + ":00.000"
         return tsv_date, tsv_time
 
@@ -191,22 +307,22 @@ class EcoTaxaTSV:
             "sample_tow_nb": int(sample_meta["townb"]),
             "sample_tow_type": sample_meta["towtype"],
             "sample_net_type": sample_meta["nettype"],
-            "sample_net_mesh": float(sample_meta["netmesh"]),
-            "sample_net_surf": float(sample_meta["netsurf"]),
-            "sample_zmax": float(sample_meta["zmax"]),
-            "sample_zmin": float(sample_meta["zmin"]),
-            "sample_tot_vol": float(sample_meta["vol"]),
+            "sample_net_mesh": float_or_int(sample_meta["netmesh"]),
+            "sample_net_surf": float_or_int(sample_meta["netsurf"]),
+            "sample_zmax": float_or_int(sample_meta["zmax"]),
+            "sample_zmin": float_or_int(sample_meta["zmin"]),
+            "sample_tot_vol": float_or_int(sample_meta["vol"]),
             "sample_comment": sample_meta["sample_comment"],
-            "sample_tot_vol_qc": float(sample_meta["vol_qc"]),
-            "sample_depth_qc": float(sample_meta["depth_qc"]),
-            "sample_sample_qc": float(sample_meta["sample_qc"]),
+            "sample_tot_vol_qc": float_or_int(sample_meta["vol_qc"]),
+            "sample_depth_qc": float_or_int(sample_meta["depth_qc"]),
+            "sample_sample_qc": float_or_int(sample_meta["sample_qc"]),
             "sample_barcode": sample_meta["barcode"],
-            "sample_duration": float(sample_meta["net_duration"]),
-            "sample_ship_speed": float(sample_meta["ship_speed_knots"]),
-            "sample_cable_length": float(sample_meta["cable_length"]),
-            "sample_cable_angle": float(sample_meta["cable_angle"]),
-            "sample_cable_speed": float(sample_meta["cable_speed"]),
-            "sample_nb_jar": float(sample_meta["nb_jar"]),
+            "sample_duration": float_or_int(sample_meta["net_duration"]),
+            "sample_ship_speed": float_or_int(sample_meta["ship_speed_knots"]),
+            "sample_cable_length": float_or_int(sample_meta["cable_length"]),
+            "sample_cable_angle": float_or_int(sample_meta["cable_angle"]),
+            "sample_cable_speed": float_or_int(sample_meta["cable_speed"]),
+            "sample_nb_jar": float_or_int(sample_meta["nb_jar"]),
             # "sample_dataportal_descriptor": "",
             # "sample_open": "",
         }
@@ -214,18 +330,26 @@ class EcoTaxaTSV:
     def object_acquisition(self) -> Dict[str, Any]:
         scan_csv_meta = self.meta_for_scan
         assert scan_csv_meta is not None  # mypy
-        prj_work_path = self.zoo_project.zooscan_scan.work.get_sub_directory(
+
+        # Convert the scan to get measurements
+        lut = self.zoo_project.zooscan_config.read_lut()
+        raw_path = self.zoo_project.zooscan_scan.raw.get_file(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
-        scan_txt_meta = self.zoo_project.zooscan_scan.work.get_txt_meta(
+        raw_info, raw_image = load_tiff_image_and_info(raw_path)
+        median, _mean = averaged_median_mean(raw_image)
+        min_rec, max_rec = minAndMax(median, lut)
+
+        scan_log_meta = self.zoo_project.zooscan_scan.raw.get_scan_log(
             self.subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
-        assert (
-            scan_txt_meta is not None
-        ), f"No _meta for {self.scan_name} in {prj_work_path}"
-        tsv_date, tsv_time = self.ini_date_to_tsv_date_and_time(scan_txt_meta.Date)
+        assert scan_log_meta is not None, f"No _log for {self.scan_name} in {raw_path}"
+        acq_date, acq_time = self.scanlog_date_to_tsv_date_and_time(
+            scan_log_meta.scanning_date
+        )
+        acq_id = scan_csv_meta["fracid"] + "_" + self.sample_name
         return {
-            "acq_id": self.scan_name,  # image name of the scanned image (fraction_id)
+            "acq_id": acq_id,
             # "acq_instrument": "",  # zooscan serial number
             "acq_min_mesh": scan_csv_meta[
                 "fracmin"
@@ -234,40 +358,49 @@ class EcoTaxaTSV:
                 "fracsup"
             ],  # maximum mesh size for the sieving of the scanned fraction of the sample [µm]
             "acq_sub_part": scan_csv_meta[
-                "fracsup"
+                "fracnb"
             ],  # subsampling division factor of the sieved fraction of the sample
             "acq_sub_method": scan_csv_meta[
                 "submethod"
             ],  # device utilized for the subsampling
-            "acq_hardware": "",  # zooscan model
-            "acq_software": SOFTWARE_FOR_TSVS,  # scanning application and version
+            "acq_hardware": get_hardware(
+                getattr(scan_log_meta, "scanner_source", "")
+            ).lower(),  # zooscan model
+            "acq_software": scan_log_meta.vuescan_version,  # scanning application and version
             "acq_author": scan_csv_meta["scanop"],  # image scanning operator
             "acq_imgtype": "zooscan",  # type of instrument utilized to scan the image
-            "acq_scan_date": tsv_date,  # date of the scan of the fraction [YYYYMMDD]
-            "acq_scan_time": tsv_time,  # time of the scan of the fraction [HHMMSS]
-            "acq_quality": "",  # scanned image quality index for scaning applications version before 9.7.67
-            "acq_bitpixel": "",  # 16 bits raw image coded grey scale
-            "acq_greyfrom": "",  # index of the RGB chanel utilized to make the grey level image
-            "acq_scan_resolution": self.resolution,  # resolution of the scanned image in dot per inch [dpi]
-            "acq_rotation": "",  # rotation index to rotate the scanned image during the process
-            "acq_miror": "",  # miror index to flip the scanned image during the process
-            "acq_xsize": "",  # width of the scanned image [pixel]
-            "acq_ysize": "",  # height of the scanned image [pixels]
-            "acq_xoffset": "",  # x position of the scanned area [pixel]
-            "acq_yoffset": "",  # y position of the scanned area [pixel]
-            # "acq_lut_color_balance": "", # type of conversion of the scanned 16 bit image to 8 bit image for the process (manual indicates that the zooprocess default method is utilized)
-            # "acq_lut_filter": "", # na
-            # "acq_lut_min": "", # zooprocess calculated black point for the 16 bits to 8 bit conversion of the scanned image
-            # "acq_lut_max": "", # zooprocess calculated white point for the 16 bits to 8 bit conversion of the scanned image
-            # "acq_lut_odrange": "", # optical density set range for the computing of the black point from the white point
-            # "acq_lut_ratio": "", # multiplying factor to calculate the white point from the median grey level of the scanned image
-            # "acq_lut_16b_median": "", # median grey level of the scanned image
+            "acq_scan_date": acq_date,  # date of the scan of the fraction [YYYYMMDD]
+            "acq_scan_time": acq_time,  # time of the scan of the fraction [HHMMSS]
+            "acq_quality": "nan",  # scanned image quality index for scaning applications version before 9.7.67
+            "acq_bitpixel": scan_log_meta.bits_per_pixel,  # 16 bits raw image coded grey scale
+            "acq_greyfrom": scan_log_meta.make_gray_from,
+            # index of the RGB chanel utilized to make the grey level image
+            "acq_scan_resolution": scan_log_meta.scan_resolution,
+            # resolution of the scanned image in dot per inch [dpi]
+            "acq_rotation": scan_log_meta.rotation,  # rotation index to rotate the scanned image during the process
+            "acq_miror": scan_log_meta.mirror,  # miror index to flip the scanned image during the process
+            "acq_xsize": scan_log_meta.preview_x_size,  # width of the scanned image [pixel]
+            "acq_ysize": scan_log_meta.preview_y_size,  # height of the scanned image [pixels]
+            "acq_xoffset": scan_log_meta.preview_x_offset,  # x position of the scanned area [pixel]
+            "acq_yoffset": scan_log_meta.preview_y_offset,  # y position of the scanned area [pixel]
+            "acq_lut_color_balance": "",
+            # type of conversion of the scanned 16 bit image to 8 bit image for the process (manual indicates that the zooprocess default method is utilized)
+            "acq_lut_filter": lut.adjust,  # na
+            "acq_lut_min": min_rec,
+            # zooprocess calculated black point for the 16 bits to 8 bit conversion of the scanned image
+            "acq_lut_max": max_rec,
+            # zooprocess calculated white point for the 16 bits to 8 bit conversion of the scanned image
+            "acq_lut_odrange": lut.odrange,
+            # optical density set range for the computing of the black point from the white point
+            "acq_lut_ratio": lut.ratio,
+            # multiplying factor to calculate the white point from the median grey level of the scanned image
+            "acq_lut_16b_median": median,  # median grey level of the scanned image
             "acq_scan_comment": scan_csv_meta["observation"],  #
         }
 
     def object_process(self) -> Dict[str, Any]:
         prc_id = f"zooprocess_{self.meta_for_sample["sampleid"]}"
-        prc_date = self.start_date.strftime("%y%m%d")
+        prc_date = self.start_date.strftime("%Y%m%d")
         prc_time = self.start_date.strftime("%H:%M:%S.000")
         pixel_size_mm = round(self.segmenter.pixel_size(self.resolution), 4)
         background_image = self.backgrounds[0].name.replace("_1.", ".")
@@ -282,9 +415,9 @@ class EcoTaxaTSV:
             "process_img_background_img": background_image,
             "process_particle_version": version_hash(),
             "process_particle_threshold": self.segmenter.threshold,
-            "process_particle_pixel_size_mm": pixel_size_mm,
-            "process_particle_min_size_mm": self.segmenter.minsize,
-            "process_particle_max_size_mm": self.segmenter.maxsize,
+            "process_particle_pixel_size_mm": float_or_int(pixel_size_mm),
+            "process_particle_min_size_mm": float_or_int(self.segmenter.minsize),
+            "process_particle_max_size_mm": float_or_int(self.segmenter.maxsize),
             # "process_particle_sep_mask": "",
             # "process_particle_bw_ratio": "",
             "process_software": SOFTWARE_FOR_TSVS,
