@@ -7,7 +7,7 @@ from typing import List
 
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.ids import mask_file_name
-from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
+from modern.ids import scan_name_from_subsample_name
 
 TOP_V10_DIR = "_v10work"
 V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
@@ -37,14 +37,11 @@ class ModernScanFileSystem:
         self.subsample_name = subsample_name
         scan_name = scan_name_from_subsample_name(subsample_name)
         self.work_dir = zoo_project.zooscan_scan.path / TOP_V10_DIR / scan_name
-        if not self.work_dir.exists():
-            os.makedirs(self.work_dir, exist_ok=True)
 
     @property
     def meta_dir(self) -> Path:
         """
         Get the metadata directory path, where all single files are.
-
         Returns:
             Path to the metadata directory
         """
@@ -73,10 +70,10 @@ class ModernScanFileSystem:
     @property
     def multiples_vis_dir(self) -> Path:
         """
-        Get the multiples visualization directory path.
+        Get the multiples' visualization directory path.
 
         Returns:
-            Path to the multiples visualization directory
+            Path to the multiples' visualization directory
         """
         return self.work_dir / V10_THUMBS_TO_CHECK_SUBDIR
 
@@ -96,7 +93,7 @@ class ModernScanFileSystem:
 
     def fresh_empty_cut_after_dir(self) -> Path:
         """
-        Get the cut/thumbnails directory path, ensuring it's new and empty.
+        Get the cut/thumbnails directory path, ensuring it is new and empty.
         If the directory exists, it will be removed and recreated.
 
         Returns:
@@ -110,7 +107,7 @@ class ModernScanFileSystem:
 
     def fresh_empty_multiples_vis_dir(self) -> Path:
         """
-        Get the multiples visualization directory path, ensuring it's new and empty.
+        Get the multiples' visualization directory path, ensuring it is new and empty.
         If the directory exists, it will be removed and recreated.
 
         Returns:
@@ -124,7 +121,7 @@ class ModernScanFileSystem:
 
     def get_multiples_files_modified_before_separation_done(self) -> List[str]:
         """
-        Get all files in the multiples visualization directory that were last modified
+        Get all files in the multiples' visualization directory that were last modified
         before the separation_done.txt file was created.
 
         Returns:
