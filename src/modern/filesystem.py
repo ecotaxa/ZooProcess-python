@@ -7,9 +7,9 @@ from typing import List
 
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.ids import mask_file_name
-from modern.ids import THE_SCAN_PER_SUBSAMPLE
+from modern.ids import THE_SCAN_PER_SUBSAMPLE, scan_name_from_subsample_name
 
-TOP_V10_DIR = "ZPv10"  # For unique files
+TOP_V10_DIR = "_v10work"
 V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
 V10_THUMBS_TO_CHECK_SUBDIR = "v10_multiples"  # Where and how ML (or user) determined we should separate, RGB PNGs
 V10_THUMBS_AFTER_SUBDIR = (
@@ -32,15 +32,11 @@ class ModernScanFileSystem:
         self, zoo_project: ZooscanProjectFolder, sample_name: str, subsample_name: str
     ):
         """
-        Initialize with a legacy work directory.
+        Initialize with a work directory aside the legacy one.
         """
         self.subsample_name = subsample_name
-        self.work_dir = (
-            zoo_project.zooscan_scan.work.get_sub_directory(
-                subsample_name, THE_SCAN_PER_SUBSAMPLE
-            )
-            / TOP_V10_DIR
-        )
+        scan_name = scan_name_from_subsample_name(subsample_name)
+        self.work_dir = zoo_project.zooscan_scan.path / TOP_V10_DIR / scan_name
         if not self.work_dir.exists():
             os.makedirs(self.work_dir, exist_ok=True)
 

@@ -118,15 +118,6 @@ class VignettesToAutoSeparated(Job):
 
     def _cleanup_work(self):
         """Cleanup the files that the present process is going to (re) create"""
-        # work_files = self.zoo_project.zooscan_scan.work.get_files(
-        #     self.subsample_name, THE_SCAN_PER_SUBSAMPLE
-        # )
-        # if WRK_MSK1 in work_files:
-        #     the_work_file = work_files[WRK_MSK1]
-        #     assert isinstance(
-        #         the_work_file, Path
-        #     ), f"Unexpected {WRK_MSK1} (not a file?)!"
-        #     os.remove(the_work_file)
 
 
 def generate_box_measures(rois: List[ROI], scan_name: str, meta_file: Path) -> None:

@@ -78,7 +78,9 @@ def tsv_export_from_legacy_segmentation(project, sample, subsample):
         zoo_project.zooscan_config.read_lut(),
     )
 
-    work_files = zoo_project.zooscan_scan.work.get_files(subsample.name, 1)
+    work_files = zoo_project.zooscan_scan.work.get_files(
+        subsample.name, 1
+    )  # Dig in Legacy work dir
     if WRK_TSV not in work_files or WRK_MEAS not in work_files:
         return
 

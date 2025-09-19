@@ -53,7 +53,6 @@ from modern.jobs.VignettesToAutoSep import VignettesToAutoSeparated
 from modern.subsample import get_project_scans_metadata, add_subsample
 from modern.tasks import JobScheduler, Job
 from modern.utils import job_to_task_rsp
-from remote.DB import DB
 from .utils import validate_path_components
 
 # Create a router instance
@@ -452,6 +451,8 @@ async def get_subsample_scan(
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample.
         img_name (str): The name of the image to return.
+            "scan.jpg" magic file is the RAW scan converted for display.
+            Others are for browsing the _work folder, which might not exists outside archived projects.
 
     Returns:
         StreamingResponse: The scan image as a streaming response.
@@ -468,15 +469,13 @@ async def get_subsample_scan(
     )
 
     # Get the files for the subsample
-    try:
+    work_path = zoo_project.zooscan_scan.work.path
+    if work_path.exists():
         subsample_files = zoo_project.zooscan_scan.work.get_files(
             subsample_name, THE_SCAN_PER_SUBSAMPLE
         )
-    except Exception as e:
-        raise_404(
-            f"Scan image not found (error getting files) for subsample {subsample_name}"
-        )
-        assert False
+    else:
+        subsample_files = dict()
 
     if img_name == SCAN_JPEG:
         real_file = zoo_project.zooscan_scan.get_8bit_file(
