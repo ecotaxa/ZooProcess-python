@@ -3,11 +3,12 @@ import os
 from datetime import datetime
 from logging import getLogger
 from pathlib import Path
-from typing import List, Dict, Type
+from typing import List, Dict, Type, Iterator, Tuple
 
 import numpy as np
+import pytest
 
-from Models import SubSampleStateEnum
+from Models import Sample, SubSample
 from ZooProcess_lib.Features import BOX_MEASUREMENTS, TYPE_BY_LEGACY, TYPE_BY_ECOTAXA
 from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ROI import ROI, ecotaxa_tsv_unq
@@ -24,9 +25,11 @@ HERE = Path(__file__).parent
 logger = getLogger(__name__)
 
 
-def test_project_export():
+def list_projects_and_sample() -> (
+    Iterator[Tuple[ZooscanProjectFolder, Sample, SubSample]]
+):
     """
-    Regression testing of TSV export.
+    Generator yielding (zoo_project, sample, subsampe) for (sub)samples with legacy TSV export data
     """
     os.environ["APP_ENV"] = "dev"
     os.chdir(HERE.parent)
@@ -38,11 +41,17 @@ def test_project_export():
     projects = list_all_projects(next(get_db()), config_rdr.config.get_drives(), 3)
 
     for project in projects:
+        zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(
+            project.name
+        )
         for sample in project.samples:
             for subsample in sample.subsample:
-                if subsample.state != SubSampleStateEnum.SEPARATION_VALIDATION_DONE:
+                work_files = zoo_project.zooscan_scan.work.get_files(
+                    subsample.name, 1
+                )  # Dig in Legacy work dir
+                if WRK_TSV not in work_files or WRK_MEAS not in work_files:
                     continue
-                tsv_export_from_legacy_segmentation(project, sample, subsample)
+                yield zoo_project, sample, subsample
 
 
 def to_object_keys(feat: Dict) -> Dict:
@@ -63,7 +72,19 @@ def remove_object_features(rows: List[Dict]) -> None:
             del row[k]
 
 
-def tsv_export_from_legacy_segmentation(project, sample, subsample):
+project_set = [(prj, sam, ssam) for (prj, sam, ssam) in list_projects_and_sample()]
+
+
+@pytest.mark.parametrize(
+    "zoo_project, sample, subsample",
+    project_set,
+    ids=[
+        prj.path.name + ":" + subsample.name for (prj, sample, subsample) in project_set
+    ],
+)
+def test_tsv_export_from_legacy_segmentation(
+    zoo_project: ZooscanProjectFolder, sample: Sample, subsample: SubSample
+):
     from modern.ids import scan_name_from_subsample_name
     from modern.jobs.VignettesToAutoSep import (
         get_scan_and_backgrounds,
@@ -72,7 +93,6 @@ def tsv_export_from_legacy_segmentation(project, sample, subsample):
     from providers.ecotaxa_tsv import TSV_HEADER
 
     scan_name = scan_name_from_subsample_name(subsample.name)
-    zoo_project = ZooscanDrive(Path(project.drive.url)).get_project_folder(project.name)
     processor = Processor.from_legacy_config(
         zoo_project.zooscan_config.read(),
         zoo_project.zooscan_config.read_lut(),
@@ -81,8 +101,6 @@ def tsv_export_from_legacy_segmentation(project, sample, subsample):
     work_files = zoo_project.zooscan_scan.work.get_files(
         subsample.name, 1
     )  # Dig in Legacy work dir
-    if WRK_TSV not in work_files or WRK_MEAS not in work_files:
-        return
 
     raw_scan, bg_scans = get_scan_and_backgrounds(logger, zoo_project, subsample.name)
     scan_resolution = 2400
@@ -133,7 +151,7 @@ def tsv_export_from_legacy_segmentation(project, sample, subsample):
     legacy_tsv.sort(key=ecotaxa_tsv_unq)
     remove_object_features(legacy_tsv)
 
-    assert legacy_tsv[0] == generated_tsv[0]
+    assert generated_tsv[0] == legacy_tsv[0]
 
 
 # Dup code from lib tests TODO

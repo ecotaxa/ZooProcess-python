@@ -1,7 +1,3 @@
-import sys
-import os
-import pytest
-
 from modern.utils import extract_serial_number
 
 

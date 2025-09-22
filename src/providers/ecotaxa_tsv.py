@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 
 from ZooProcess_lib.Extractor import Extractor
 from ZooProcess_lib.Features import ECOTAXA_TSV_ROUNDINGS
@@ -14,83 +14,40 @@ from legacy.samples import read_samples_metadata_table, find_sample_metadata
 from legacy.scans import find_scan_metadata, read_scans_metadata_table
 from modern.from_legacy import sample_from_legacy_meta
 from modern.ids import THE_SCAN_PER_SUBSAMPLE
+from modern.utils import extract_serial_number
 from version import version_hash
 
 SOFTWARE_FOR_TSVS = "zooprocess_10_0"
 
 
-def get_hardware(scanner: Union[str, None]) -> str:
-    """
-    Ported from legacy macro Zooscan_define_zooscan_version.txt.
-    Map scanner model names to Zooscan hardware generation names.
-
-    Known inputs include:
-      - Photosmart5520, Photosmart4870 -> Other
-      - no_scanner -> Zooscan_not_connected
-      - Perfection2450 -> CNRS_prototype
-      - Perfection4990 -> Hydroptic_V1
-      - Perfection4490 -> Hydroptic_V2
-      - PerfectionV700, PerfectionV750, GT-X900, GT-X970 -> Hydroptic_V3
-      - PerfectionV800, PerfectionV850, GT-X980 -> Hydroptic_V4
-
-    The input string can come from ScanLog scanner source and
-    may include vendor prefixes, spaces or hyphens; matching is case-insensitive.
-    """
-    if not scanner:
+def get_hardware(scanner: Optional[str]) -> str:
+    """Return Zooscan hardware generation from a scanner model using a lookup table."""
+    if scanner is None:
         return "unknown"
 
-    s = scanner.strip().lower()
-    # Remove common vendor prefixes and extra spaces
-    for vendor in ("epson", "hewlett-packard", "hewlett packard", "hp"):
-        if s.startswith(vendor):
-            s = s[len(vendor) :].strip()
-            break
-    # Normalize separators and remove spaces
-    s_norm = (
-        s.replace(" ", "").replace("_", "").replace("-", "-")
-    )  # keep hyphen for GT-X models
-    # Also a version without hyphen for easier matching
-    s_flat = s_norm.replace("-", "")
-
-    def any_in(*keys: str) -> bool:
-        return any(k in s_flat for k in keys)
-
-    if any_in("photosmart5520", "photosmart4870"):
-        return "Other"
-    if any_in("noscanner"):
-        return "Zooscan_not_connected"
-    if any_in("perfection2450"):
-        return "CNRS_prototype"
-    if any_in("perfection4990"):
-        return "Hydroptic_V1"
-    if any_in("perfection4490"):
-        return "Hydroptic_V2"
-    if any_in("perfectionv700", "perfectionv750", "gtx900", "gtx970"):
-        return "Hydroptic_V3"
-    if any_in("perfectionv800", "perfectionv850", "gtx980"):
-        return "Hydroptic_V4"
-
-    # Fallback: try direct exact tokens present in original string
-    tokens = {
-        "PerfectionV700": "Hydroptic_V3",
-        "PerfectionV750": "Hydroptic_V3",
-        "GT-X900": "Hydroptic_V3",
-        "GT-X970": "Hydroptic_V3",
-        "PerfectionV800": "Hydroptic_V4",
-        "PerfectionV850": "Hydroptic_V4",
-        "GT-X980": "Hydroptic_V4",
-        "Perfection4990": "Hydroptic_V1",
-        "Perfection4490": "Hydroptic_V2",
-        "Perfection2450": "CNRS_prototype",
+    table = {
+        # Others / not real zooscan
+        "photosmart5520": "Other",
+        "photosmart4870": "Other",
+        # Not connected
         "no_scanner": "Zooscan_not_connected",
-        "Photosmart5520": "Other",
-        "Photosmart4870": "Other",
+        # CNRS prototype
+        "perfection2450": "CNRS_prototype",
+        # Hydroptic versions
+        "perfection4990": "Hydroptic_V1",
+        "perfection4490": "Hydroptic_V2",
+        # V3
+        "perfectionv700": "Hydroptic_V3",
+        "perfectionv750": "Hydroptic_V3",
+        "gt-x900": "Hydroptic_V3",
+        "gt-x970": "Hydroptic_V3",
+        # V4
+        "perfectionv800": "Hydroptic_V4",
+        "perfectionv850": "Hydroptic_V4",
+        "gt-x980": "Hydroptic_V4",
     }
-    for k, v in tokens.items():
-        if k.lower().replace(" ", "") in s_flat:
-            return v
 
-    return "unknown"
+    return table.get(scanner.lower(), "unknown")
 
 
 LEGACY_COLUMNS = (
@@ -177,6 +134,10 @@ def float_or_int(value: Union[float, str]) -> Union[float, int]:
     if float.is_integer(ret):
         return int(ret)
     return ret
+
+
+def to_nan_if_nan(value: str) -> str:
+    return "nan" if str(value) == "NaN" else value
 
 
 class EcoTaxaTSV:
@@ -316,7 +277,7 @@ class EcoTaxaTSV:
             "sample_tot_vol_qc": float_or_int(sample_meta["vol_qc"]),
             "sample_depth_qc": float_or_int(sample_meta["depth_qc"]),
             "sample_sample_qc": float_or_int(sample_meta["sample_qc"]),
-            "sample_barcode": sample_meta["barcode"],
+            "sample_barcode": to_nan_if_nan(sample_meta["barcode"]),
             "sample_duration": float_or_int(sample_meta["net_duration"]),
             "sample_ship_speed": float_or_int(sample_meta["ship_speed_knots"]),
             "sample_cable_length": float_or_int(sample_meta["cable_length"]),
@@ -348,9 +309,12 @@ class EcoTaxaTSV:
             scan_log_meta.scanning_date
         )
         acq_id = scan_csv_meta["fracid"] + "_" + self.sample_name
+        zooscan_sn = extract_serial_number(self.zoo_project.path.name)
+        if zooscan_sn.endswith("???"):
+            zooscan_sn = "nan"
         return {
             "acq_id": acq_id,
-            # "acq_instrument": "",  # zooscan serial number
+            "acq_instrument": f"zooscan_{zooscan_sn}",  # zooscan serial number
             "acq_min_mesh": scan_csv_meta[
                 "fracmin"
             ],  # minimum mesh size for the sieving of the scanned fraction of the sample [µm]
@@ -371,7 +335,9 @@ class EcoTaxaTSV:
             "acq_imgtype": "zooscan",  # type of instrument utilized to scan the image
             "acq_scan_date": acq_date,  # date of the scan of the fraction [YYYYMMDD]
             "acq_scan_time": acq_time,  # time of the scan of the fraction [HHMMSS]
-            "acq_quality": "nan",  # scanned image quality index for scaning applications version before 9.7.67
+            "acq_quality": (
+                "nan" if scan_log_meta.quality == -1 else scan_log_meta.quality
+            ),  # scanned image quality index for scaning applications version before 9.7.67
             "acq_bitpixel": scan_log_meta.bits_per_pixel,  # 16 bits raw image coded grey scale
             "acq_greyfrom": scan_log_meta.make_gray_from,
             # index of the RGB chanel utilized to make the grey level image
@@ -383,9 +349,9 @@ class EcoTaxaTSV:
             "acq_ysize": scan_log_meta.preview_y_size,  # height of the scanned image [pixels]
             "acq_xoffset": scan_log_meta.preview_x_offset,  # x position of the scanned area [pixel]
             "acq_yoffset": scan_log_meta.preview_y_offset,  # y position of the scanned area [pixel]
-            "acq_lut_color_balance": "",
+            "acq_lut_color_balance": "manual",
             # type of conversion of the scanned 16 bit image to 8 bit image for the process (manual indicates that the zooprocess default method is utilized)
-            "acq_lut_filter": lut.adjust,  # na
+            "acq_lut_filter": lut.adjust,
             "acq_lut_min": min_rec,
             # zooprocess calculated black point for the 16 bits to 8 bit conversion of the scanned image
             "acq_lut_max": max_rec,
