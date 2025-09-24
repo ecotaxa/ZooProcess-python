@@ -3,16 +3,16 @@
 # Copyright (C) 2015-2021  Picheral, Colin, Irisson (UPMC-CNRS)
 #
 import logging
+import os
 import threading
 import time
-import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from logging import Logger
 from pathlib import Path
 from threading import Thread, Event
-from typing import Any, Optional, Tuple, List
+from typing import Any, Optional, Tuple, List, Callable
 
 from helpers.logger import logger, logs_dir, NullLogger
 
@@ -122,13 +122,13 @@ class Job(ABC):
         self.logger.debug(f"Job {self.job_id} finished at {self.updated_at}")
         logger.info(f"Job {self.job_id} finished at {self.updated_at}")
 
-    def is_done(self):
+    def is_done(self) -> bool:
         return self.state in (JobStateEnum.Finished, JobStateEnum.Error)
 
-    def will_do(self):
+    def will_do(self) -> bool:
         return self.state in (JobStateEnum.Pending, JobStateEnum.Running)
 
-    def is_in_error(self):
+    def is_in_error(self) -> bool:
         return self.state in (JobStateEnum.Error,)
 
 
@@ -340,13 +340,14 @@ class JobScheduler:
         logger.info(f"Job #{task.job_id} submitted")
 
     @classmethod
-    def find_effective_jobs_like(cls, task: Job) -> List[Job]:
+    def find_jobs_like(cls, task: Job, state_def: Callable[[Job], bool]) -> List[Job]:
         """
         Find jobs matching exactly the class and params of the provided job, and able
         to complete the task.
 
         Args:
             task: The job to match.
+            state_def: a function to filter jobs.
 
         Returns:
             All jobs matching the class and parameters of the provided job.
@@ -355,8 +356,9 @@ class JobScheduler:
             ret = []
             for job in cls._jobs:
                 # Check if the job is of the same class type
-                if isinstance(job, type(task)):
-                    if job.params == task.params:
-                        if job.will_do():
-                            ret.append(job)
+                if not isinstance(job, type(task)):
+                    continue
+                if job.params == task.params:
+                    if state_def(job):
+                        ret.append(job)
             return sorted(ret, key=lambda a_job: a_job.created_at, reverse=True)

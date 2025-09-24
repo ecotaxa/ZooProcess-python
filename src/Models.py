@@ -84,9 +84,13 @@ class SubSampleStateEnum(str, Enum):
 
     EMPTY = "EMPTY"  # No scanned image, but some data suggests it should come
     ACQUIRED = "ACQUIRED"  # There is a scanned image
+    SEGMENTATION_FAILED = "SEGMENTATION_FAILED"  # Something went wrong while segmenting/counting potential multiples
     SEGMENTED = "SEGMENTED"  # Segmentation and MSK generation took place
     MSK_APPROVED = (
         "MSK_APPROVED"  # Visual check of MSK and object count was made and OK
+    )
+    MULTIPLES_GENERATION_FAILED = (
+        "MULTIPLES_GENERATION_FAILED"  # Something went wrong generating multiples
     )
     MULTIPLES_GENERATED = "MULTIPLES_GENERATED"  # ML determined multiples
     SEPARATION_VALIDATION_DONE = (
@@ -94,6 +98,7 @@ class SubSampleStateEnum(str, Enum):
     )
     UPLOADING = "UPLOADING"  # Transferring to EcoTaxa
     UPLOADED = "UPLOADED"  # Final state, all went into EcoTaxa
+    UPLOAD_FAILED = "UPLOAD_FAILED"  # Something went while uploading
 
 
 class SubSample(BaseModel):

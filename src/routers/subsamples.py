@@ -1,7 +1,7 @@
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Callable
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -292,20 +292,23 @@ def process_subsample(
     )
     modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
     state = modern_subsample_state(zoo_project, sample_name, subsample_name, modern_fs)
-    to_launch: Job | None
+    to_launch: Job | None = None
+    # noinspection PyTypeChecker
+    job_state: Callable[[Job], bool] = Job.will_do
     match state:
-        case SubSampleStateEnum.ACQUIRED:
+        case SubSampleStateEnum.ACQUIRED | SubSampleStateEnum.SEGMENTATION_FAILED:
             to_launch = FreshScanToVignettes(zoo_project, sample_name, subsample_name)
+            if state == SubSampleStateEnum.SEGMENTATION_FAILED:
+                # noinspection PyTypeChecker
+                job_state = Job.is_in_error
         case SubSampleStateEnum.MSK_APPROVED:
             to_launch = VignettesToAutoSeparated(
                 zoo_project, sample_name, subsample_name
             )
-        case _:
-            to_launch = None
     ret: Job | None = None
     if to_launch is not None:
         with JobScheduler.jobs_lock:
-            there_tasks = JobScheduler.find_effective_jobs_like(to_launch)
+            there_tasks = JobScheduler.find_jobs_like(to_launch, job_state)
             if len(there_tasks) == 0:
                 JobScheduler.submit(to_launch)
                 ret = to_launch

@@ -39,6 +39,7 @@ def modern_subsample_state(
         ret = SubSampleStateEnum.ACQUIRED
 
     msk_file_path = modern_fs.MSK_file_path
+    scores_file_path = modern_fs.scores_file_path
     if ret == SubSampleStateEnum.ACQUIRED:
         scan_date = file_date(
             raw_scan
@@ -49,7 +50,10 @@ def modern_subsample_state(
             and msk_file_path.exists()
             and file_date(msk_file_path) > scan_date
         ):
-            ret = SubSampleStateEnum.SEGMENTED
+            if scores_file_path.exists():
+                ret = SubSampleStateEnum.SEGMENTED
+            else:
+                ret = SubSampleStateEnum.SEGMENTATION_FAILED
 
     if ret == SubSampleStateEnum.SEGMENTED:
         valid_msk = modern_fs.MSK_validated_file_path

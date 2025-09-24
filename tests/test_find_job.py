@@ -50,7 +50,7 @@ def test_find_job_same_class_and_params(clear_jobs):
     job2 = FakeTestJob(param1="value1", param2="value2")
 
     # Find the job using the find_job method
-    found_job = JobScheduler.find_effective_jobs_like(job2)
+    found_job = JobScheduler.find_jobs_like(job2, Job.will_do)
 
     # Assert that the found job is the same as the submitted job
     assert len(found_job) == 1
@@ -68,7 +68,7 @@ def test_find_job_different_params(clear_jobs):
     job2 = FakeTestJob(param1="value1", param2="different_value")
 
     # Find the job using the find_job method
-    found_job = JobScheduler.find_effective_jobs_like(job2)
+    found_job = JobScheduler.find_jobs_like(job2, Job.will_do)
 
     # Assert that no job is found
     assert len(found_job) == 0
@@ -85,7 +85,7 @@ def test_find_job_different_class(clear_jobs):
     job2 = AnotherTestJob(param1="value1", param2="value2")
 
     # Find the job using the find_job method
-    found_job = JobScheduler.find_effective_jobs_like(job2)
+    found_job = JobScheduler.find_jobs_like(job2, Job.will_do)
 
     # Assert that no job is found
     assert len(found_job) == 0
