@@ -11,19 +11,19 @@ from Models import (
     SubSample,
     SubSampleIn,
     LinkBackgroundReq,
-    ScanToUrlReq,
-    User,
     ScanPostRsp,
     ProcessRsp,
     MarkSubsampleReq,
     SubSampleStateEnum,
     ExportSubsampleReq,
     ExportSubsampleRsp,
+    User,
+    ScanToUrlReq,
 )
 from ZooProcess_lib.Processor import Processor
 from helpers.auth import get_current_user_from_credentials, decode_jwt_token
 from helpers.logger import logger
-from helpers.web import raise_404, get_stream, raise_422
+from helpers.web import raise_404, get_stream, raise_422, raise_500
 from img_proc.convert import convert_image_for_display
 from legacy.ids import raw_file_name
 from legacy.scans import find_scan_metadata, sub_scans_metadata_table_for_sample
@@ -237,10 +237,50 @@ def delete_subsample(
     _zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
         db, project_hash, sample_hash, subsample_hash
     )
-
     modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
-    msk_path = modern_fs.MSK_file_path
+    state = modern_subsample_state(zoo_project, sample_name, subsample_name, modern_fs)
 
+    message = "nothing to do"
+    match state:
+        case SubSampleStateEnum.SEGMENTATION_FAILED:
+            result = remove_MSK(modern_fs, sample_name, subsample_name)
+            message = f"MSK file for subsample {subsample_name} {result}"
+        case SubSampleStateEnum.MULTIPLES_GENERATION_FAILED:
+            result = remove_multiples_dir(modern_fs, sample_name, subsample_name)
+            message = f"Thumbs directory for subsample {subsample_name} {result}"
+
+    return {"message": message}
+
+
+def remove_multiples_dir(
+    modern_fs: ModernScanFileSystem, sample_name: str, subsample_name: str
+) -> str:
+    to_erase = modern_fs.multiples_vis_dir
+    try:
+        if to_erase.exists():
+            shutil.rmtree(to_erase)
+            logger.info(
+                f"Deleted thumbs directory for subsample {subsample_name} in sample {sample_name}: {to_erase}"
+            )
+            result = "deleted"
+        else:
+            logger.info(
+                f"No thumbs directory found to delete for subsample {subsample_name} in sample {sample_name}: {to_erase}"
+            )
+            result = "not_found"
+    except Exception as e:
+        logger.error(
+            f"Error deleting thumbs directory for subsample {subsample_name} in sample {sample_name}: {e}"
+        )
+        result = "?"
+        raise_500(str(e))
+    return result
+
+
+def remove_MSK(
+    modern_fs: ModernScanFileSystem, sample_name: str, subsample_name: str
+) -> str:
+    msk_path = modern_fs.MSK_file_path
     try:
         if msk_path.exists():
             msk_path.unlink()
@@ -257,9 +297,9 @@ def delete_subsample(
         logger.error(
             f"Error deleting MSK file for subsample {subsample_name} in sample {sample_name}: {e}"
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return {"message": f"MSK file for subsample {subsample_name} {result}"}
+        result = "?"
+        raise_500(str(e))
+    return result
 
 
 @router.post("/{subsample_hash}/process")
@@ -301,10 +341,16 @@ def process_subsample(
             if state == SubSampleStateEnum.SEGMENTATION_FAILED:
                 # noinspection PyTypeChecker
                 job_state = Job.is_in_error
-        case SubSampleStateEnum.MSK_APPROVED:
+        case (
+            SubSampleStateEnum.MSK_APPROVED
+            | SubSampleStateEnum.MULTIPLES_GENERATION_FAILED
+        ):
             to_launch = VignettesToAutoSeparated(
                 zoo_project, sample_name, subsample_name
             )
+            if state == SubSampleStateEnum.MULTIPLES_GENERATION_FAILED:
+                # noinspection PyTypeChecker
+                job_state = Job.is_in_error
     ret: Job | None = None
     if to_launch is not None:
         with JobScheduler.jobs_lock:

@@ -62,12 +62,11 @@ def modern_subsample_state(
 
     multiples_dir = modern_fs.multiples_vis_dir
     if ret == SubSampleStateEnum.MSK_APPROVED:
-        if (
-            multiples_dir.exists()
-            and count_files_in_dir(multiples_dir) >= 0
-            and modern_fs.SEP_generated_file_path.exists()
-        ):
-            ret = SubSampleStateEnum.MULTIPLES_GENERATED
+        if multiples_dir.exists() and count_files_in_dir(multiples_dir) >= 0:
+            if modern_fs.SEP_generated_file_path.exists():
+                ret = SubSampleStateEnum.MULTIPLES_GENERATED
+            else:
+                ret = SubSampleStateEnum.MULTIPLES_GENERATION_FAILED
 
     separation_approved = modern_fs.SEP_validated_file_path
     if ret == SubSampleStateEnum.MULTIPLES_GENERATED:
