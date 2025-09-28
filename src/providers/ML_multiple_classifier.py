@@ -28,7 +28,10 @@ def classify_all_images_from(
     image_names: Optional[List[str]] = None,
 ) -> Tuple[List[NameAndScore], Optional[str]]:
     """
-    Process multiple images using the classifier service and parse the JSON responses.
+    Process multiple images using the classifier service, parsing its JSON response.
+    Returns a list of NameAndScore objects, one for each image which:
+    - Has a higher score than the min_score, i.e. is 'likely' to be a multiple.
+    - Is not too big (work around ML Separator weakness on large images).
 
     Args:
         logger: Logger instance
@@ -63,8 +66,9 @@ def classify_all_images_from(
     above_threshold = [
         NameAndScore(name, score)
         for name, score in all_scores.items()
-        if score > min_score
+        if score > min_score and image_list.size_by_name[name] < 2_000_000
     ]
+
     with open(scores_path, "w") as scores_file:
         json.dump(all_scores, scores_file)
     os.unlink(zip_path)

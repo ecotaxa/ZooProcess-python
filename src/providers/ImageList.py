@@ -4,7 +4,7 @@ import tempfile
 import zipfile
 from logging import Logger
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 from zipfile import ZipInfo
 
 from PIL import Image
@@ -33,6 +33,7 @@ class ImageList:
             self.images = images
         else:
             self._load_images()
+        self.size_by_name: Dict[str, int] = {}
 
     def _load_images(self) -> None:
         """
@@ -144,6 +145,7 @@ class ImageList:
                         zip_file.writestr(ZipInfo(image_name), img_buffer.getvalue())
                     else:
                         zip_file.write(image_path, arcname=image_name)
+                    self.size_by_name[image_name] = pil_img.size[0] * pil_img.size[1]
 
             logger.debug(
                 f"Successfully created zip file with {len(image_names)} images from ImageList at {temp_zip_path}"

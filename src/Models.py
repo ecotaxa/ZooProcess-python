@@ -385,7 +385,9 @@ class MultiplesClassifierRsp(BaseModel):
     """Model for the response from the classifier service"""
 
     names: List[str]  # The input file names
-    scores: List[float]  # Probability there is a multiple in the corresponding image
+    scores: List[
+        float
+    ]  # Probability that there is a multiple in the corresponding image
 
     @field_validator("scores")
     def validate_lists_equal_length(cls, v, info):

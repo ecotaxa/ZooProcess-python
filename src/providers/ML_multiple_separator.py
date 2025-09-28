@@ -26,7 +26,9 @@ def ping_separator_server(log_to: Logger):
 
 def separate_each_image_from(
     path: Path,
-) -> List[Tuple[str, Optional[MultiplesSeparatorRsp], Optional[str]]]:
+) -> List[
+    Tuple[str, Optional[MultiplesSeparatorRsp], Optional[str]]
+]:  # Unused # mypy:ignore
     """
     Process multiple images using the separator service, one call per file.
 
@@ -225,7 +227,9 @@ def call_separate_server(
 
 def do_separation_file_by_file(
     to_separate: Path,
-) -> List[Tuple[str, Optional[MultiplesSeparatorRsp], Optional[str]]]:
+) -> List[
+    Tuple[str, Optional[MultiplesSeparatorRsp], Optional[str]]
+]:  # Unused # mypy:ignore
     """
     Process all jpg files in a directory using the separator service and parse the JSON responses.
 
