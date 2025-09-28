@@ -73,6 +73,15 @@ def modern_subsample_state(
         if separation_approved.exists():
             ret = SubSampleStateEnum.SEPARATION_VALIDATION_DONE
 
+    upload_done = modern_fs.upload_done_path
+    upload_zip = modern_fs.zip_for_upload
+    if ret == SubSampleStateEnum.SEPARATION_VALIDATION_DONE:
+        if upload_zip.exists():
+            if upload_done.exists():
+                ret = SubSampleStateEnum.UPLOADED
+            else:
+                ret = SubSampleStateEnum.UPLOAD_FAILED
+
     return ret
 
 

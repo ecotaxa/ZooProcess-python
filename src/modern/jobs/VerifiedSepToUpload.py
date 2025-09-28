@@ -1,6 +1,7 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
 
 import zipfile
+from datetime import datetime
 from pathlib import Path
 import shutil
 
@@ -49,7 +50,6 @@ class VerifiedSeparationToEcoTaxa(Job):
         self.sample_name = sample_name
         self.subsample_name = subsample_name
         self.token = token
-        self.dst_project_id = int(dst_project_id)
         # Derived
         self.scan_name = scan_name_from_subsample_name(subsample_name)
         # Modern side
@@ -68,8 +68,7 @@ class VerifiedSeparationToEcoTaxa(Job):
         )
         # All vignettes should be generated and fresher than origin data
         thumbs_dir = self.modern_fs.cut_dir
-        # TODO, including some force option for dev
-        # All separated vignettes should be processed, i.e. written after marker file
+        # All separated vignettes should be processed, i.e., written after the marker file
 
     def run(self):
         # self._cleanup_work()
@@ -177,6 +176,8 @@ class VerifiedSeparationToEcoTaxa(Job):
         if final_job_state.state != "F":
             assert final_job_state.errors is not None
             assert False, "Job failed:" + "\n".join(final_job_state.errors)
+
+        self.modern_fs.mark_upload_done(datetime.now())
 
     def log_image_diffs(self, before_cuts, after_cuts):
         """

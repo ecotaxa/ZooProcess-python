@@ -23,6 +23,7 @@ SEPARATION_VALIDATED_TXT = "separation_validated.txt"
 SCORE_PER_IMAGE = "score_per_image.json"
 ML_MSK_OK_TXT = "MSK_validated.txt"
 ECOTAXA_ZIP = "ecotaxa_upload.zip"
+UPLOAD_DONE_TXT = "upload_done.txt"
 
 
 class ModernScanFileSystem:
@@ -212,3 +213,12 @@ class ModernScanFileSystem:
     @property
     def zip_for_upload(self):
         return self.meta_dir / ECOTAXA_ZIP
+
+    @property
+    def upload_done_path(self):
+        return self.meta_dir / UPLOAD_DONE_TXT
+
+    def mark_upload_done(self, event_date: datetime):
+        self.ensure_meta_dir()
+        with open(self.upload_done_path, "w") as f:
+            f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))

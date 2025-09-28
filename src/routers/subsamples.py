@@ -15,7 +15,6 @@ from Models import (
     ProcessRsp,
     MarkSubsampleReq,
     SubSampleStateEnum,
-    ExportSubsampleReq,
     ExportSubsampleRsp,
     User,
     ScanToUrlReq,
@@ -248,6 +247,9 @@ def delete_subsample(
         case SubSampleStateEnum.MULTIPLES_GENERATION_FAILED:
             result = remove_multiples_dir(modern_fs, sample_name, subsample_name)
             message = f"Thumbs directory for subsample {subsample_name} {result}"
+        case SubSampleStateEnum.UPLOAD_FAILED:
+            result = remove_upload_zip(modern_fs, sample_name, subsample_name)
+            message = f"Zip for subsample {subsample_name} {result}"
 
     return {"message": message}
 
@@ -296,6 +298,31 @@ def remove_MSK(
     except Exception as e:
         logger.error(
             f"Error deleting MSK file for subsample {subsample_name} in sample {sample_name}: {e}"
+        )
+        result = "?"
+        raise_500(str(e))
+    return result
+
+
+def remove_upload_zip(
+    modern_fs: ModernScanFileSystem, sample_name: str, subsample_name: str
+) -> str:
+    upload_zip_path = modern_fs.zip_for_upload
+    try:
+        if upload_zip_path.exists():
+            upload_zip_path.unlink()
+            logger.info(
+                f"Deleted ZIP file for subsample {subsample_name} in sample {sample_name}: {upload_zip_path}"
+            )
+            result = "deleted"
+        else:
+            logger.info(
+                f"No ZIP file found to delete for subsample {subsample_name} in sample {sample_name}: {upload_zip_path}"
+            )
+            result = "not_found"
+    except Exception as e:
+        logger.error(
+            f"Error deleting ZIP file for subsample {subsample_name} in sample {sample_name}: {e}"
         )
         result = "?"
         raise_500(str(e))
@@ -351,6 +378,17 @@ def process_subsample(
             if state == SubSampleStateEnum.MULTIPLES_GENERATION_FAILED:
                 # noinspection PyTypeChecker
                 job_state = Job.is_in_error
+        case (
+            SubSampleStateEnum.SEPARATION_VALIDATION_DONE
+            | SubSampleStateEnum.UPLOAD_FAILED
+        ):
+            to_launch = VerifiedSeparationToEcoTaxa(
+                zoo_project, sample_name, subsample_name, None
+            )
+            if state == SubSampleStateEnum.UPLOAD_FAILED:
+                # noinspection PyTypeChecker
+                job_state = Job.is_in_error
+
     ret: Job | None = None
     if to_launch is not None:
         with JobScheduler.jobs_lock:
@@ -427,7 +465,6 @@ def export_subsample(
     project_hash: str,
     sample_hash: str,
     subsample_hash: str,
-    export_data: ExportSubsampleReq,
     _user=Depends(get_current_user_from_credentials),
     db: Session = Depends(get_db),
 ) -> ExportSubsampleRsp:
@@ -438,7 +475,6 @@ def export_subsample(
         project_hash (str): The ID of the project.
         sample_hash (str): The hash of the sample.
         subsample_hash (str): The hash of the subsample to process.
-        export_data (ExportSubsampleReq): EcoTaxa token and destination project ID
         _user: User from authentication.
         db: Database dependency.
 
