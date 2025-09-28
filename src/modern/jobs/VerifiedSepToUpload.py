@@ -1,6 +1,8 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
 
 import zipfile
+from pathlib import Path
+import shutil
 
 import cv2
 
@@ -17,7 +19,7 @@ from legacy.ids import (
     ecotaxa_tsv_file_name,
 )
 from modern.filesystem import ModernScanFileSystem
-from modern.ids import scan_name_from_subsample_name
+from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
 from modern.jobs.VignettesToAutoSep import (
     get_scan_and_backgrounds,
     convert_scan_and_backgrounds,
@@ -90,6 +92,12 @@ class VerifiedSeparationToEcoTaxa(Job):
             measures,
             modern_fs.multiples_vis_dir,
             modern_fs.cut_dir,
+            msk_file_path,
+            sep_file_path,
+        )
+        copy_to_legacy_work(
+            self.zoo_project,
+            self.subsample_name,
             msk_file_path,
             sep_file_path,
         )
@@ -210,4 +218,41 @@ class VerifiedSeparationToEcoTaxa(Job):
         #         self.logger.info(f"  - {img}")
 
     def _cleanup_work(self):
-        """Cleanup the files that the present process is going to (re) create"""
+        """Clean up the files that the present process is going to (re) create"""
+
+
+def copy_to_legacy_work(
+    zoo_project: ZooscanProjectFolder,
+    subsample_name: str,
+    msk_file_path: Path,
+    sep_file_path: Path,
+) -> None:
+    """Copy MSK and SEP files into the legacy _work directory for the subsample.
+
+    Args:
+        zoo_project: The legacy project folder object (filesystem accessor).
+        subsample_name: The subsample name (base of scan name).
+        msk_file_path: Source path of the generated mask GIF file.
+        sep_file_path: Source path of the generated separator GIF file.
+    """
+    # Ensure source files exist
+    if not msk_file_path.exists():
+        raise FileNotFoundError(f"MSK file not found: {msk_file_path}")
+    if not sep_file_path.exists():
+        raise FileNotFoundError(f"SEP file not found: {sep_file_path}")
+
+    # Legacy work directory is Zooscan_scan/_work/<scan_name>
+    work_dir, _ = zoo_project.zooscan_scan.work.get_path_for(
+        subsample_name, THE_SCAN_PER_SUBSAMPLE
+    )
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Destination file names follow legacy conventions
+    dst_msk = work_dir / mask_file_name(subsample_name)
+    dst_sep = work_dir / separator_file_name(subsample_name)
+
+    # Copy with metadata
+    shutil.copy2(msk_file_path, dst_msk)
+    shutil.copy2(sep_file_path, dst_sep)
+
+    return None

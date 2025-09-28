@@ -31,7 +31,7 @@ def generate_separator_gif(
         )
 
     if not mask_img_path.exists():
-        raise ValueError(f"Template image does not exist: {mask_img_path}")
+        raise ValueError(f"Mask image does not exist: {mask_img_path}")
 
     # Load mask
     logger.info(f"Loading mask image: {mask_img_path}")
