@@ -10,10 +10,12 @@ from legacy.ids import mask_file_name
 from modern.ids import scan_name_from_subsample_name
 
 TOP_V10_DIR = "_v10work"
-V10_THUMBS_SUBDIR = "v10_cut"  # Output of full image segmented, 1 byte greyscale PNGs
-V10_THUMBS_TO_CHECK_SUBDIR = "v10_multiples"  # Where and how ML (or user) determined we should separate, RGB PNGs
+V10_THUMBS_SUBDIR = (
+    "cuts_before_sep"  # Output of full image segmented, 1 byte greyscale PNGs
+)
+V10_THUMBS_TO_CHECK_SUBDIR = "cuts_multiples"  # Where and how ML (or user) determined we should separate, RGB PNGs
 V10_THUMBS_AFTER_SUBDIR = (
-    "v10_cut_after"  # Output of full image segmented, after separation
+    "cuts_after_sep"  # Output of full image segmented, after applying separation
 )
 
 ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
