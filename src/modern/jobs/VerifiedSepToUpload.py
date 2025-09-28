@@ -153,7 +153,8 @@ class VerifiedSeparationToEcoTaxa(Job):
         tsv_gen.generate_into(tsv_file_path)
         # Build images zip
         images_zip = ImageList(modern_fs.cut_dir_after)
-        zip_file = images_zip.zipped(self.logger, force_RGB=False)
+        zip_path = self.modern_fs.zip_for_upload
+        zip_file = images_zip.zipped(self.logger, force_RGB=False, zip_path=zip_path)
         # Add the TSV file to the zip
         with zipfile.ZipFile(zip_file, "a") as zip_ref:
             zip_ref.write(tsv_file_path, arcname=tsv_file_name)

@@ -102,7 +102,9 @@ class ImageList:
             # Create a new ImageList instance with the same directory_path but with only the images from the sublist
             yield ImageList(self.directory_path, images=sublist)
 
-    def zipped(self, logger: Logger, force_RGB=True) -> Path:
+    def zipped(
+        self, logger: Logger, force_RGB=True, zip_path: Optional[Path] = None
+    ) -> Path:
         """
         Zips flat all images from this ImageList to a temporary zip file.
         Images are converted to RGB if it's not their format.
@@ -111,6 +113,7 @@ class ImageList:
         Args:
             logger: for messages
             force_RGB: ensure gray-level images are converted to RGB before zipping
+            zip_path: destination zip, default to temporary space if not provided
 
         Returns:
             Path to the temporary zip file
@@ -118,16 +121,17 @@ class ImageList:
         logger.debug(f"Zipping images from directory: {self.directory_path}")
 
         # Always create a unique temporary zip file per call (thread-safe)
-        temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
-        temp_zip_path = Path(temp_zip.name)
-        temp_zip.close()
-        logger.debug(f"Created temporary zip file at {temp_zip_path}")
+        if zip_path is None:
+            temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+            zip_path = Path(temp_zip.name)
+            temp_zip.close()
+        logger.debug(f"Created zip file at {zip_path}")
 
         try:
             image_names = self.get_images()
 
             # Create the zip file (valid even if there are no images)
-            with zipfile.ZipFile(temp_zip_path, "w") as zip_file:
+            with zipfile.ZipFile(zip_path, "w") as zip_file:
                 if not image_names:
                     logger.warning(
                         "No images found in the ImageList; creating empty zip"
@@ -148,11 +152,11 @@ class ImageList:
                     self.size_by_name[image_name] = pil_img.size[0] * pil_img.size[1]
 
             logger.debug(
-                f"Successfully created zip file with {len(image_names)} images from ImageList at {temp_zip_path}"
+                f"Successfully created zip file with {len(image_names)} images from ImageList at {zip_path}"
             )
-            return temp_zip_path
+            return zip_path
 
         except Exception as e:
             logger.error(f"Error creating zip file: {str(e)}")
             # If an error occurs, return the path anyway so the caller can handle it
-            return temp_zip_path
+            return zip_path

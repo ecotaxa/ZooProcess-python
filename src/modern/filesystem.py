@@ -20,6 +20,7 @@ ML_SEPARATION_DONE_TXT = "ML_separation_done.txt"
 SEPARATION_VALIDATED_TXT = "separation_validated.txt"
 SCORE_PER_IMAGE = "score_per_image.json"
 ML_MSK_OK_TXT = "MSK_validated.txt"
+ECOTAXA_ZIP = "ecotaxa_upload.zip"
 
 
 class ModernScanFileSystem:
@@ -205,3 +206,7 @@ class ModernScanFileSystem:
     @property
     def scores_file_path(self):
         return self.meta_dir / SCORE_PER_IMAGE
+
+    @property
+    def zip_for_upload(self):
+        return self.meta_dir / ECOTAXA_ZIP
