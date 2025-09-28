@@ -15,12 +15,14 @@ from Models import (
     ProcessRsp,
     MarkSubsampleReq,
     SubSampleStateEnum,
-    ExportSubsampleRsp,
     User,
     ScanToUrlReq,
 )
 from ZooProcess_lib.Processor import Processor
-from helpers.auth import get_current_user_from_credentials, decode_jwt_token
+from helpers.auth import (
+    get_current_user_from_credentials,
+    get_ecotaxa_token_from_credentials,
+)
 from helpers.logger import logger
 from helpers.web import raise_404, get_stream, raise_422, raise_500
 from img_proc.convert import convert_image_for_display
@@ -335,6 +337,7 @@ def process_subsample(
     sample_hash: str,
     subsample_hash: str,
     _user=Depends(get_current_user_from_credentials),
+    ecotaxa_token: str = Depends(get_ecotaxa_token_from_credentials),
     db: Session = Depends(get_db),
 ) -> ProcessRsp:
     """
@@ -383,7 +386,7 @@ def process_subsample(
             | SubSampleStateEnum.UPLOAD_FAILED
         ):
             to_launch = VerifiedSeparationToEcoTaxa(
-                zoo_project, sample_name, subsample_name, None
+                zoo_project, sample_name, subsample_name, ecotaxa_token
             )
             if state == SubSampleStateEnum.UPLOAD_FAILED:
                 # noinspection PyTypeChecker
@@ -458,65 +461,6 @@ def mark_subsample(
         _sample_scans_meta(zoo_project, sample_name, subsample_name, db),
     )
     return subsample
-
-
-@router.post("/{subsample_hash}/export")
-def export_subsample(
-    project_hash: str,
-    sample_hash: str,
-    subsample_hash: str,
-    _user=Depends(get_current_user_from_credentials),
-    db: Session = Depends(get_db),
-) -> ExportSubsampleRsp:
-    """
-    Mark that the subsample is validated by a user.
-
-    Args:
-        project_hash (str): The ID of the project.
-        sample_hash (str): The hash of the sample.
-        subsample_hash (str): The hash of the subsample to process.
-        _user: User from authentication.
-        db: Database dependency.
-
-    Returns:
-        The updated SubSample
-
-    Raises:
-        HTTPException: If the project, sample, or subsample is not found, or the user is not authorized.
-    """
-    # Validate the project, sample, and subsample hashes
-    zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
-        db, project_hash, sample_hash, subsample_hash
-    )
-
-    # Decode the JWT token to get the actual EcoTaxa token
-    decoded_token = decode_jwt_token(export_data.token, db)
-    ecotaxa_token = decoded_token.get("ecotaxa_token")
-    if ecotaxa_token is None:
-        raise_404("No EcoTaxa token")
-    assert isinstance(ecotaxa_token, str)
-
-    modern_fs = ModernScanFileSystem(zoo_project, sample_name, subsample_name)
-    state = modern_subsample_state(zoo_project, sample_name, subsample_name, modern_fs)
-    if state != SubSampleStateEnum.SEPARATION_VALIDATION_DONE:
-        raise_404("Can't send unfinished subsample to EcoTaxa")
-        assert False
-
-    manu2ecotaxa_task = VerifiedSeparationToEcoTaxa(
-        zoo_project, sample_name, subsample_name, ecotaxa_token, export_data.projid
-    )
-    JobScheduler.submit(manu2ecotaxa_task)
-
-    subsample = subsample_from_legacy(
-        db,
-        zoo_project,
-        sample_name,
-        subsample_name,
-        _sample_scans_meta(zoo_project, sample_name, subsample_name, db),
-    )
-    return ExportSubsampleRsp(
-        task=job_to_task_rsp(manu2ecotaxa_task), subsample=subsample
-    )
 
 
 @router.get("/{subsample_hash}/{img_name}")
