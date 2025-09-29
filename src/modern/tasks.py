@@ -155,7 +155,10 @@ class JobRunner(Thread):
             job.state = JobStateEnum.Finished
             job.mark_done(logger)
         except Exception as e:
-            job.logger.error(f"Error during processing: {str(e)}", exc_info=True)
+            job.logger.error(f"Error during processing: {str(e)}")
+            logger.error(
+                f"Job {job.job_id} encountered an error: {str(e)}", exc_info=True
+            )
             job.state = JobStateEnum.Error
             job.mark_done(logger)
             raise

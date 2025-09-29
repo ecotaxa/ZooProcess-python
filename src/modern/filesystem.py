@@ -3,7 +3,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from legacy.ids import mask_file_name
@@ -24,6 +24,7 @@ SCORE_PER_IMAGE = "score_per_image.json"
 ML_MSK_OK_TXT = "MSK_validated.txt"
 ECOTAXA_ZIP = "ecotaxa_upload.zip"
 UPLOAD_DONE_TXT = "upload_done.txt"
+ECOTAXA_PROJECT_CONFIG = "ecotaxa_project.txt"
 
 
 class ModernScanFileSystem:
@@ -41,6 +42,7 @@ class ModernScanFileSystem:
         self.subsample_name = subsample_name
         scan_name = scan_name_from_subsample_name(subsample_name)
         self.work_dir = zoo_project.zooscan_scan.path / TOP_V10_DIR / scan_name
+        self.legacy_config_dir = zoo_project.zooscan_config
 
     @property
     def meta_dir(self) -> Path:
@@ -222,3 +224,29 @@ class ModernScanFileSystem:
         self.ensure_meta_dir()
         with open(self.upload_done_path, "w") as f:
             f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
+
+    def destination_ecotaxa_project(self) -> Optional[int]:
+        config_file = self.legacy_config_dir.path / ECOTAXA_PROJECT_CONFIG
+        ret = self.read_int_in_file(config_file)
+        if ret is None:
+            config_file = self.legacy_config_dir.path.parent.parent / ECOTAXA_PROJECT_CONFIG
+            ret = self.read_int_in_file(config_file)
+        return ret
+
+    @staticmethod
+    def read_int_in_file(config_file: Path) -> Optional[int]:
+        if not config_file.exists():
+            return None
+        try:
+            content = config_file.read_text(encoding="utf-8")
+        except Exception:
+            return None
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            try:
+                return int(line)
+            except ValueError:
+                return None
+        return None

@@ -1,9 +1,9 @@
 # Process a scan from its manual separation until sending data to EcoTaxa
 
+import shutil
 import zipfile
 from datetime import datetime
 from pathlib import Path
-import shutil
 
 import cv2
 
@@ -40,11 +40,8 @@ class VerifiedSeparationToEcoTaxa(Job):
         sample_name: str,
         subsample_name: str,
         token: str,
-        dst_project_id: int,
     ):
-        super().__init__(
-            (zoo_project, sample_name, subsample_name, token, dst_project_id)
-        )
+        super().__init__((zoo_project, sample_name, subsample_name))
         # Params
         self.zoo_project = zoo_project
         self.sample_name = sample_name
@@ -77,8 +74,17 @@ class VerifiedSeparationToEcoTaxa(Job):
             self.zoo_project.zooscan_config.read(),
             self.zoo_project.zooscan_config.read_lut(),
         )
+
+        # Strong prereq
+        dst_project_id = self.modern_fs.destination_ecotaxa_project()
+        if dst_project_id is None:
+            error = f"""Cannot determine EcoTaxa project to import into.
+                In the folder Zooscan_config of project {self.zoo_project.name}, create a file called ecotaxa_project.txt,
+                that contains the id of the EcoTaxa project in which to upload (it should be just an integer number, not the project name). Then reload this page."""
+            assert False, error
+
         # Generate SEP with post-processed vignettes
-        # Generate with the same name as Legacy, for practicality, but in modern subdirectory
+        # Generate with the same name as Legacy, for practicality, but in the modern subdirectory
         meta_dir = modern_fs.meta_dir
         sep_file_name = separator_file_name(self.subsample_name)
         sep_file_path = meta_dir / sep_file_name
@@ -125,8 +131,8 @@ class VerifiedSeparationToEcoTaxa(Job):
             rois,
             self.scan_name,
         )
-        before_cuts = modern_fs.images_in_cut_after_dir()
-        after_cuts = modern_fs.images_in_cut_dir()
+        before_cuts = modern_fs.images_in_cut_dir()
+        after_cuts = modern_fs.images_in_cut_after_dir()
         self.log_image_diffs(before_cuts, after_cuts)
         # Generate features
         self.logger.info(f"Generating features")
@@ -170,7 +176,7 @@ class VerifiedSeparationToEcoTaxa(Job):
         remote_ref = client.put_file(zip_file, dest_user_dir)
         self.logger.info(f"Zip file uploaded into {dest_user_dir} as {remote_ref}")
         # Start an import task with the file
-        job_id = client.import_my_file_into_project(self.dst_project_id, dest_user_dir)
+        job_id = client.import_my_file_into_project(dst_project_id, dest_user_dir)
         self.logger.info(f"Waiting for job {job_id}")
         final_job_state = client.wait_for_job_done(job_id)
         if final_job_state.state != "F":
@@ -207,17 +213,6 @@ class VerifiedSeparationToEcoTaxa(Job):
         self.logger.info(f"  - Common images: {len(common_images)} images")
         self.logger.info(f"  - Appearing images: {appearing_msg}")
         self.logger.info(f"  - Disappearing images: {gone_msg} ")
-
-        # Log detailed lists if there are differences
-        # if appearing_images:
-        #     self.logger.info(f"New images appearing after processing:")
-        #     for img in sorted(appearing_images):
-        #         self.logger.info(f"  + {img}")
-        #
-        # if gone_images:
-        #     self.logger.info(f"Images that disappeared after processing:")
-        #     for img in sorted(gone_images):
-        #         self.logger.info(f"  - {img}")
 
     def _cleanup_work(self):
         """Clean up the files that the present process is going to (re) create"""
