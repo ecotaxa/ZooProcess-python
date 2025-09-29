@@ -112,6 +112,23 @@ class EcoTaxaApiClient(SimpleClient):
         rsp = self.post(ObjectSetQueryRsp, qry, json=filters)
         return cast(List[ObjectModel], rsp)
 
+    def query_acquisition_object_set(
+        self, prj: int, sample_id: int, acq_id: int, disp_cols: List[str] = ""
+    ) -> List[Dict]:
+        flds = "obj.objid%2Cobj.orig_id%2Cobj.acquisid"
+        if disp_cols:
+            flds += "%2C".join([""] + disp_cols)
+        filters = {"samples": sample_id}
+        qry = f"/object_set/{prj}/query?fields={flds}"
+        rsp = self.post(ObjectSetQueryRsp, qry, json=filters)
+        # e.g. [990827551, 'apero2023_tha_bioness_sup2000_013_st46_d_n4_d2_1_sur_1_1_x2BD2y36Ew204h17C', 10557563]
+        rsp_for_acq = [
+            dict(objid=objid, orig_id=orig_id, acquisid=acquisid)
+            for objid, orig_id, acquisid in rsp.details
+            if acquisid == acq_id  # Filter manually
+        ]
+        return rsp_for_acq
+
     def put_file(self, zip_file: Path, remote_dir: str) -> str:
         with open(zip_file, "rb") as fin:
             upload_rsp = self.post(
@@ -123,11 +140,16 @@ class EcoTaxaApiClient(SimpleClient):
             return cast(str, upload_rsp)
 
     def import_my_file_into_project(
-        self, dst_prj_id: int, my_file_path: str, skip_existing_objects: bool = False
+        self,
+        dst_prj_id: int,
+        my_file_path: str,
+        skip_existing_objects: bool = False,
+        update_mode: str = "",
     ) -> int:
         req = {
             "source_path": my_file_path,
             "skip_existing_objects": skip_existing_objects,
+            "update_mode": update_mode,
         }
         job_status: ImportRsp = self.post(
             ImportRsp, "/file_import/%d" % dst_prj_id, json=req

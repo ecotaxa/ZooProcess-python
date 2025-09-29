@@ -4,6 +4,7 @@ import shutil
 import zipfile
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import cv2
 
@@ -19,6 +20,7 @@ from legacy.ids import (
     measure_file_name,
     ecotaxa_tsv_file_name,
 )
+from legacy.scans import read_scans_metadata_table, find_scan_metadata
 from modern.filesystem import ModernScanFileSystem
 from modern.ids import scan_name_from_subsample_name, THE_SCAN_PER_SUBSAMPLE
 from modern.jobs.VignettesToAutoSep import (
@@ -27,9 +29,11 @@ from modern.jobs.VignettesToAutoSep import (
     produce_cuts_and_index,
 )
 from modern.tasks import Job
+from providers.EcoTaxa.ecotaxa_model import AcquisitionModel
 from providers.ImageList import ImageList
 from providers.ecotaxa_client import EcoTaxaApiClient
 from providers.ecotaxa_tsv import EcoTaxaTSV
+from test_project_export import read_ecotaxa_tsv
 
 
 class VerifiedSeparationToEcoTaxa(Job):
@@ -82,6 +86,13 @@ class VerifiedSeparationToEcoTaxa(Job):
                 In the folder Zooscan_config of project {self.zoo_project.name}, create a file called ecotaxa_project.txt,
                 that contains the id of the EcoTaxa project in which to upload (it should be just an integer number, not the project name). Then reload this page."""
             assert False, error
+
+        # Ensure we have EcoTaxa connection
+        assert self.token is not None, "No connection to EcoTaxa"
+        client = EcoTaxaApiClient.from_token(
+            self.logger, config.ECOTAXA_SERVER, self.token
+        )
+        self.logger.info(f"Connected as {client.whoami().name}")
 
         # Generate SEP with post-processed vignettes
         # Generate with the same name as Legacy, for practicality, but in the modern subdirectory
@@ -164,19 +175,13 @@ class VerifiedSeparationToEcoTaxa(Job):
         with zipfile.ZipFile(zip_file, "a") as zip_ref:
             zip_ref.write(tsv_file_path, arcname=tsv_file_name)
 
-        # Upload to EcoTaxa
-        assert self.token is not None, "No connection to EcoTaxa"
-
-        client = EcoTaxaApiClient.from_token(
-            self.logger, config.ECOTAXA_SERVER, self.token
-        )
-        self.logger.info(f"Connected as {client.whoami().name}")
         # Upload the zip file into a directory, it automatically uncompresses there
         dest_user_dir = f"/{self.subsample_name}/"
         remote_ref = client.put_file(zip_file, dest_user_dir)
         self.logger.info(f"Zip file uploaded into {dest_user_dir} as {remote_ref}")
-        # Start an import task with the file
-        job_id = client.import_my_file_into_project(dst_project_id, dest_user_dir)
+        job_id = self.adaptative_upload(
+            tsv_file_path, client, dest_user_dir, dst_project_id
+        )
         self.logger.info(f"Waiting for job {job_id}")
         final_job_state = client.wait_for_job_done(job_id)
         if final_job_state.state != "F":
@@ -184,6 +189,71 @@ class VerifiedSeparationToEcoTaxa(Job):
             assert False, "Job failed:" + "\n".join(final_job_state.errors)
 
         self.modern_fs.mark_upload_done(datetime.now())
+
+    def adaptative_upload(
+        self,
+        tsv_file_path: Path,
+        client: EcoTaxaApiClient,
+        dest_user_dir: str,
+        dst_project_id: int,
+    ) -> int:
+        """
+        Upload onto EcoTaxa depending on what's already there, i.e. target subsample in target project.
+        """
+        # Reconstitute the previously sent acq_id
+        all_scans_meta = read_scans_metadata_table(self.zoo_project)
+        meta_for_scan = find_scan_metadata(
+            all_scans_meta, self.sample_name, self.scan_name
+        )
+        acq_orig_id = meta_for_scan["fracid"] + "_" + self.sample_name
+        # Get all acquisitions for project
+        all_acqs: List[AcquisitionModel] = client.list_acquisitions(dst_project_id)
+        target_acq = next((acq for acq in all_acqs if acq.orig_id == acq_orig_id), None)
+        import_update = ""
+        if target_acq is not None:
+            # We might have some objects in there
+            objects_for_acq = client.query_acquisition_object_set(
+                prj=dst_project_id,
+                sample_id=target_acq.acq_sample_id,
+                acq_id=target_acq.acquisid,
+            )
+            if len(objects_for_acq) == 0:
+                pass  # Empty previous acq
+            else:
+                objects_in_tsv = read_ecotaxa_tsv(tsv_file_path, {"object_id": str})
+                nb_objects_in_tsv = len(objects_in_tsv)
+                nb_objects_in_acq = len(objects_for_acq)
+                obj_ids = "\n".join([str(obj["objid"]) for obj in objects_for_acq])
+                if nb_objects_in_tsv != nb_objects_in_acq:
+                    raise Exception(
+                        f"EcoTaxa has {nb_objects_in_acq} objects in this acquisition while {nb_objects_in_tsv} should be uploaded."
+                        f"Please cleanup on EcoTaxa side before retrying. Object IDs: {obj_ids}"
+                    )
+                else:
+                    orig_ids_acq = set(
+                        [an_obj["orig_id"] for an_obj in objects_for_acq]
+                    )
+                    orig_ids_tsv = set(
+                        [an_obj["object_id"] for an_obj in objects_in_tsv]
+                    )
+                    if orig_ids_acq == orig_ids_tsv:
+                        import_update = "Yes"
+                    else:
+                        raise Exception(
+                            f"EcoTaxa has different objects in this acquisition."
+                            f"Please cleanup on EcoTaxa side before retrying. Object IDs: {obj_ids}"
+                        )
+        else:
+            # No previous acq
+            pass
+        # Start an import task with the file
+        job_id = client.import_my_file_into_project(
+            dst_project_id,
+            dest_user_dir,
+            skip_existing_objects=import_update != "",
+            update_mode=import_update,
+        )
+        return job_id
 
     def log_image_diffs(self, before_cuts, after_cuts):
         """

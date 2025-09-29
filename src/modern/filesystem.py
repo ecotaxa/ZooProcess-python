@@ -229,7 +229,9 @@ class ModernScanFileSystem:
         config_file = self.legacy_config_dir.path / ECOTAXA_PROJECT_CONFIG
         ret = self.read_int_in_file(config_file)
         if ret is None:
-            config_file = self.legacy_config_dir.path.parent.parent / ECOTAXA_PROJECT_CONFIG
+            config_file = (
+                self.legacy_config_dir.path.parent.parent / ECOTAXA_PROJECT_CONFIG
+            )
             ret = self.read_int_in_file(config_file)
         return ret
 

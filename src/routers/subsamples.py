@@ -252,6 +252,9 @@ def delete_subsample(
         case SubSampleStateEnum.UPLOAD_FAILED:
             result = remove_upload_zip(modern_fs, sample_name, subsample_name)
             message = f"Zip for subsample {subsample_name} {result}"
+        case SubSampleStateEnum.UPLOADED:
+            result = remove_upload_zip(modern_fs, sample_name, subsample_name)
+            message = f"Zip for subsample {subsample_name} {result}"
 
     return {"message": message}
 
