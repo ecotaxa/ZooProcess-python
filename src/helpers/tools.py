@@ -1,8 +1,12 @@
+import csv
 import os
 import sys
 import time
 from functools import wraps
 from pathlib import Path
+from typing import Dict, Type, List
+
+import numpy as np
 
 from helpers.logger import logger
 
@@ -57,3 +61,28 @@ def create_folder(path: Path):
 
 def is_file_exist(path):
     return os.path.exists(path)
+
+
+def read_ecotaxa_tsv(
+    csv_file: Path,
+    typings: Dict[str, Type],
+) -> List[Dict]:
+    ret = []
+    with open(csv_file, "r") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        first_line = True
+        for a_line in reader:
+            if first_line:
+                first_line = False
+                continue
+            to_add = {}
+            for k, v in typings.items():
+                if k in a_line:
+                    typing = float if typings[k] == np.float64 else typings[k]
+                    try:
+                        to_add[k] = typing(a_line[k])
+                    except ValueError as e:
+                        to_add[k] = None
+                    # print("TSV: ", a_line[k], to_add[k])
+            ret.append(to_add)
+    return ret

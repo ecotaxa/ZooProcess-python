@@ -16,6 +16,14 @@ from local_DB.models import User, BlacklistedToken
 from providers.ecotaxa_client import EcoTaxaApiClient
 
 
+def get_ecotaxa_client(logger, url: str, email: str, password: str) -> EcoTaxaApiClient:
+    """
+    Factory function to create an EcoTaxaApiClient instance.
+    This indirection allows tests to monkeypatch this factory to avoid real network calls.
+    """
+    return EcoTaxaApiClient(logger, url, email, password)
+
+
 class CustomHTTPBearer(HTTPBearer):
     """
     Custom HTTP Bearer token authentication that returns 401 instead of 403 when no token is provided.
@@ -308,7 +316,7 @@ def authenticate_user(email: str, password: str, db) -> str:
         HTTPException: If authentication fails
     """
     # Validate the credentials against EcoTaxa server
-    client = EcoTaxaApiClient(logger, config.ECOTAXA_SERVER, email, password)
+    client = get_ecotaxa_client(logger, config.ECOTAXA_SERVER, email, password)
     client.token = client.login()
     if client.token is None:
         raise HTTPException(

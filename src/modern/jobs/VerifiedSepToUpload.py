@@ -13,6 +13,7 @@ from ZooProcess_lib.Processor import Processor
 from ZooProcess_lib.ZooscanFolder import ZooscanProjectFolder
 from ZooProcess_lib.img_tools import load_image, add_separated_mask
 from config_rdr import config
+from helpers.tools import read_ecotaxa_tsv
 from img_proc.generate import generate_separator_gif
 from legacy.ids import (
     separator_file_name,
@@ -33,7 +34,6 @@ from providers.EcoTaxa.ecotaxa_model import AcquisitionModel
 from providers.ImageList import ImageList
 from providers.ecotaxa_client import EcoTaxaApiClient
 from providers.ecotaxa_tsv import EcoTaxaTSV
-from test_project_export import read_ecotaxa_tsv
 
 
 class VerifiedSeparationToEcoTaxa(Job):

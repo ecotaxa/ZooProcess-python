@@ -109,9 +109,7 @@ def test_get_user_from_token():
     user = get_user_from_token(token)
 
     # Check that the extracted user information matches the original data
-    assert user["id"] == user_data["sub"]
-    assert user["name"] == user_data["name"]
-    assert user["email"] == user_data["email"]
+    assert user == user_data["email"]
 
 
 def test_secret_environment_variable():

@@ -21,7 +21,7 @@ if zooprocess_lib_path.exists():
     sys.path.append(str(zooprocess_lib_path))
 
 os.environ.setdefault("APP_ENV", "dev")
-os.environ.setdefault("WORKING_DIR", "tests")
+os.environ.setdefault("WORKING_DIR", os.getcwd())
 
 from local_DB.models import Base, User
 from main import app
@@ -317,3 +317,41 @@ def local_db():
     except Exception as e:
         # Ignore errors when removing the file
         pass
+
+
+# ---- Test-only mocking of external EcoTaxa authentication ----
+@pytest.fixture(autouse=True)
+def mock_ecotaxa_auth(monkeypatch):
+    """
+    Automatically mock EcoTaxa client creation for all tests so that
+    no external HTTP calls are made during authentication.
+    """
+    from helpers import auth as auth_module
+
+    class _FakeWho:
+        def __init__(self, name: str, email: str):
+            self.name = name
+            self.email = email
+
+    class _FakeEcoTaxaClient:
+        def __init__(self, _logger, _url: str, email: str, password: str):
+            self.logger = _logger
+            self.url = _url
+            self.email = email
+            self.password = password
+            self.token = None
+
+        def login(self):
+            # Simulate successful login and return a deterministic token
+            return f"fake-ecotaxa-token-for-{self.email}"
+
+        def whoami(self):
+            # Return the same email provided at login; name can be derived or anything
+            name = self.email.split("@")[0] or "Test User"
+            return _FakeWho(name=name, email=self.email)
+
+    def _factory(logger, url: str, email: str, password: str):
+        return _FakeEcoTaxaClient(logger, url, email, password)
+
+    # Monkeypatch the factory used by helpers.auth.authenticate_user
+    monkeypatch.setattr(auth_module, "get_ecotaxa_client", _factory)
