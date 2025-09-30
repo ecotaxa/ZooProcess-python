@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+os.environ["APP_ENV"] = "dev"
 import config_rdr
 from helpers.logger import logger
 
@@ -16,7 +17,6 @@ out_dir = Path("/tmp")
 
 
 def test_separate_auto_big_image():
-    os.environ["APP_ENV"] = "dev"
     os.chdir(HERE.parent)
     importlib.reload(config_rdr)
     from providers.ML_multiple_separator import (

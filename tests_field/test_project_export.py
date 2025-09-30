@@ -30,7 +30,7 @@ def list_projects_and_sample() -> (
     Iterator[Tuple[ZooscanProjectFolder, Sample, SubSample]]
 ):
     """
-    Generator yielding (zoo_project, sample, subsampe) for (sub)samples with legacy TSV export data
+    Generator yielding (zoo_project, sample, subsample) for (sub)samples with legacy TSV export data
     """
     os.environ["APP_ENV"] = "dev"
     os.chdir(HERE.parent)

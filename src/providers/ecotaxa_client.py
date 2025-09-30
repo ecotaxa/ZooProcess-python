@@ -113,8 +113,10 @@ class EcoTaxaApiClient(SimpleClient):
         return cast(List[ObjectModel], rsp)
 
     def query_acquisition_object_set(
-        self, prj: int, sample_id: int, acq_id: int, disp_cols: List[str] = ""
+        self, prj: int, sample_id: int, acq_id: int, disp_cols=None
     ) -> List[Dict]:
+        if disp_cols is None:
+            disp_cols = []
         flds = "obj.objid%2Cobj.orig_id%2Cobj.acquisid"
         if disp_cols:
             flds += "%2C".join([""] + disp_cols)

@@ -24,13 +24,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src /app
+COPY run_https.py /app
+
 # Fetch compiled front-end from GH
 ADD https://github.com/ecotaxa/ZooProcess-front/releases/latest/download/dist.tgz client.tgz
 RUN cd / && tar xvf app/client.tgz && rm app/client.tgz
 COPY src/static /static
 
-EXPOSE 80
+EXPOSE 8443
 
 ENV APP_ENV=prod
-# TODO RUN python user_cli.py add --name admin --email admin@nowhere.com --password password --confirm-password password
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["python", "run_https.py", "--host", "0.0.0.0", "--port", "8443"]
