@@ -178,7 +178,10 @@ def convert_ddm_to_decimal_degrees(a_value: str) -> float:
     """
     if isinstance(a_value, str) and "," in a_value:
         a_value = a_value.replace(",", ".")
-    val = float(a_value)
+    try:
+        val = float(a_value)
+    except ValueError:
+        val = math.nan
     if math.isnan(val):
         return val
     degrees = int(val)
