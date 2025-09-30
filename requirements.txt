@@ -15,7 +15,7 @@ pymongo==4.15.1
 # pillow==11.3.0 # PIL, in ZooProcess-lib
 pyjwt==2.10.1 # For JWT token validation
 sqlalchemy==2.0.43 # ORM for database operations
-ZooProcess-lib @ https://github.com/ecotaxa/ZooProcess-lib/archive/refs/tags/v0.10.0.tar.gz
+ZooProcess-lib @ https://github.com/ecotaxa/ZooProcess-lib/archive/refs/tags/v0.11.0.tar.gz
 python-dotenv==1.1.1
 
 # CLI dependencies
