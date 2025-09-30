@@ -1,35 +1,35 @@
 # gunicorn
-fastapi==0.115.12
-pydantic==2.11.4
-uvicorn==0.34.2
-requests==2.32.3
+fastapi==0.118.0
+pydantic==2.11.9
+uvicorn==0.37.0
+requests==2.32.5
 python-multipart==0.0.20
 aiofiles==24.1.0
 jinja2==3.1.6 # For HTML templates
 # For ObjectId generation
-pymongo==4.13.0
+pymongo==4.15.1
 # pandas
 # matplotlib
 # numpy==2.3.2 # in ZooProcess-lib
 # opencv-python==4.11.0.86 # cv2, in ZooProcess-lib
 # pillow==11.3.0 # PIL, in ZooProcess-lib
 pyjwt==2.10.1 # For JWT token validation
-sqlalchemy==2.0.42 # ORM for database operations
+sqlalchemy==2.0.43 # ORM for database operations
 ZooProcess-lib @ https://github.com/ecotaxa/ZooProcess-lib/archive/refs/tags/v0.10.0.tar.gz
-python-dotenv==1.1.0
+python-dotenv==1.1.1
 
 # CLI dependencies
-click==8.2.0 # CLI framework
-rich==14.0.0 # Rich text and formatting for CLI
+click==8.3.0 # CLI framework
+rich==14.1.0 # Rich text and formatting for CLI
 
 # Testing dependencies
-pytest==8.3.5
-pytest-cov==6.1.1
-pytest-mock==3.14.0
+pytest==8.4.2
+pytest-cov==7.0.0
+pytest-mock==3.15.1
 httpx==0.28.1 # Required for FastAPI TestClient
 
 # Source code QA dependencies
-mypy==1.10.1 # Static type checking
-types-PyYAML==6.0.12.2
-types-requests==2.32.0.20250602
-types-aiofiles==24.1.0.20250606
+mypy==1.18.2 # Static type checking
+types-PyYAML==6.0.12.20250915
+types-requests==2.32.4.20250913
+types-aiofiles==24.1.0.20250822
