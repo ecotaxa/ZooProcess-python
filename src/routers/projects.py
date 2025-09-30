@@ -51,6 +51,8 @@ def list_all_projects(
     for drive_path in drives_to_check:
         zoo_drive = ZooscanDrive(drive_path)
         for a_prj_path in zoo_drive.list():
+            if a_prj_path.name.startswith("Zooscan_"):  # TODO: Align lib
+                continue
             project = project_from_legacy(db, a_prj_path, depth)
             all_projects.append(project)
 
