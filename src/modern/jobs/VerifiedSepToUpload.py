@@ -168,14 +168,16 @@ class VerifiedSeparationToEcoTaxa(Job):
         )
         tsv_gen.generate_into(tsv_file_path)
         # Build images zip
-        images_zip = ImageList(modern_fs.cut_dir_after)
         zip_path = self.modern_fs.zip_for_upload
+        self.logger.info(f"Building zip for EcoTaxa import into {zip_path}")
+        images_zip = ImageList(modern_fs.cut_dir_after)
         zip_file = images_zip.zipped(self.logger, force_RGB=False, zip_path=zip_path)
         # Add the TSV file to the zip
         with zipfile.ZipFile(zip_file, "a") as zip_ref:
             zip_ref.write(tsv_file_path, arcname=tsv_file_name)
 
         # Upload the zip file into a directory, it automatically uncompresses there
+        self.logger.info(f"Uploading zip to EcoTaxa")
         dest_user_dir = f"/{self.subsample_name}/"
         remote_ref = client.put_file(zip_file, dest_user_dir)
         self.logger.info(f"Zip file uploaded into {dest_user_dir} as {remote_ref}")
@@ -200,6 +202,7 @@ class VerifiedSeparationToEcoTaxa(Job):
         """
         Upload onto EcoTaxa depending on what's already there, i.e. target subsample in target project.
         """
+        self.logger.info(f"Reading EcoTaxa project")
         # Reconstitute the previously sent acq_id
         all_scans_meta = read_scans_metadata_table(self.zoo_project)
         meta_for_scan = find_scan_metadata(
@@ -214,6 +217,7 @@ class VerifiedSeparationToEcoTaxa(Job):
         target_acq = next((acq for acq in all_acqs if acq.orig_id == acq_orig_id), None)
         import_update = ""
         if target_acq is not None:
+            self.logger.info(f"Reading EcoTaxa objects")
             # We might have some objects in there
             objects_for_acq = client.query_acquisition_object_set(
                 prj=dst_project_id,
@@ -250,6 +254,7 @@ class VerifiedSeparationToEcoTaxa(Job):
             # No previous acq
             pass
         # Start an import task with the file
+        self.logger.info(f"Starting EcoTaxa import")
         job_id = client.import_my_file_into_project(
             dst_project_id,
             dest_user_dir,
