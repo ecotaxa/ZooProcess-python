@@ -88,7 +88,7 @@ class VerifiedSeparationToEcoTaxa(Job):
             assert False, error
 
         # Ensure we have EcoTaxa connection
-        assert self.token is not None, "No connection to EcoTaxa"
+        assert self.token is not None, "No token for connecting to EcoTaxa"
         client = EcoTaxaApiClient.from_token(
             self.logger, config.ECOTAXA_SERVER, self.token
         )

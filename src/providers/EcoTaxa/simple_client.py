@@ -42,7 +42,7 @@ class SimpleClient(object):
     """
 
     def __init__(self, base_url: str):
-        self.url = base_url
+        self.base_url = base_url
         self.session = Session()
         # Workaround certificate issues, in case
         # self.session.verify = False
@@ -52,11 +52,10 @@ class SimpleClient(object):
         self.token: Optional[str] = None
 
     def _url_headers_args(self, entry_point: str, kwargs: Dict):
-        url = self.url + "/api" + entry_point
+        url = self.base_url + "/api" + entry_point
+        headers = {"User-Agent": "ZooProcessV10"}
         if self.token is not None:
-            headers = {"Authorization": "Bearer " + self.token}
-        else:
-            headers = {}
+            headers["Authorization"] = "Bearer " + self.token
         for an_arg, a_val in kwargs.items():
             if hasattr(a_val, "to_dict"):
                 kwargs[an_arg] = a_val.to_dict()

@@ -35,7 +35,7 @@ class EcoTaxaApiClient(SimpleClient):
         self.token: str = token
 
     def login(self):
-        self.logger.info(f"Logging in to EcoTaxa at {self.url}")
+        self.logger.info(f"Logging in to EcoTaxa at {self.base_url}")
         req = LoginReq(username=self.email, password=self.password)
         try:
             rsp = self.post(str, "/login", json=req)
@@ -81,13 +81,13 @@ class EcoTaxaApiClient(SimpleClient):
 
     def list_acquisitions(self, prj_id: int):
         rsp: List[AcquisitionModel] = self.get(
-            List[AcquisitionModel], "/acquisitions/search/?project_id=%d" % prj_id
+            List[AcquisitionModel], "/acquisitions/search?project_id=%d" % prj_id
         )
         return rsp
 
     def list_zooscan_projects(self) -> List[ProjectModel]:
         rsp: List[ProjectModel] = self.get(
-            List[ProjectModel], "/projects/search/?instrument_filter=Zooscan"
+            List[ProjectModel], "/projects/search?instrument_filter=Zooscan"
         )
         return rsp
 
