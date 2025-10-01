@@ -521,7 +521,7 @@ async def get_subsample_scan(
             raw_sample_file = zoo_project.zooscan_scan.raw.get_file(
                 subsample_name, THE_SCAN_PER_SUBSAMPLE
             )
-            processor.converter.do_file_to_file(raw_sample_file, real_file)
+            processor.converter.do_file_to_file(raw_sample_file, real_file, False)
     else:
         real_files: List[Path] = list(
             filter(

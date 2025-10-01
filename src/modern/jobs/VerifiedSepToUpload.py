@@ -205,6 +205,9 @@ class VerifiedSeparationToEcoTaxa(Job):
         meta_for_scan = find_scan_metadata(
             all_scans_meta, self.sample_name, self.scan_name
         )
+        assert (
+            meta_for_scan is not None
+        ), f"Not found, line for {self.sample_name} in {self.zoo_project.name} metadata"
         acq_orig_id = meta_for_scan["fracid"] + "_" + self.sample_name
         # Get all acquisitions for project
         all_acqs: List[AcquisitionModel] = client.list_acquisitions(dst_project_id)

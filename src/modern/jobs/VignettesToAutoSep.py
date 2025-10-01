@@ -177,7 +177,7 @@ def convert_scan_and_backgrounds(
 ):
     logger.info(f"Converting backgrounds")
     bg_converted_files = [
-        processor.converter.do_file_to_image(a_raw_bg_file)
+        processor.converter.do_file_to_image(a_raw_bg_file, True)
         for a_raw_bg_file in bg_scans
     ]
     logger.info(f"Combining backgrounds")
@@ -187,7 +187,7 @@ def convert_scan_and_backgrounds(
     # Scan pre-processing
     logger.info(f"Converting scan")
     eight_bit_scan_image, scan_resolution = processor.converter.do_file_to_image(
-        raw_scan
+        raw_scan, False
     )
     # Background removal
     logger.info(f"Removing background")
