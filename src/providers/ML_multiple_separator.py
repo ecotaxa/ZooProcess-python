@@ -141,7 +141,7 @@ def build_separated_image(
     points = list(zip(y_coords, x_coords))
     # Draw individual points
     for y, x in points:
-        cv2.circle(color_image, (y, x), 1, BGR_RED_COLOR, -1)
+        color_image[x, y] = BGR_RED_COLOR
     # Save the result in subdirectory 'separated' of base directory
     png_filename = filename.replace(".jpg", ".png")
     output_path = separated_dir / png_filename
