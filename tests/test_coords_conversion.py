@@ -21,6 +21,14 @@ def test_latitude_correction_10_30000():
     assert corrected_value == 10.50000
 
 
+def test_latitude_correction_pointB():
+    # 43.4110000;-7.0189400
+    corrected_value = convert_ddm_to_decimal_degrees(43.4110000)
+    assert corrected_value == 43.685
+    corrected_value = convert_ddm_to_decimal_degrees(-7.0189400)
+    assert corrected_value == -7.031567
+
+
 def test_latitude_correction_from_apero():
     # meta
     # apero2023_pp_wp2_001_st01_d ;pourquoipas ;apero          ;        1 ;20230610-1303 ;48.27162   ;22.30036   ; 4107 ;nan    ;nan      ;    1 ;      3 ;wp2     ;    200 ;  99999 ; 200 ;   0 ;20.2875   ;nan            ;     1 ;       2 ;     1111 ;ape000000659 ;  48.27162   ;   22.30039   ;          17 ;               0 ;       99999 ;      99999 ;        0.5 ;     1
