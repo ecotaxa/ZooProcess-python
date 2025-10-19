@@ -134,7 +134,7 @@ async def get_vignettes(
             # Segmenter
             sep_img_path = multiples_to_check_dir / a_vignette
             assert sep_img_path.is_file()
-            _, rois = segment_mask(processor, sep_img_path)
+            _, rois = segment_mask_file(processor, sep_img_path)
             segmenter_output = []
             for i in range(len(rois)):
                 seg_name = (
@@ -211,7 +211,7 @@ async def get_vignette_image(
         multiple_name = img_path.rsplit("/", 1)[1]
         sep_img_path = multiples_to_check_dir / multiple_name
         assert sep_img_path.is_file(), f"Not a file: {sep_img_path}"
-        sep_img, rois = segment_mask(processor, sep_img_path)
+        sep_img, rois = segment_mask_file(processor, sep_img_path)
         vignette_in_vignette = processor.extractor.extract_image_at_ROI(
             sep_img, rois[int(seg_num)], erasing_background=True
         )
@@ -352,6 +352,73 @@ async def update_a_vignette_mask(
     }
 
 
+DRAWING_FEATURES = {"object_bx", "object_by", "object_width", "object_height",
+                    "object_x", "object_y", "object_major", "object_minor", "object_angle"}
+
+
+@router.post("/vignette_mask_maybe/{project_hash}/{sample_hash}/{subsample_hash}/{img_path}")
+async def simulate_a_vignette_mask(
+    project_hash: str,
+    sample_hash: str,
+    subsample_hash: str,
+    img_path: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Update _virtually_ a vignette using the drawn mask
+
+    Args:
+        project_hash (str): The ID of the project
+        sample_hash (str): The hash of the sample
+        subsample_hash (str): The hash of the subsample
+        img_path (str): The path to the original image
+        file (UploadFile): The uploaded file containing the mask
+        db (Session): Database session
+
+    Returns:
+        dict: Status of the simulation operation
+    """
+    logger.info(
+        f"simulate_a_vignette_mask: {project_hash}/{sample_hash}/{subsample_hash}/{img_path}"
+    )
+    # Validate the project, sample, and subsample hashes
+    zoo_drive, zoo_project, sample_name, subsample_name = validate_path_components(
+        db, project_hash, sample_hash, subsample_hash
+    )
+    img_path = img_path.replace(API_PATH_SEP, "/")
+    assert img_path.startswith(
+        V10_THUMBS_SUBDIR
+    )  # Convention with UI, ref is original image in cut directory
+    assert img_path.endswith(".png")
+    _, img_name = img_path.rsplit("/", 1)
+    processor, thumbs_dir, multiples_to_check_dir, meta_dir = processing_context(
+        zoo_project, sample_name, subsample_name
+    )
+    # Read the content of the uploaded file
+    content = await file.read()
+    # Validate that the content is a gzip or zip-encoded matrix
+    if not is_valid_compressed_matrix(content):
+        raise_422("Invalid compressed matrix")
+        assert False
+    mask = load_matrix_from_compressed(content)
+    scan_path = thumbs_dir / img_name
+    scan_img = load_image(scan_path, cv2.IMREAD_GRAYSCALE)
+    check_mask_sanity(scan_img, mask, subsample_name, img_name[:-4], meta_dir)
+    masked_img = apply_matrix_onto(scan_img, mask, True)
+    # Segment the masked image
+    assert processor.config is not None
+    rois, _ = processor.segmenter.find_ROIs_in_cropped_image(
+        masked_img, processor.config.resolution
+    )
+    calcs = processor.calculator.ecotaxa_measures_list_from_roi_list(masked_img, processor.config.resolution, rois,
+                                                                     DRAWING_FEATURES)
+    return {
+        "status": "success",
+        "rois": calcs,
+        "image": str(img_name),
+    }
+
+
 def all_pngs_in_dir(a_dir: Path) -> List[str]:
     ret = []
     if a_dir is None:
@@ -365,10 +432,14 @@ def all_pngs_in_dir(a_dir: Path) -> List[str]:
     return ret
 
 
-def segment_mask(
+def segment_mask_file(
     processor: Processor, sep_img_path: Path
 ) -> Tuple[np.ndarray, List[ROI]]:
     sep_img = load_image(sep_img_path, cv2.IMREAD_COLOR_BGR)
+    return segment_mask_image(processor, sep_img)
+
+
+def segment_mask_image(processor: Processor, sep_img: np.ndarray) -> Tuple[np.ndarray, List[ROI]]:
     sep_img2 = cv2.extractChannel(sep_img, 1)
     sep_img2[sep_img[:, :, 2] == BGR_RED_COLOR[2]] = 255
     assert processor.config is not None
