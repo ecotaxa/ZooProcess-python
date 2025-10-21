@@ -353,7 +353,8 @@ async def update_a_vignette_mask(
 
 
 DRAWING_FEATURES = {"object_bx", "object_by", "object_width", "object_height",
-                    "object_x", "object_y", "object_major", "object_minor", "object_angle"}
+                    "object_x", "object_y", "object_major", "object_minor", "object_angle",
+                    "object_xstart", "object_ystart"}
 
 
 @router.post("/vignette_mask_maybe/{project_hash}/{sample_hash}/{subsample_hash}/{img_path}")
