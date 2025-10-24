@@ -15,12 +15,12 @@ class ScanCSVLine(TypedDict):
     fracsup: str  # Maximum mesh size for the fraction in microns (e.g., '999999')
     fracnb: str  # Splitting ratio (e.g., '1')
     observation: str  # Observations (e.g., 'no')
-    code: str  # Code (e.g., '1')
+    code: str  # Code (e.g., '1') # Not produced into EcoTaxa TSV
     submethod: str  # Submethod (e.g., 'motoda')
-    cellpart: str  # Cell part (e.g., '1')
-    replicates: str  # Number of replicates (e.g., '1')
-    volini: str  # Initial volume (e.g., '1')
-    volprec: str  # Precision volume (e.g., '1')
+    cellpart: str  # Cell part (e.g., '1')  # Not produced into EcoTaxa TSV
+    replicates: str  # Number of replicates (e.g., '1') # Not produced into EcoTaxa TSV
+    volini: str  # Initial volume (e.g., '1') # Not produced into EcoTaxa TSV
+    volprec: str  # Precision volume (e.g., '1') # Not produced into EcoTaxa TSV
 
 
 SCAN_CSV_COLUMNS = list(ScanCSVLine.__annotations__.keys())

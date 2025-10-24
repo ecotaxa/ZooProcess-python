@@ -79,22 +79,22 @@ LEGACY_COLUMNS = (
     # "object_cdexc,"
     # Process
     "process_id,process_date,process_time,process_img_software_version,process_img_resolution,"
-    # "process_img_od_grey,process_img_od_std,"
+    "process_img_od_grey,process_img_od_std,"
     "process_img_background_img,process_particle_version,process_particle_threshold,process_particle_pixel_size_mm,"
     "process_particle_min_size_mm,process_particle_max_size_mm,"
-    # "process_particle_sep_mask,process_particle_bw_ratio,"
+    "process_particle_sep_mask,process_particle_bw_ratio,"
     "process_software,"
     # Acquisition
     "acq_id,acq_min_mesh,acq_max_mesh,acq_sub_part,acq_sub_method,acq_hardware,acq_software,acq_author,acq_imgtype,acq_scan_date,acq_scan_time,acq_quality,acq_bitpixel,acq_greyfrom,acq_scan_resolution,acq_rotation,acq_miror,acq_xsize,acq_ysize,acq_xoffset,acq_yoffset,acq_lut_color_balance,acq_lut_filter,acq_lut_min,acq_lut_max,acq_lut_odrange,acq_lut_ratio,acq_lut_16b_median,acq_instrument,acq_scan_comment,"
     # Sample
     "sample_id,sample_scan_operator,sample_ship,sample_program,sample_stationid,"
     "sample_bottomdepth,"
-    # "sample_ctdrosettefilename,sample_other_ref,"
+    "sample_ctdrosettefilename,sample_other_ref,"
     "sample_tow_nb,sample_tow_type,sample_net_type,sample_net_mesh,sample_net_surf,sample_zmax,"
     "sample_zmin,sample_tot_vol,sample_comment,sample_tot_vol_qc,sample_depth_qc,"
     "sample_sample_qc,sample_barcode,sample_duration,sample_ship_speed,sample_cable_length,"
     "sample_cable_angle,sample_cable_speed,sample_nb_jar,"
-    # "sample_dataportal_descriptor,sample_open"
+    "sample_dataportal_descriptor,sample_open"
 )
 TSV_HEADER = LEGACY_COLUMNS.rstrip(",").split(",")
 
@@ -113,13 +113,6 @@ LEGACY_EXCLUDED_COLUMNS = (
     "object_tag,"
     "object_centroids,"
     "object_cdexc,"
-    # Process
-    "process_img_od_grey,process_img_od_std,"
-    "process_particle_sep_mask,process_particle_bw_ratio,"
-    # Acquisition
-    # Sample
-    "sample_ctdrosettefilename,sample_other_ref,"
-    "sample_dataportal_descriptor,sample_open"
 )
 
 
@@ -218,7 +211,7 @@ class EcoTaxaTSV:
                     "img_file_name": image_name,
                     "img_rank": 0,
                     "object_id": image_name[:-4],
-                    "object_link": "http://www.zooscan.obs-vlfr.fr/",
+                    "object_link": "https://zenodo.org/records/14704251",
                 }
             )
         return rows
@@ -263,8 +256,8 @@ class EcoTaxaTSV:
             "sample_program": sample_meta["scientificprog"],
             "sample_stationid": sample_meta["stationid"],
             "sample_bottomdepth": sample_meta["depth"],
-            # "sample_ctdrosettefilename": "",
-            # "sample_other_ref": "",
+            "sample_ctdrosettefilename": sample_meta["ctdref"],
+            "sample_other_ref": sample_meta["otherref"],
             "sample_tow_nb": int(sample_meta["townb"]),
             "sample_tow_type": sample_meta["towtype"],
             "sample_net_type": sample_meta["nettype"],
@@ -284,8 +277,8 @@ class EcoTaxaTSV:
             "sample_cable_angle": float_or_int(sample_meta["cable_angle"]),
             "sample_cable_speed": float_or_int(sample_meta["cable_speed"]),
             "sample_nb_jar": float_or_int(sample_meta["nb_jar"]),
-            # "sample_dataportal_descriptor": "",
-            # "sample_open": "",
+            "sample_dataportal_descriptor": "nan",
+            "sample_open": "nan",
         }
 
     def object_acquisition(self) -> Dict[str, Any]:
@@ -360,7 +353,9 @@ class EcoTaxaTSV:
             # optical density set range for the computing of the black point from the white point
             "acq_lut_ratio": lut.ratio,
             # multiplying factor to calculate the white point from the median grey level of the scanned image
-            "acq_lut_16b_median": median,  # median grey level of the scanned image
+            "acq_lut_16b_median": float_or_int(
+                median
+            ),  # median grey level of the scanned image
             "acq_scan_comment": scan_csv_meta["observation"],  #
         }
 
@@ -376,15 +371,15 @@ class EcoTaxaTSV:
             "process_time": prc_time,
             "process_img_software_version": version_hash(),
             "process_img_resolution": self.resolution,
-            # "process_img_od_grey": "",
-            # "process_img_od_std": "",
+            "process_img_od_grey": "",
+            "process_img_od_std": "",
             "process_img_background_img": background_image,
             "process_particle_version": version_hash(),
             "process_particle_threshold": self.segmenter.threshold,
             "process_particle_pixel_size_mm": float_or_int(pixel_size_mm),
             "process_particle_min_size_mm": float_or_int(self.segmenter.minsize),
             "process_particle_max_size_mm": float_or_int(self.segmenter.maxsize),
-            # "process_particle_sep_mask": "",
-            # "process_particle_bw_ratio": "",
+            "process_particle_sep_mask": "include",
+            "process_particle_bw_ratio": "",
             "process_software": SOFTWARE_FOR_TSVS,
         }

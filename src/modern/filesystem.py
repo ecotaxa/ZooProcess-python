@@ -175,8 +175,7 @@ class ModernScanFileSystem:
         Mark the MSK as validated by writing the date into a file
         """
         self.ensure_meta_dir()
-        validation_file = self.MSK_validated_file_path
-        with open(validation_file, "w") as f:
+        with open(self.MSK_validated_file_path, "w") as f:
             f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
 
     def mark_ML_separation_done(self):
@@ -184,7 +183,9 @@ class ModernScanFileSystem:
         Mark the ML separation process as done
         """
         self.ensure_meta_dir()
-        self.SEP_generated_file_path.touch()
+        event_date = datetime.now()
+        with open(self.SEP_generated_file_path, "w") as f:
+            f.write(event_date.strftime("%Y-%m-%d %H:%M:%S"))
 
     def mark_SEP_validated(self, event_date: datetime):
         self.ensure_meta_dir()
