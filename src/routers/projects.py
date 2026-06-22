@@ -64,7 +64,11 @@ def list_all_projects(
     for drive_path in drives_to_check:
         zoo_drive = ZooscanDrive(drive_path)
         for a_prj_path in zoo_drive.list():
-            project = project_from_legacy(db, a_prj_path, depth)
+            try:
+                project = project_from_legacy(db, a_prj_path, depth)
+            except FileNotFoundError:
+                # Looks like e.g. /zooscan/Zooscan_ptb_jb_2024_sn001/ is incomplete
+                continue
             all_projects.append(project)
 
     return all_projects
